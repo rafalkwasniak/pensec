@@ -1,0 +1,187 @@
+extends: ["spectral:oas"]
+
+rules:
+  # ---------------------------------------------------------------
+  # DRY - wszystko wielokrotnego uzytku siedzi w components
+  # ---------------------------------------------------------------
+  response-schema-must-be-ref:
+    description: Schemat odpowiedzi musi byc $ref do components/schemas (inline = duplikat w generatorze).
+    message: "{{path}} - schemat inline zamiast $ref"
+    severity: error
+    resolved: false
+    given: "$.paths[*][get,put,post,delete,patch].responses[*].content[*].schema"
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          oneOf:
+            - required: ["$ref"]
+            - properties:
+                type:
+                  const: array
+                items:
+                  type: object
+                  required: ["$ref"]
+              required: ["type", "items"]
+
+  request-body-schema-must-be-ref:
+    description: Schemat requestBody musi byc $ref do components/schemas.
+    message: "{{path}} - requestBody inline zamiast $ref"
+    severity: error
+    resolved: false
+    given: "$.paths[*][*].requestBody.content[*].schema"
+    then:
+      field: "$ref"
+      function: truthy
+
+  parameter-must-be-ref:
+    description: Powtarzalne parametry (naglowki, paginacja) trzymamy w components/parameters.
+    message: "{{path}} - parametr inline; wyciagnij do components/parameters i uzyj $ref"
+    severity: warn
+    resolved: false
+    given: "$.paths[*][*].parameters[*]"
+    then:
+      field: "$ref"
+      function: truthy
+
+  # Schematy nieuzywane lapie wbudowana regula 'oas3-unused-component'.
+
+  # ---------------------------------------------------------------
+  # Typy - zamkniete zbiory wartosci, formaty, zakresy
+  # ---------------------------------------------------------------
+  enum-for-status-like-fields:
+    description: Pole typu status/type/state/mode/role ma skonczony zbior wartosci - opisz go enumem.
+    message: "'{{property}}' wyglada na pole o zamknietym zbiorze wartosci, a nie ma enum"
+    severity: warn
+    given: "$..properties[?(@property.match(/(^|_)(type|status|state|mode|kind|role|level|action)$/i))]"
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          if:
+            properties:
+              type:
+                const: string
+            required: ["type"]
+          then:
+            required: ["enum"]
+
+  date-time-needs-format:
+    description: Pola *_at / *_date to daty - dodaj format (date-time albo date).
+    message: "'{{property}}' to data, a nie ma 'format'"
+    severity: warn
+    given: "$..properties[?(@property.match(/(_at|_date|^date$)$/i))]"
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          if:
+            properties:
+              type:
+                const: string
+            required: ["type"]
+          then:
+            required: ["format"]
+
+  object-must-declare-required:
+    description: Obiekt bez 'required' oznacza dla generatora "wszystko opcjonalne" - front dostaje same '?'.
+    message: "{{path}} - obiekt z properties bez listy 'required'"
+    severity: warn
+    given: "$.components.schemas[*]"
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          if:
+            properties:
+              type:
+                const: object
+            required: ["type", "properties"]
+          then:
+            required: ["required"]
+
+  # ---------------------------------------------------------------
+  # Czytelnosc i generowanie klienta
+  # ---------------------------------------------------------------
+  operation-operationid-required:
+    description: operationId to nazwa funkcji w wygenerowanym kliencie - musi byc i musi byc czytelna.
+    severity: error
+    given: "$.paths[*][get,put,post,delete,patch]"
+    then:
+      field: operationId
+      function: truthy
+
+  operation-operationid-camel-case:
+    description: operationId w camelCase - inaczej nazwy funkcji w kliencie sa losowe.
+    severity: warn
+    given: "$.paths[*][get,put,post,delete,patch].operationId"
+    then:
+      function: casing
+      functionOptions:
+        type: camel
+
+  schema-name-pascal-case:
+    description: Nazwy schematow w PascalCase - to sa nazwy typow TS.
+    severity: warn
+    given: "$.components.schemas"
+    then:
+      field: "@key"
+      function: casing
+      functionOptions:
+        type: pascal
+
+  response-must-have-description:
+    description: Kazda odpowiedz opisana - pusty string nie mowi nic.
+    severity: error
+    given: "$.paths[*][*].responses[*]"
+    then:
+      field: description
+      function: truthy
+
+  # ---------------------------------------------------------------
+  # Bledy
+  # ---------------------------------------------------------------
+  operation-must-document-4xx:
+    description: Operacja musi opisywac przynajmniej jeden blad klienta (4xx).
+    message: "{{path}} - brak udokumentowanej odpowiedzi 4xx"
+    severity: warn
+    given: "$.paths[*][get,put,post,delete,patch].responses"
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          minProperties: 1
+          patternProperties:
+            "^4": {}
+          anyOf:
+            - required: ["400"]
+            - required: ["401"]
+            - required: ["403"]
+            - required: ["404"]
+            - required: ["409"]
+            - required: ["422"]
+
+  # ---------------------------------------------------------------
+  # Przyklady - dokumentacja i mocki
+  # ---------------------------------------------------------------
+  schema-should-have-example:
+    description: Schemat bez przykladu = dokumentacja, ktorej nie da sie przeczytac ani zamockowac.
+    severity: info
+    given: "$.components.schemas[*]"
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          anyOf:
+            - required: ["example"]
+            - required: ["examples"]
+            - required: ["$ref"]
+            - required: ["allOf"]
+            - required: ["oneOf"]
+            - required: ["anyOf"]

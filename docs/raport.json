@@ -1,0 +1,296 @@
+{
+    "scan_time": "2026-08-16 13:38:12",
+    "orchestrator_ip": "192.168.0.107",
+    "discovered_hosts_count": 9,
+    "hosts": [
+        "192.168.0.105",
+        "192.168.0.103",
+        "192.168.0.101",
+        "192.168.0.106",
+        "192.168.0.100",
+        "192.168.0.1",
+        "192.168.0.108",
+        "192.168.0.104",
+        "192.168.0.102"
+    ],
+    "diagnostics": {
+        "latency": "Ping stats for 192.168.0.105: MIN=12.037ms, AVG=46.146ms, MAX=99.823ms",
+        "dns_health": "DNS response time for 8.8.8.8: 32ms",
+        "mitm_vulnerability": "Brak blokady Gratuitous ARP. Krytyczna podatnosc na ataki Man in the Middle.",
+        "wpad_vulnerability": "Brak autorytatywnego serwera WPAD w DNS. Krytyczna podatnosc na Rogue WPAD i przejecie ruchu uzytkownikow.",
+        "ipv6_spoofing": "Brak aktywnych zapytan IPv6 w czasie testu lub siec zabezpieczona.",
+        "rogue_dhcp": "Brak odpowiedzi DHCP Sprawdz podlaczenie do sieci",
+        "vlan_hopping": [
+            {
+                "target": "192.168.0.105",
+                "interface": "eth0",
+                "status": "SECURE",
+                "severity": "INFO",
+                "assessment": "Brak odpowiedzi na ruch tagowany (Single oraz Double Tag) dla wszystkich przetestowanych VLAN ID. Gniazdko jest bezpieczne."
+            }
+        ],
+        "network_fabric": "Port dost\u0119powy zabezpieczony poprawnie. Brak wyciek\u00f3w CDP/LLDP/DTP oraz zablokowane STP i protoko\u0142y routingu.",
+        "egress_filtering": "Port 4444 (Reverse Shell / Metasploit) jest OTWARTY - powazne ryzyko wycieku danych\nPort 3389 (RDP / Zdalny Pulpit) jest OTWARTY - powazne ryzyko wycieku danych\nPort 6667 (IRC / Botnety) jest OTWARTY - powazne ryzyko wycieku danych",
+        "top_talkers": "================================================================================\nIPv4 Endpoints\nFilter:<No Filter>\n                       |  Packets  | |  Bytes  | | Tx Packets | | Tx Bytes | | Rx Packets | | Rx Bytes |\n192.168.0.103                 12          4022         12            4022           0               0   \n224.0.0.251                   10          3902          0               0          10            3902   \n224.0.0.22                     2           120          0               0           2             120   \n================================================================================",
+        "bandwidth": "Ping: 44.654 ms\nDownload: 41.60 Mbit/s\nUpload: 24.86 Mbit/s"
+    },
+    "nmap_results": {
+        "192.168.0.108": "Starting Nmap 7.95 ( https://nmap.org ) at 2026-08-16 13:39 CEST\nNmap done: 1 IP address (0 hosts up) scanned in 3.54 seconds",
+        "192.168.0.106": "Starting Nmap 7.95 ( https://nmap.org ) at 2026-08-16 13:39 CEST\nNmap scan report for 192.168.0.106\nHost is up (0.046s latency).\n\nPORT     STATE  SERVICE      VERSION\n21/tcp   closed ftp\n22/tcp   closed ssh\n80/tcp   closed http\n161/tcp  closed snmp\n389/tcp  closed ldap\n443/tcp  closed https\n445/tcp  closed microsoft-ds\n3306/tcp closed mysql\n8080/tcp closed http-proxy\nMAC Address: 60:3E:5F:0A:F5:C4 (Apple)\n\nService detection performed. Please report any incorrect results at https://nmap.org/submit/ .\nNmap done: 1 IP address (1 host up) scanned in 3.02 seconds",
+        "192.168.0.105": "Starting Nmap 7.95 ( https://nmap.org ) at 2026-08-16 13:39 CEST\nNmap scan report for 192.168.0.105\nHost is up (0.043s latency).\n\nPORT     STATE  SERVICE      VERSION\n21/tcp   closed ftp\n22/tcp   closed ssh\n80/tcp   closed http\n161/tcp  closed snmp\n389/tcp  closed ldap\n443/tcp  closed https\n445/tcp  closed microsoft-ds\n3306/tcp closed mysql\n8080/tcp closed http-proxy\nMAC Address: 32:AB:BA:A0:ED:CE (Unknown)\n\nService detection performed. Please report any incorrect results at https://nmap.org/submit/ .\nNmap done: 1 IP address (1 host up) scanned in 3.11 seconds",
+        "192.168.0.100": "Starting Nmap 7.95 ( https://nmap.org ) at 2026-08-16 13:39 CEST\nNmap scan report for 192.168.0.100\nHost is up (0.00091s latency).\n\nPORT     STATE  SERVICE      VERSION\n21/tcp   closed ftp\n22/tcp   closed ssh\n80/tcp   closed http\n161/tcp  closed snmp\n389/tcp  closed ldap\n443/tcp  closed https\n445/tcp  closed microsoft-ds\n3306/tcp closed mysql\n8080/tcp closed http-proxy\nMAC Address: 84:46:FE:44:84:51 (Huawei Technologies)\n\nService detection performed. Please report any incorrect results at https://nmap.org/submit/ .\nNmap done: 1 IP address (1 host up) scanned in 4.78 seconds",
+        "192.168.0.102": "Starting Nmap 7.95 ( https://nmap.org ) at 2026-08-16 13:39 CEST\nNmap scan report for 192.168.0.102\nHost is up (0.099s latency).\n\nPORT     STATE    SERVICE      VERSION\n21/tcp   filtered ftp\n22/tcp   filtered ssh\n80/tcp   filtered http\n161/tcp  filtered snmp\n389/tcp  filtered ldap\n443/tcp  filtered https\n445/tcp  filtered microsoft-ds\n3306/tcp filtered mysql\n8080/tcp filtered http-proxy\nMAC Address: 2A:02:B4:E4:0D:0F (Unknown)\n\nService detection performed. Please report any incorrect results at https://nmap.org/submit/ .\nNmap done: 1 IP address (1 host up) scanned in 5.69 seconds",
+        "192.168.0.103": "Starting Nmap 7.95 ( https://nmap.org ) at 2026-08-16 13:39 CEST\nNmap done: 1 IP address (0 hosts up) scanned in 3.46 seconds",
+        "192.168.0.104": "Starting Nmap 7.95 ( https://nmap.org ) at 2026-08-16 13:39 CEST\nNmap scan report for 192.168.0.104\nHost is up (0.071s latency).\n\nPORT     STATE  SERVICE      VERSION\n21/tcp   closed ftp\n22/tcp   closed ssh\n80/tcp   closed http\n161/tcp  closed snmp\n389/tcp  closed ldap\n443/tcp  closed https\n445/tcp  closed microsoft-ds\n3306/tcp closed mysql\n8080/tcp closed http-proxy\nMAC Address: 1A:96:7D:B7:9E:51 (Unknown)\n\nService detection performed. Please report any incorrect results at https://nmap.org/submit/ .\nNmap done: 1 IP address (1 host up) scanned in 5.08 seconds",
+        "192.168.0.101": "Starting Nmap 7.95 ( https://nmap.org ) at 2026-08-16 13:39 CEST\nNmap scan report for 192.168.0.101\nHost is up (0.079s latency).\n\nPORT     STATE  SERVICE      VERSION\n21/tcp   closed ftp\n22/tcp   closed ssh\n80/tcp   closed http\n161/tcp  closed snmp\n389/tcp  closed ldap\n443/tcp  closed https\n445/tcp  closed microsoft-ds\n3306/tcp closed mysql\n8080/tcp closed http-proxy\nMAC Address: DC:72:23:71:F9:A3 (Hui Zhou Gaoshengda Technology)\n\nService detection performed. Please report any incorrect results at https://nmap.org/submit/ .\nNmap done: 1 IP address (1 host up) scanned in 3.21 seconds",
+        "192.168.0.1": "Starting Nmap 7.95 ( https://nmap.org ) at 2026-08-16 13:39 CEST\nNmap scan report for 192.168.0.1\nHost is up (0.00046s latency).\n\nPORT     STATE  SERVICE      VERSION\n21/tcp   closed ftp\n22/tcp   closed ssh\n80/tcp   open   http         GoAhead WebServer\n161/tcp  closed snmp\n389/tcp  closed ldap\n443/tcp  closed https\n445/tcp  closed microsoft-ds\n3306/tcp closed mysql\n8080/tcp closed http-proxy\nMAC Address: 50:0F:F5:97:CE:48 (Tenda Technology,Ltd.Dongguan branch)\n\nService detection performed. Please report any incorrect results at https://nmap.org/submit/ .\nNmap done: 1 IP address (1 host up) scanned in 9.64 seconds"
+    },
+    "deep_vulnerabilities": {
+        "192.168.0.108": "Starting Nmap 7.95 ( https://nmap.org ) at 2026-08-16 13:39 CEST\nPre-scan script results:\n| broadcast-avahi-dos: \n|   Discovered hosts:\n|     224.0.0.251\n|   After NULL UDP avahi packet DoS (CVE-2011-1002).\n|_  Hosts are all up (not vulnerable).\nNmap scan report for 192.168.0.108\nHost is up (0.070s latency).\n\nPORT    STATE  SERVICE      VERSION\n21/tcp  closed ftp\n22/tcp  closed ssh\n80/tcp  closed http\n443/tcp closed https\n445/tcp closed microsoft-ds\nMAC Address: BE:83:28:EA:58:BB (Unknown)\n\nService detection performed. Please report any incorrect results at https://nmap.org/submit/ .\nNmap done: 1 IP address (1 host up) scanned in 38.53 seconds",
+        "192.168.0.106": "Starting Nmap 7.95 ( https://nmap.org ) at 2026-08-16 13:39 CEST\nPre-scan script results:\n| broadcast-avahi-dos: \n|   Discovered hosts:\n|     224.0.0.251\n|   After NULL UDP avahi packet DoS (CVE-2011-1002).\n|_  Hosts are all up (not vulnerable).\nNmap scan report for 192.168.0.106\nHost is up (0.027s latency).\n\nPORT    STATE  SERVICE      VERSION\n21/tcp  closed ftp\n22/tcp  closed ssh\n80/tcp  closed http\n443/tcp closed https\n445/tcp closed microsoft-ds\nMAC Address: 60:3E:5F:0A:F5:C4 (Apple)\n\nService detection performed. Please report any incorrect results at https://nmap.org/submit/ .\nNmap done: 1 IP address (1 host up) scanned in 38.70 seconds",
+        "192.168.0.105": "Starting Nmap 7.95 ( https://nmap.org ) at 2026-08-16 13:39 CEST\nPre-scan script results:\n| broadcast-avahi-dos: \n|   Discovered hosts:\n|     224.0.0.251\n|   After NULL UDP avahi packet DoS (CVE-2011-1002).\n|_  Hosts are all up (not vulnerable).\nNmap scan report for 192.168.0.105\nHost is up (0.100s latency).\n\nPORT    STATE  SERVICE      VERSION\n21/tcp  closed ftp\n22/tcp  closed ssh\n80/tcp  closed http\n443/tcp closed https\n445/tcp closed microsoft-ds\nMAC Address: 32:AB:BA:A0:ED:CE (Unknown)\n\nService detection performed. Please report any incorrect results at https://nmap.org/submit/ .\nNmap done: 1 IP address (1 host up) scanned in 38.99 seconds",
+        "192.168.0.100": "Starting Nmap 7.95 ( https://nmap.org ) at 2026-08-16 13:39 CEST\nPre-scan script results:\n| broadcast-avahi-dos: \n|   Discovered hosts:\n|     224.0.0.251\n|   After NULL UDP avahi packet DoS (CVE-2011-1002).\n|_  Hosts are all up (not vulnerable).\nNmap scan report for 192.168.0.100\nHost is up (0.00046s latency).\n\nPORT    STATE  SERVICE      VERSION\n21/tcp  closed ftp\n22/tcp  closed ssh\n80/tcp  closed http\n443/tcp closed https\n445/tcp closed microsoft-ds\nMAC Address: 84:46:FE:44:84:51 (Huawei Technologies)\n\nService detection performed. Please report any incorrect results at https://nmap.org/submit/ .\nNmap done: 1 IP address (1 host up) scanned in 38.81 seconds",
+        "192.168.0.102": "Starting Nmap 7.95 ( https://nmap.org ) at 2026-08-16 13:39 CEST\nPre-scan script results:\n| broadcast-avahi-dos: \n|   Discovered hosts:\n|     224.0.0.251\n|   After NULL UDP avahi packet DoS (CVE-2011-1002).\n|_  Hosts are all up (not vulnerable).\nNmap scan report for 192.168.0.102\nHost is up (0.039s latency).\n\nPORT    STATE  SERVICE      VERSION\n21/tcp  closed ftp\n22/tcp  closed ssh\n80/tcp  closed http\n443/tcp closed https\n445/tcp closed microsoft-ds\nMAC Address: 2A:02:B4:E4:0D:0F (Unknown)\n\nService detection performed. Please report any incorrect results at https://nmap.org/submit/ .\nNmap done: 1 IP address (1 host up) scanned in 39.18 seconds",
+        "192.168.0.103": "Starting Nmap 7.95 ( https://nmap.org ) at 2026-08-16 13:39 CEST\nPre-scan script results:\n| broadcast-avahi-dos: \n|   Discovered hosts:\n|     224.0.0.251\n|   After NULL UDP avahi packet DoS (CVE-2011-1002).\n|_  Hosts are all up (not vulnerable).\nNmap scan report for 192.168.0.103\nHost is up (0.15s latency).\n\nPORT    STATE  SERVICE      VERSION\n21/tcp  closed ftp\n22/tcp  closed ssh\n80/tcp  closed http\n443/tcp closed https\n445/tcp closed microsoft-ds\nMAC Address: 52:16:95:6A:F9:31 (Unknown)\n\nService detection performed. Please report any incorrect results at https://nmap.org/submit/ .\nNmap done: 1 IP address (1 host up) scanned in 39.37 seconds",
+        "192.168.0.104": "Starting Nmap 7.95 ( https://nmap.org ) at 2026-08-16 13:39 CEST\nPre-scan script results:\n| broadcast-avahi-dos: \n|   Discovered hosts:\n|     224.0.0.251\n|   After NULL UDP avahi packet DoS (CVE-2011-1002).\n|_  Hosts are all up (not vulnerable).\nNmap scan report for 192.168.0.104\nHost is up (0.27s latency).\n\nPORT    STATE  SERVICE      VERSION\n21/tcp  closed ftp\n22/tcp  closed ssh\n80/tcp  closed http\n443/tcp closed https\n445/tcp closed microsoft-ds\nMAC Address: 1A:96:7D:B7:9E:51 (Unknown)\n\nService detection performed. Please report any incorrect results at https://nmap.org/submit/ .\nNmap done: 1 IP address (1 host up) scanned in 39.70 seconds",
+        "192.168.0.101": "Starting Nmap 7.95 ( https://nmap.org ) at 2026-08-16 13:39 CEST\nPre-scan script results:\n| broadcast-avahi-dos: \n|   Discovered hosts:\n|     224.0.0.251\n|   After NULL UDP avahi packet DoS (CVE-2011-1002).\n|_  Hosts are all up (not vulnerable).\nNmap scan report for 192.168.0.101\nHost is up (0.035s latency).\n\nPORT    STATE  SERVICE      VERSION\n21/tcp  closed ftp\n22/tcp  closed ssh\n80/tcp  closed http\n443/tcp closed https\n445/tcp closed microsoft-ds\nMAC Address: DC:72:23:71:F9:A3 (Hui Zhou Gaoshengda Technology)\n\nService detection performed. Please report any incorrect results at https://nmap.org/submit/ .\nNmap done: 1 IP address (1 host up) scanned in 38.96 seconds",
+        "192.168.0.1": "Starting Nmap 7.95 ( https://nmap.org ) at 2026-08-16 13:39 CEST\nPre-scan script results:\n| broadcast-avahi-dos: \n|   Discovered hosts:\n|     224.0.0.251\n|   After NULL UDP avahi packet DoS (CVE-2011-1002).\n|_  Hosts are all up (not vulnerable).\nNmap scan report for 192.168.0.1\nHost is up (0.00055s latency).\n\nPORT    STATE  SERVICE      VERSION\n21/tcp  closed ftp\n22/tcp  closed ssh\n80/tcp  open   http         GoAhead WebServer\n| http-enum: \n|_  //system.html: CMNC-200 IP Camera\n|_http-stored-xss: Couldn't find any stored XSS vulnerabilities.\n|_http-csrf: Couldn't find any CSRF vulnerabilities.\n|_http-dombased-xss: Couldn't find any DOM based XSS.\n|_http-server-header: GoAhead-Webs\n| http-fileupload-exploiter: \n|   \n|_    Couldn't find a file-type field.\n443/tcp closed https\n445/tcp closed microsoft-ds\nMAC Address: 50:0F:F5:97:CE:48 (Tenda Technology,Ltd.Dongguan branch)\n\nService detection performed. Please report any incorrect results at https://nmap.org/submit/ .\nNmap done: 1 IP address (1 host up) scanned in 173.80 seconds"
+    },
+    "nuclei_results": {},
+    "smb_null_sessions": {},
+    "broadcast_poisoning_risks": [
+        {
+            "type": "INFO",
+            "severity": "INFO",
+            "assessment": "Brak zdarze\u0144 legacy name resolution oraz brak nowych hashy NetNTLMv2 w zadanym oknie pomiarowym."
+        }
+    ],
+    "ics_ot_risks": {
+        "192.168.0.101": [
+            {
+                "port": 1741,
+                "transport": "UDP",
+                "protocol": "CODESYS Runtime",
+                "state": "open|filtered",
+                "nmap_service": "cisco-net-mgmt",
+                "severity": "INCONCLUSIVE"
+            },
+            {
+                "port": 2221,
+                "transport": "UDP",
+                "protocol": "EtherNet/IP Secure",
+                "state": "open|filtered",
+                "nmap_service": "rockwell-csp1",
+                "severity": "INCONCLUSIVE"
+            },
+            {
+                "port": 2404,
+                "transport": "UDP",
+                "protocol": "IEC 60870-5-104",
+                "state": "open|filtered",
+                "nmap_service": "iec-104",
+                "severity": "INCONCLUSIVE"
+            },
+            {
+                "port": 3671,
+                "transport": "UDP",
+                "protocol": "KNXnet/IP",
+                "state": "open|filtered",
+                "nmap_service": "efcp",
+                "severity": "INCONCLUSIVE"
+            },
+            {
+                "port": 5094,
+                "transport": "UDP",
+                "protocol": "HART-IP",
+                "state": "open|filtered",
+                "nmap_service": "hart-ip",
+                "severity": "INCONCLUSIVE"
+            },
+            {
+                "port": 9600,
+                "transport": "UDP",
+                "protocol": "OMRON FINS",
+                "state": "open|filtered",
+                "nmap_service": "micromuse-ncpw",
+                "severity": "INCONCLUSIVE"
+            },
+            {
+                "port": 19999,
+                "transport": "UDP",
+                "protocol": "DNP3 Secure",
+                "state": "open|filtered",
+                "nmap_service": "dnp-sec",
+                "severity": "INCONCLUSIVE"
+            },
+            {
+                "port": 34378,
+                "transport": "UDP",
+                "protocol": "P-Net on IP Local",
+                "state": "open|filtered",
+                "nmap_service": "p-net-local",
+                "severity": "INCONCLUSIVE"
+            },
+            {
+                "port": 34962,
+                "transport": "UDP",
+                "protocol": "PROFINET RT",
+                "state": "open|filtered",
+                "nmap_service": "profinet-rt",
+                "severity": "INCONCLUSIVE"
+            },
+            {
+                "port": 34963,
+                "transport": "UDP",
+                "protocol": "PROFINET RT Multicast",
+                "state": "open|filtered",
+                "nmap_service": "profinet-rtm",
+                "severity": "INCONCLUSIVE"
+            },
+            {
+                "port": 34964,
+                "transport": "UDP",
+                "protocol": "PROFINET Context Manager",
+                "state": "open|filtered",
+                "nmap_service": "profinet-cm",
+                "severity": "INCONCLUSIVE"
+            },
+            {
+                "port": 34965,
+                "transport": "UDP",
+                "protocol": "PROFINET Secure Context Manager",
+                "state": "open|filtered",
+                "nmap_service": "unknown",
+                "severity": "INCONCLUSIVE"
+            },
+            {
+                "port": 34980,
+                "transport": "UDP",
+                "protocol": "EtherCAT",
+                "state": "open|filtered",
+                "nmap_service": "ethercat",
+                "severity": "INCONCLUSIVE"
+            }
+        ]
+    },
+    "service_fingerprints": {
+        "192.168.0.101": [
+            {
+                "port": 1741,
+                "transport": "UDP",
+                "ics_protocol": "CODESYS Runtime",
+                "ics_nmap_service": "cisco-net-mgmt",
+                "raw_banner": null,
+                "raw_banner_hex": null
+            },
+            {
+                "port": 2221,
+                "transport": "UDP",
+                "ics_protocol": "EtherNet/IP Secure",
+                "ics_nmap_service": "rockwell-csp1",
+                "raw_banner": null,
+                "raw_banner_hex": null
+            },
+            {
+                "port": 2404,
+                "transport": "UDP",
+                "ics_protocol": "IEC 60870-5-104",
+                "ics_nmap_service": "iec-104",
+                "raw_banner": null,
+                "raw_banner_hex": null
+            },
+            {
+                "port": 3671,
+                "transport": "UDP",
+                "ics_protocol": "KNXnet/IP",
+                "ics_nmap_service": "efcp",
+                "raw_banner": null,
+                "raw_banner_hex": null
+            },
+            {
+                "port": 5094,
+                "transport": "UDP",
+                "ics_protocol": "HART-IP",
+                "ics_nmap_service": "hart-ip",
+                "raw_banner": null,
+                "raw_banner_hex": null
+            },
+            {
+                "port": 9600,
+                "transport": "UDP",
+                "ics_protocol": "OMRON FINS",
+                "ics_nmap_service": "micromuse-ncpw",
+                "raw_banner": null,
+                "raw_banner_hex": null
+            },
+            {
+                "port": 19999,
+                "transport": "UDP",
+                "ics_protocol": "DNP3 Secure",
+                "ics_nmap_service": "dnp-sec",
+                "raw_banner": null,
+                "raw_banner_hex": null
+            },
+            {
+                "port": 34378,
+                "transport": "UDP",
+                "ics_protocol": "P-Net on IP Local",
+                "ics_nmap_service": "p-net-local",
+                "raw_banner": null,
+                "raw_banner_hex": null
+            },
+            {
+                "port": 34962,
+                "transport": "UDP",
+                "ics_protocol": "PROFINET RT",
+                "ics_nmap_service": "profinet-rt",
+                "raw_banner": null,
+                "raw_banner_hex": null
+            },
+            {
+                "port": 34963,
+                "transport": "UDP",
+                "ics_protocol": "PROFINET RT Multicast",
+                "ics_nmap_service": "profinet-rtm",
+                "raw_banner": null,
+                "raw_banner_hex": null
+            },
+            {
+                "port": 34964,
+                "transport": "UDP",
+                "ics_protocol": "PROFINET Context Manager",
+                "ics_nmap_service": "profinet-cm",
+                "raw_banner": null,
+                "raw_banner_hex": null
+            },
+            {
+                "port": 34965,
+                "transport": "UDP",
+                "ics_protocol": "PROFINET Secure Context Manager",
+                "ics_nmap_service": "unknown",
+                "raw_banner": null,
+                "raw_banner_hex": null
+            },
+            {
+                "port": 34980,
+                "transport": "UDP",
+                "ics_protocol": "EtherCAT",
+                "ics_nmap_service": "ethercat",
+                "raw_banner": null,
+                "raw_banner_hex": null
+            }
+        ],
+        "192.168.0.1": [
+            {
+                "port": 80,
+                "transport": "TCP",
+                "nmap_service": "http GoAhead WebServer",
+                "raw_banner": "HTTP/1.0 302 Moved Temporarily",
+                "raw_banner_hex": "485454502f312e3020333032204d6f7665642054656d706f726172696c790d0a"
+            }
+        ]
+    },
+    "infrastructure_risks": {},
+    "default_credentials": {},
+    "ldap_leaks": {}
+}

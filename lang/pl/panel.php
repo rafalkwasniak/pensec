@@ -16,6 +16,12 @@ return [
         'token_reissued' => 'Sonda :name ma nowe poświadczenie. Poprzednie przestało działać.',
     ],
 
+    'administrators' => [
+        'created' => 'Konto :name zostało utworzone.',
+        'removed' => 'Konto :name zostało usunięte.',
+        'cannot_remove_self' => 'Nie możesz usunąć własnego konta.',
+    ],
+
     'account' => [
         'updated' => 'Dane konta zostały zapisane.',
         'password_updated' => 'Hasło zostało zmienione. Pozostałe sesje zostały wylogowane.',

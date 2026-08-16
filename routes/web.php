@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Panel\AccountController;
+use App\Http\Controllers\Panel\AdministratorController;
 use App\Http\Controllers\Panel\DeviceController;
 use App\Http\Controllers\Panel\DeviceTokenController;
 use App\Http\Controllers\Panel\PasswordController;
@@ -28,6 +29,11 @@ Route::prefix('panel')->name('panel.')->middleware('panel.locale')->group(functi
         Route::post('devices/{device}', [DeviceController::class, 'update'])->name('devices.update');
         Route::post('devices/{device}/delete', [DeviceController::class, 'destroy'])->name('devices.destroy');
         Route::post('devices/{device}/token', [DeviceTokenController::class, 'store'])->name('devices.token');
+
+        Route::get('administrators', [AdministratorController::class, 'index'])->name('administrators.index');
+        Route::get('administrators/new', [AdministratorController::class, 'create'])->name('administrators.create');
+        Route::post('administrators', [AdministratorController::class, 'store'])->name('administrators.store');
+        Route::post('administrators/{administrator}/delete', [AdministratorController::class, 'destroy'])->name('administrators.destroy');
 
         Route::get('account', [AccountController::class, 'edit'])->name('account.edit');
         Route::post('account', [AccountController::class, 'update'])->name('account.update');

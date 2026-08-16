@@ -22,6 +22,7 @@
                     @foreach ([
                         ['panel.devices.index', 'Sondy', 'panel/devices*'],
                         ['panel.reports.index', 'Badania', 'panel/reports*'],
+                        ['panel.administrators.index', 'Administratorzy', 'panel/administrators*'],
                         ['panel.account.edit', 'Konto', 'panel/account*'],
                     ] as [$route, $label, $pattern])
                         <a href="{{ route($route) }}"

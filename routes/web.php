@@ -1,7 +1,9 @@
 <?php
 
+use App\Http\Controllers\Panel\AccountController;
 use App\Http\Controllers\Panel\DeviceController;
 use App\Http\Controllers\Panel\DeviceTokenController;
+use App\Http\Controllers\Panel\PasswordController;
 use App\Http\Controllers\Panel\ReportController;
 use App\Http\Controllers\Panel\SessionController;
 use Illuminate\Support\Facades\Route;
@@ -26,6 +28,10 @@ Route::prefix('panel')->name('panel.')->middleware('panel.locale')->group(functi
         Route::post('devices/{device}', [DeviceController::class, 'update'])->name('devices.update');
         Route::post('devices/{device}/delete', [DeviceController::class, 'destroy'])->name('devices.destroy');
         Route::post('devices/{device}/token', [DeviceTokenController::class, 'store'])->name('devices.token');
+
+        Route::get('account', [AccountController::class, 'edit'])->name('account.edit');
+        Route::post('account', [AccountController::class, 'update'])->name('account.update');
+        Route::post('account/password', [PasswordController::class, 'update'])->name('account.password');
 
         Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
         Route::get('reports/{report}', [ReportController::class, 'show'])->name('reports.show');

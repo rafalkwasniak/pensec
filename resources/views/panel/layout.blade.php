@@ -22,6 +22,7 @@
                     @foreach ([
                         ['panel.devices.index', 'Sondy', 'panel/devices*'],
                         ['panel.reports.index', 'Badania', 'panel/reports*'],
+                        ['panel.account.edit', 'Konto', 'panel/account*'],
                     ] as [$route, $label, $pattern])
                         <a href="{{ route($route) }}"
                            class="{{ request()->is($pattern) ? 'text-brand' : 'text-muted hover:text-chrome' }}">{{ $label }}</a>

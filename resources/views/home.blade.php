@@ -105,7 +105,7 @@
 
             <div class="mt-12 grid gap-6 lg:grid-cols-2">
                 @foreach ([
-                    ['Wyniki zachowujemy w oryginale', 'Raport zostaje zapisany dokładnie tak, jak powstał na sondzie. Późniejsze zmiany w sposobie prezentacji nigdy nie odbierają dostępu do tego, co faktycznie zmierzono podczas badania.'],
+                    ['Wyniki zachowujemy w całości', 'Zapisujemy dokładnie to, co zmierzyła sonda - bez skracania, filtrowania i podsumowywania. Późniejsze zmiany w sposobie prezentacji nigdy nie odbierają dostępu do tego, co faktycznie wykazało badanie.'],
                     ['Zerwane połączenie nie kosztuje wyników', 'Jeśli łączność urwie się w trakcie przesyłania, sonda ponawia wysyłkę. System rozpozna, że to wciąż to samo badanie, i nie zdubluje wyników.'],
                     ['Każda sonda odpowiada sama za siebie', 'Urządzenia uwierzytelniają się osobno, każde własnym poświadczeniem. Pojedynczą sondę można wyłączyć z systemu, nie ruszając pozostałych.'],
                     ['Historia badań nie nadpisuje się', 'Każde uruchomienie jest osobnym, zamkniętym badaniem, powiązanym z konkretną sondą i momentem wykonania. Nowy wynik nie zastępuje poprzedniego.'],
@@ -132,6 +132,7 @@
                             'Odbieranie i bezpieczne przechowywanie raportów z sond',
                             'Rozpoznawanie sondy oraz pojedynczego badania',
                             'Odporność na zerwane połączenie i powtórną wysyłkę',
+                            'Panel: lista sond, przeprowadzone badania i podgląd szczegółów',
                         ] as $item)
                             <li class="flex gap-3">
                                 <span aria-hidden="true" class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-brand"></span>
@@ -145,8 +146,8 @@
                     <h3 class="text-base font-semibold text-chrome">Przed nami</h3>
                     <ul class="mt-4 space-y-3 text-sm leading-relaxed text-muted">
                         @foreach ([
-                            'Panel: lista sond, przeprowadzone badania i ich statusy',
                             'Prezentacja wyników badania w czytelnej formie',
+                            'Zestawianie kolejnych badań tej samej sieci',
                         ] as $item)
                             <li class="flex gap-3">
                                 <span aria-hidden="true" class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-ink-line"></span>

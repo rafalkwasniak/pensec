@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\DocumentationController;
 use App\Http\Controllers\Panel\AccountController;
 use App\Http\Controllers\Panel\AdministratorController;
 use App\Http\Controllers\Panel\DeviceController;
@@ -10,6 +11,10 @@ use App\Http\Controllers\Panel\SessionController;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'home')->name('home');
+
+Route::get('docs/{slug}.html', [DocumentationController::class, 'page'])
+    ->where('slug', '[A-Za-z0-9_-]+')
+    ->name('docs.page');
 
 Route::prefix('panel')->name('panel.')->middleware('panel.locale')->group(function (): void {
     Route::middleware('guest')->group(function (): void {

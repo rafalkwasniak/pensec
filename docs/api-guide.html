@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pensec API guide</title>
+    <meta name="description" content="How a probe submits a scan report to the Pensec API: authentication, the request, retries and failure handling.">
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <style>
+        :root {
+            --ink: #05070e;
+            --ink-raised: #080d1a;
+            --line: #16203a;
+            --brand: #12a5ff;
+            --chrome: #dfe6f5;
+            --muted: #8a9ab7;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            background: var(--ink);
+            color: var(--chrome);
+            font: 16px/1.7 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .wrap { max-width: 52rem; margin: 0 auto; padding: 4rem 1.5rem 6rem; }
+
+        header { border-bottom: 1px solid var(--line); padding-bottom: 2rem; margin-bottom: 3rem; }
+        .eyebrow { color: var(--brand); font-size: .75rem; letter-spacing: .25em; text-transform: uppercase; margin: 0; }
+        h1 { font-size: 2.25rem; line-height: 1.2; margin: 1rem 0 0; }
+        h2 { font-size: 1.4rem; margin: 3.5rem 0 1rem; padding-top: 2rem; border-top: 1px solid var(--line); }
+        h3 { font-size: 1.05rem; margin: 2rem 0 .5rem; }
+        p, li { color: var(--muted); }
+        strong { color: var(--chrome); font-weight: 600; }
+        a { color: var(--brand); }
+
+        code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: .9em; color: var(--chrome); }
+        pre {
+            background: var(--ink-raised);
+            border: 1px solid var(--line);
+            border-radius: .75rem;
+            padding: 1.25rem;
+            overflow-x: auto;
+        }
+        pre code { color: var(--muted); font-size: .85rem; line-height: 1.6; }
+
+        table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: .9rem; }
+        th, td { text-align: left; padding: .75rem .5rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+        th { color: var(--muted); font-size: .75rem; letter-spacing: .1em; text-transform: uppercase; font-weight: 500; }
+        td:first-child { white-space: nowrap; }
+
+        .note {
+            border: 1px solid var(--line);
+            border-left: 3px solid var(--brand);
+            border-radius: .5rem;
+            padding: 1rem 1.25rem;
+            margin: 1.5rem 0;
+            background: rgba(18, 165, 255, .05);
+        }
+        .note p { margin: 0; }
+
+        footer { margin-top: 5rem; padding-top: 2rem; border-top: 1px solid var(--line); font-size: .85rem; color: var(--muted); }
+    </style>
+</head>
+<body>
+<div class="wrap">
+
+    <header>
+        <p class="eyebrow">Pensec</p>
+        <h1>Submitting a scan report</h1>
+        <p>
+            This guide explains how a probe talks to the API, in prose. The precise types live in the
+            <a href="/api/openapi.yaml">OpenAPI contract</a>, and the
+            <a href="/docs/api.html">interactive reference</a> lets you inspect and call the endpoint directly.
+        </p>
+    </header>
+
+    <h2>The shape of the exchange</h2>
+
+    <p>
+        A probe runs its entire assessment locally and submits the result <strong>once</strong>, after every test has
+        finished. There is no session to open, no partial upload and no progress reporting. One scan run produces one
+        request.
+    </p>
+
+    <p>
+        The API identifies two separate things: <strong>which probe</strong> is talking, from the token in the
+        <code>Authorization</code> header, and <strong>which run</strong> the data belongs to, from the
+        <code>report_id</code> the probe generates. One probe submits many runs over its lifetime; each run needs its
+        own identifier.
+    </p>
+
+    <h2>Authentication</h2>
+
+    <p>
+        Every probe carries its own token, issued in the administration panel when the device is registered. The token
+        is a 64-character string and is displayed exactly once, at the moment it is created: the system keeps only its
+        hash, so it cannot be read back later. If a token is lost, an administrator issues a new one, which immediately
+        invalidates the old.
+    </p>
+
+    <pre><code>Authorization: Bearer 3f8a1c...c9d2</code></pre>
+
+    <p>
+        A token that no administrator recognises is rejected with <code>401</code>. A token that belongs to a probe an
+        administrator has switched off is rejected with <code>403</code> - the credential is fine, the device is simply
+        no longer allowed to report.
+    </p>
+
+    <h2>The request</h2>
+
+    <p>
+        Send <code>POST /api/v1/reports</code> with a JSON body carrying two keys:
+    </p>
+
+    <table>
+        <thead>
+            <tr><th>Key</th><th>Meaning</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>report_id</code></td>
+                <td>
+                    A UUID the probe generates before the first test starts. It must be unique across all probes, so
+                    generate a fresh one for every run. This is what makes retrying safe.
+                </td>
+            </tr>
+            <tr>
+                <td><code>report</code></td>
+                <td>
+                    The complete scan document, as a JSON object. The API does not read inside it, does not validate its
+                    structure and depends on none of its fields.
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <pre><code>POST /api/v1/reports HTTP/1.1
+Host: pensec.top
+Authorization: Bearer &lt;device token&gt;
+Content-Type: application/json
+
+{
+  "report_id": "0f1d4e9c-6a2b-4f7e-9d31-5c8ba0f2e7a4",
+  "report": {
+    "scan_time": "2026-08-16 13:38:12",
+    "orchestrator_ip": "192.168.0.107",
+    "discovered_hosts_count": 9,
+    "hosts": ["192.168.0.1", "192.168.0.100"],
+    "nmap_results": { "192.168.0.1": "Starting Nmap 7.95 ..." }
+  }
+}</code></pre>
+
+    <div class="note">
+        <p>
+            <strong>The report must be a JSON object, not an array.</strong> A top-level list is rejected with
+            <code>422</code>, because the contract promises an object and a list would quietly change the shape of
+            everything stored downstream.
+        </p>
+    </div>
+
+    <h3>Size</h3>
+
+    <p>
+        A body larger than <strong>32 MB</strong> is refused with <code>413</code>. Retrying an oversized document will
+        not help; it has to get smaller. Raw scanner output for a large network is the usual reason to approach that
+        limit.
+    </p>
+
+    <h2>What comes back</h2>
+
+    <p>
+        A stored report answers <code>201</code>. The body repeats what was saved, so the probe can confirm the whole
+        document arrived:
+    </p>
+
+    <pre><code>{
+  "success": true,
+  "message": "Report stored.",
+  "data": {
+    "report_id": "0f1d4e9c-6a2b-4f7e-9d31-5c8ba0f2e7a4",
+    "status": "received",
+    "received_at": "2026-08-16T13:41:02Z",
+    "payload_bytes": 17581,
+    "payload_sha256": "960d0ea4da06a7bb..."
+  }
+}</code></pre>
+
+    <p>
+        <code>payload_bytes</code> and <code>payload_sha256</code> describe the document as stored. Note that the API
+        stores a canonical re-encoding of the JSON you sent - semantically identical, but with your whitespace and
+        escaping normalised - so the checksum will not match one computed over your exact bytes. Compare against the
+        value returned here, not against your own file.
+    </p>
+
+    <p>
+        <code>status</code> is <code>received</code>, meaning the raw document is stored and nothing has been derived
+        from it yet. Parsing is a separate, later step, and more status values will appear as it lands.
+    </p>
+
+    <h3>Retrying is safe</h3>
+
+    <p>
+        If the connection drops mid-upload and the probe cannot tell whether the report arrived, it should simply send
+        the same request again. Submitting a <code>report_id</code> that is already stored answers <code>200</code>
+        instead of <code>201</code>, with the details of the report stored first. Nothing is duplicated and nothing is
+        overwritten.
+    </p>
+
+    <div class="note">
+        <p>
+            <strong>The first document wins.</strong> If a retry carries different content under the same
+            <code>report_id</code>, the stored document is not replaced - the response describes what was already on
+            file. Use a new <code>report_id</code> for a new run, never for a corrected version of an old one.
+        </p>
+    </div>
+
+    <h2>When something fails</h2>
+
+    <p>
+        Every failure answers in the same envelope, carrying a stable <code>code</code>. Branch on that code, never on
+        <code>message</code>, whose wording can change at any time.
+    </p>
+
+    <pre><code>{
+  "success": false,
+  "code": "device_token_invalid",
+  "message": "Unknown device token."
+}</code></pre>
+
+    <table>
+        <thead>
+            <tr><th>Status</th><th>Code</th><th>What the probe should do</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>401</td>
+                <td><code>device_token_missing</code><br><code>device_token_invalid</code></td>
+                <td>Do not retry. The token is absent or unknown; it has to be fixed on the device.</td>
+            </tr>
+            <tr>
+                <td>403</td>
+                <td><code>device_disabled</code></td>
+                <td>Do not retry. An administrator switched this probe off.</td>
+            </tr>
+            <tr>
+                <td>413</td>
+                <td><code>payload_too_large</code></td>
+                <td>Do not retry unchanged. The document exceeds 32 MB.</td>
+            </tr>
+            <tr>
+                <td>422</td>
+                <td><code>validation_failed</code></td>
+                <td>Do not retry unchanged. The <code>errors</code> object names the offending fields.</td>
+            </tr>
+            <tr>
+                <td>429</td>
+                <td><code>rate_limit_exceeded</code></td>
+                <td>Wait for the period in the <code>Retry-After</code> header, then retry.</td>
+            </tr>
+            <tr>
+                <td>500</td>
+                <td><code>server_error</code></td>
+                <td>Retry later. The report was not saved; the failure is on our side.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p>
+        Submissions are limited to 30 per minute per probe. A device that reports once per scan will never come close;
+        the limit exists to contain a malfunctioning or hostile client.
+    </p>
+
+    <h2>A complete example</h2>
+
+    <p>With curl, sending a document straight from disk:</p>
+
+    <pre><code>curl -X POST https://pensec.top/api/v1/reports \
+  -H "Authorization: Bearer $PENSEC_TOKEN" \
+  -H "Content-Type: application/json" \
+  --data-binary @submission.json</code></pre>
+
+    <p>From the probe itself, in Python:</p>
+
+    <pre><code>import json, uuid, time, requests
+
+REPORT_ID = str(uuid.uuid4())      # generated before the scan starts
+
+def submit(report: dict, token: str) -> None:
+    body = {"report_id": REPORT_ID, "report": report}
+
+    for attempt in range(5):
+        response = requests.post(
+            "https://pensec.top/api/v1/reports",
+            json=body,
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=120,
+        )
+
+        if response.status_code in (200, 201):
+            return                                   # stored, or already stored
+
+        payload = response.json()
+
+        if response.status_code == 429:
+            time.sleep(int(response.headers.get("Retry-After", 60)))
+            continue
+
+        if response.status_code >= 500:
+            time.sleep(30 * (attempt + 1))
+            continue
+
+        raise RuntimeError(f"refused: {payload['code']}")   # 401, 403, 413, 422</code></pre>
+
+    <p>
+        Note that the same <code>REPORT_ID</code> is reused across every attempt. That is what makes the retry loop
+        safe: whichever attempt gets through, the run is stored exactly once.
+    </p>
+
+    <h2>What the API does not do</h2>
+
+    <ul>
+        <li>It does not parse the report or require any field inside it.</li>
+        <li>It does not accept partial results while a scan is running.</li>
+        <li>It does not push anything back to the probe, and never initiates a connection.</li>
+        <li>It does not modify a stored document, ever.</li>
+    </ul>
+
+    <p>
+        The document is kept exactly as received precisely so that improving the analysis later can never cost data
+        already collected.
+    </p>
+
+    <footer>
+        Pensec - security beyond the surface.
+        <a href="/api/openapi.yaml">OpenAPI contract</a> ·
+        <a href="/docs/api.html">Interactive reference</a>
+    </footer>
+
+</div>
+</body>
+</html>

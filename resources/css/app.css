@@ -6,4 +6,63 @@
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
+
+    /* Sampled from the logo: near-black blued ink, electric blue, chrome. */
+    --color-ink: #05070e;
+    --color-ink-raised: #080d1a;
+    --color-ink-line: #16203a;
+    --color-brand: #12a5ff;
+    --color-brand-deep: #0060d0;
+    --color-chrome: #dfe6f5;
+    --color-muted: #8a9ab7;
+}
+
+@layer base {
+    body {
+        background-color: var(--color-ink);
+        color: var(--color-chrome);
+        -webkit-font-smoothing: antialiased;
+    }
+}
+
+@layer components {
+    /* Radar-like glow behind the hero, echoing the shield in the logo. */
+    .backdrop-glow {
+        background:
+            radial-gradient(ellipse 80% 55% at 50% -10%, rgba(18, 165, 255, 0.22), transparent 70%),
+            radial-gradient(ellipse 60% 50% at 85% 15%, rgba(0, 96, 208, 0.14), transparent 70%);
+    }
+
+    .backdrop-grid {
+        background-image:
+            linear-gradient(to right, rgba(22, 32, 58, 0.55) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(22, 32, 58, 0.55) 1px, transparent 1px);
+        background-size: 64px 64px;
+        mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, #000 40%, transparent 100%);
+    }
+
+    .chrome-text {
+        background: linear-gradient(180deg, #ffffff 0%, #cfd8ea 45%, #93a3c0 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+
+    .card {
+        border: 1px solid rgba(22, 32, 58, 1);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.012));
+        border-radius: 0.875rem;
+        transition:
+            border-color 0.2s ease,
+            transform 0.2s ease;
+    }
+
+    .card:hover {
+        border-color: rgba(18, 165, 255, 0.4);
+        transform: translateY(-2px);
+    }
+
+    .rule {
+        background: linear-gradient(90deg, transparent, rgba(18, 165, 255, 0.55), transparent);
+    }
 }

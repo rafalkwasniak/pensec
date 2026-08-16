@@ -3,6 +3,7 @@
 use App\Enums\ApiErrorCode;
 use App\Http\Middleware\AuthenticateDevice;
 use App\Http\Middleware\EnforceReportSizeLimit;
+use App\Http\Middleware\SetPanelLocale;
 use App\Support\ApiResponse;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -24,7 +25,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'device.auth' => AuthenticateDevice::class,
             'report.size' => EnforceReportSizeLimit::class,
+            'panel.locale' => SetPanelLocale::class,
         ]);
+
+        $middleware->redirectGuestsTo(fn () => route('panel.login'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

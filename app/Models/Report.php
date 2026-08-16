@@ -3,12 +3,17 @@
 namespace App\Models;
 
 use App\Enums\ReportStatus;
+use Database\Factories\ReportFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Report extends Model
 {
+    /** @use HasFactory<ReportFactory> */
+    use HasFactory;
+
     protected $fillable = [
         'device_id',
         'report_uid',

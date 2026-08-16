@@ -1,0 +1,393 @@
+openapi: 3.0.3
+
+info:
+  title: Pensec API
+  version: 1.0.0
+  description: >
+    API collecting security scan reports from Raspberry Pi devices.
+
+    A device runs its scan locally and, once the whole run is finished, submits
+    one complete JSON report. The API authenticates the device by its token,
+    identifies the run by a device-generated report id and stores the raw JSON
+    document without interpreting it.
+
+    Time zone: every timestamp returned by the API is UTC, formatted per
+    RFC 3339 (`2026-08-16T13:38:12Z`).
+
+    Empty values: a field that has no value is `null`. The API never returns an
+    empty string to mean "no value".
+  contact:
+    name: Rafał Kwaśniak
+    email: rafal@kwasniak.org
+
+servers:
+  - url: https://pensec.top
+    description: Production
+
+tags:
+  - name: Reports
+    description: Submission of completed scan reports by devices.
+
+security:
+  - DeviceToken: []
+
+paths:
+  /api/v1/reports:
+    post:
+      operationId: submitReport
+      tags:
+        - Reports
+      summary: Submit a completed scan report
+      description: >
+        Stores one complete scan report. The device sends this request once,
+        after all its tests have finished.
+
+        The submission is idempotent on `report_id`: the first submission wins
+        and is stored, and every later submission carrying the same `report_id`
+        returns `200` with the already stored report instead of creating a
+        duplicate. A device whose connection dropped mid-upload can therefore
+        retry safely.
+
+        The `report` object is stored verbatim. The API does not parse it, does
+        not validate its internal structure and does not depend on any field
+        inside it.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportSubmission'
+      responses:
+        "201":
+          $ref: '#/components/responses/ReportStored'
+        "200":
+          $ref: '#/components/responses/ReportAlreadyStored'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/DeviceDisabled'
+        "413":
+          $ref: '#/components/responses/PayloadTooLarge'
+        "422":
+          $ref: '#/components/responses/ValidationFailed'
+        "429":
+          $ref: '#/components/responses/TooManyRequests'
+        "500":
+          $ref: '#/components/responses/ServerError'
+
+components:
+
+  securitySchemes:
+    DeviceToken:
+      type: http
+      scheme: bearer
+      description: >
+        Device token issued by the panel when the device is registered, sent as
+        `Authorization: Bearer <token>`. The token is an opaque 64-character
+        string; it is shown once at registration and stored only as a hash, so
+        it cannot be read back from the system afterwards. A lost token has to
+        be regenerated.
+
+  schemas:
+
+    Envelope:
+      type: object
+      description: Fields present in every API response, successful or not.
+      required:
+        - success
+        - message
+      properties:
+        success:
+          type: boolean
+          description: Whether the operation succeeded.
+        message:
+          type: string
+          description: >
+            Human-readable summary. Wording may change at any time without a
+            version bump - never branch on it, branch on `code` instead.
+      example:
+        success: true
+        message: Report stored.
+
+    ErrorCode:
+      type: string
+      description: >
+        Stable machine-readable identifier of the failure. Safe to branch on;
+        new values are only ever added, existing ones never change meaning.
+      enum:
+        - validation_failed
+        - device_token_missing
+        - device_token_invalid
+        - device_disabled
+        - payload_too_large
+        - rate_limit_exceeded
+        - server_error
+      example: device_token_invalid
+
+    ErrorEnvelope:
+      description: Response body of every failed request.
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          required:
+            - code
+          properties:
+            code:
+              $ref: '#/components/schemas/ErrorCode'
+
+    ValidationErrorEnvelope:
+      description: >
+        Response body of a request rejected by validation. Carries the offending
+        fields on top of the regular error envelope.
+      allOf:
+        - $ref: '#/components/schemas/ErrorEnvelope'
+        - type: object
+          required:
+            - errors
+          properties:
+            errors:
+              type: object
+              description: >
+                Validation messages keyed by request field. A field appears here
+                only when it failed validation.
+              additionalProperties:
+                type: array
+                items:
+                  type: string
+
+    ReportStatus:
+      type: string
+      description: >
+        Processing state of a stored report. `received` means the raw document
+        is stored and nothing has been derived from it yet - parsing is a later,
+        separate step. Further values will be added as parsing lands.
+      enum:
+        - received
+      example: received
+
+    DeviceReportPayload:
+      type: object
+      description: >
+        The complete scan report produced by the device, stored verbatim.
+
+        This object is deliberately unconstrained: the device firmware evolves
+        independently of the API, and the API stores the document as the source
+        of truth precisely so that a later change of the parser cannot lose
+        data. Nothing in this API depends on the keys below - they are shown
+        only to illustrate the scale and shape of a real report.
+      additionalProperties: true
+      example:
+        scan_time: "2026-08-16 13:38:12"
+        orchestrator_ip: 192.168.0.107
+        discovered_hosts_count: 2
+        hosts:
+          - 192.168.0.101
+          - 192.168.0.1
+        nmap_results:
+          192.168.0.1: "Starting Nmap 7.95 ( https://nmap.org ) at 2026-08-16 13:39 CEST\nNmap done: 1 IP address (1 host up) scanned in 3.54 seconds\n"
+        ics_ot_risks:
+          192.168.0.101:
+            - port: 2404
+              transport: UDP
+              protocol: IEC 60870-5-104
+              state: open|filtered
+              severity: INCONCLUSIVE
+        nuclei_results: []
+
+    ReportSubmission:
+      type: object
+      description: Envelope the device wraps around its report when submitting it.
+      required:
+        - report_id
+        - report
+      properties:
+        report_id:
+          type: string
+          format: uuid
+          description: >
+            Identifier of this scan run, generated by the device before the scan
+            starts. Globally unique across all devices - a device must generate
+            a fresh one for every run.
+          example: 0f1d4e9c-6a2b-4f7e-9d31-5c8ba0f2e7a4
+        report:
+          $ref: '#/components/schemas/DeviceReportPayload'
+      example:
+        report_id: 0f1d4e9c-6a2b-4f7e-9d31-5c8ba0f2e7a4
+        report:
+          scan_time: "2026-08-16 13:38:12"
+          orchestrator_ip: 192.168.0.107
+          discovered_hosts_count: 0
+          hosts: []
+          nuclei_results: []
+
+    Report:
+      type: object
+      description: A stored report as the API reports it back to the device.
+      required:
+        - report_id
+        - status
+        - received_at
+        - payload_bytes
+        - payload_sha256
+      properties:
+        report_id:
+          type: string
+          format: uuid
+          description: The identifier the device sent with the submission.
+        status:
+          $ref: '#/components/schemas/ReportStatus'
+        received_at:
+          type: string
+          format: date-time
+          description: When the API accepted and stored the report (UTC).
+        payload_bytes:
+          type: integer
+          minimum: 0
+          description: >
+            Size of the stored raw report in bytes, as received. Lets the device
+            confirm the whole document arrived.
+        payload_sha256:
+          type: string
+          pattern: '^[a-f0-9]{64}$'
+          description: >
+            SHA-256 of the stored raw report, lowercase hex. On a repeated
+            submission this is the checksum of the document stored first, which
+            is not necessarily the one just sent.
+      example:
+        report_id: 0f1d4e9c-6a2b-4f7e-9d31-5c8ba0f2e7a4
+        status: received
+        received_at: "2026-08-16T13:41:02Z"
+        payload_bytes: 21936
+        payload_sha256: 9f2c4b7e1a05d38c6e4f0b9a7d2c5e8f1b3a6c9d0e2f4a7b8c1d3e5f7a9b0c2d
+
+    ReportResponse:
+      description: Successful response of a report submission.
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          required:
+            - data
+          properties:
+            data:
+              $ref: '#/components/schemas/Report'
+
+  responses:
+
+    ReportStored:
+      description: >
+        The report was accepted and stored. This is the response to the first
+        submission of a given `report_id`.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ReportResponse'
+          example:
+            success: true
+            message: Report stored.
+            data:
+              report_id: 0f1d4e9c-6a2b-4f7e-9d31-5c8ba0f2e7a4
+              status: received
+              received_at: "2026-08-16T13:41:02Z"
+              payload_bytes: 21936
+              payload_sha256: 9f2c4b7e1a05d38c6e4f0b9a7d2c5e8f1b3a6c9d0e2f4a7b8c1d3e5f7a9b0c2d
+
+    ReportAlreadyStored:
+      description: >
+        A report with this `report_id` was already stored, so nothing was
+        written. The body describes the report stored first. Treat this as
+        success - the run is delivered.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ReportResponse'
+          example:
+            success: true
+            message: Report already stored.
+            data:
+              report_id: 0f1d4e9c-6a2b-4f7e-9d31-5c8ba0f2e7a4
+              status: received
+              received_at: "2026-08-16T13:41:02Z"
+              payload_bytes: 21936
+              payload_sha256: 9f2c4b7e1a05d38c6e4f0b9a7d2c5e8f1b3a6c9d0e2f4a7b8c1d3e5f7a9b0c2d
+
+    Unauthorized:
+      description: >
+        No `Authorization` header was sent (`device_token_missing`), or the
+        token does not match any registered device (`device_token_invalid`).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+          example:
+            success: false
+            code: device_token_invalid
+            message: Unknown device token.
+
+    DeviceDisabled:
+      description: >
+        The token belongs to a device that an administrator has disabled. The
+        token is valid but the device may no longer submit reports; contact the
+        administrator instead of retrying.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+          example:
+            success: false
+            code: device_disabled
+            message: This device is disabled.
+
+    PayloadTooLarge:
+      description: >
+        The request body exceeded the accepted report size limit of 32 MB.
+        Retrying the same document will not help.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+          example:
+            success: false
+            code: payload_too_large
+            message: The report exceeds the maximum accepted size.
+
+    ValidationFailed:
+      description: >
+        The request body is malformed: `report_id` is missing or is not a UUID,
+        or `report` is missing or is not a JSON object.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationErrorEnvelope'
+          example:
+            success: false
+            code: validation_failed
+            message: The submitted data is invalid.
+            errors:
+              report_id:
+                - The report id must be a valid UUID.
+
+    TooManyRequests:
+      description: >
+        The device sent too many submissions in a short window. Wait for the
+        period given in the `Retry-After` header before retrying.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+          example:
+            success: false
+            code: rate_limit_exceeded
+            message: Too many requests.
+
+    ServerError:
+      description: >
+        The report could not be stored because of a failure on our side. The
+        report was not saved - retrying later is the correct reaction.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+          example:
+            success: false
+            code: server_error
+            message: The report could not be stored.

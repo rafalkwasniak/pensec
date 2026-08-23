@@ -3,6 +3,12 @@
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 
+/*
+ * Every colour in the interface comes from one of the tokens below. Dark is the
+ * default and is defined here; `:root[data-theme='light']` further down re-points
+ * the same names, so switching the attribute on <html> repaints the whole site
+ * without a single utility class having to change.
+ */
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
@@ -15,6 +21,59 @@
     --color-brand-deep: #0060d0;
     --color-chrome: #dfe6f5;
     --color-muted: #8a9ab7;
+
+    /* Warnings and destructive actions - amber in both themes, readable in both. */
+    --color-warn: #fcd34d;
+    --color-warn-line: rgba(245, 158, 11, 0.4);
+    --color-warn-soft: rgba(245, 158, 11, 0.1);
+}
+
+/*
+ * Pieces the utilities cannot express: gradients, glows and the grid. They are
+ * plain custom properties so the light block can re-point them too.
+ */
+:root {
+    color-scheme: dark;
+
+    --glow-near: rgba(18, 165, 255, 0.22);
+    --glow-far: rgba(0, 96, 208, 0.14);
+    --grid-line: rgba(22, 32, 58, 0.55);
+    --card-face-top: rgba(255, 255, 255, 0.035);
+    --card-face-bottom: rgba(255, 255, 255, 0.012);
+    --card-shadow: none;
+    --chrome-text-top: #ffffff;
+    --chrome-text-mid: #cfd8ea;
+    --chrome-text-bottom: #93a3c0;
+    --logo-glow: 0 0 60px rgba(18, 165, 255, 0.35);
+}
+
+:root[data-theme='light'] {
+    color-scheme: light;
+
+    --color-ink: #eef2f9;
+    --color-ink-raised: #ffffff;
+    --color-ink-line: #ccd6e8;
+    --color-brand: #0b62c4;
+    --color-brand-deep: #08428a;
+    --color-chrome: #0b1426;
+    --color-muted: #55647f;
+
+    --color-warn: #9a5b06;
+    --color-warn-line: rgba(180, 83, 9, 0.45);
+    --color-warn-soft: rgba(245, 160, 25, 0.14);
+
+    --glow-near: rgba(18, 165, 255, 0.2);
+    --glow-far: rgba(0, 96, 208, 0.09);
+    --grid-line: rgba(115, 137, 178, 0.28);
+    --card-face-top: #ffffff;
+    --card-face-bottom: #ffffff;
+    --card-shadow:
+        0 1px 2px rgba(11, 20, 38, 0.05),
+        0 10px 26px -14px rgba(11, 20, 38, 0.28);
+    --chrome-text-top: #0b1426;
+    --chrome-text-mid: #16294c;
+    --chrome-text-bottom: #35486f;
+    --logo-glow: 0 0 50px rgba(18, 165, 255, 0.3);
 }
 
 @layer base {
@@ -26,43 +85,65 @@
 }
 
 @layer components {
+    /* Shown only under the matching theme, so the logo and the toggle icon are
+       already correct on the first paint - no JavaScript swap, no flicker. */
+    :root[data-theme='light'] .theme-when-dark,
+    :root[data-theme='dark'] .theme-when-light {
+        display: none;
+    }
+
     /* Radar-like glow behind the hero, echoing the shield in the logo. */
     .backdrop-glow {
         background:
-            radial-gradient(ellipse 80% 55% at 50% -10%, rgba(18, 165, 255, 0.22), transparent 70%),
-            radial-gradient(ellipse 60% 50% at 85% 15%, rgba(0, 96, 208, 0.14), transparent 70%);
+            radial-gradient(ellipse 80% 55% at 50% -10%, var(--glow-near), transparent 70%),
+            radial-gradient(ellipse 60% 50% at 85% 15%, var(--glow-far), transparent 70%);
     }
 
     .backdrop-grid {
         background-image:
-            linear-gradient(to right, rgba(22, 32, 58, 0.55) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(22, 32, 58, 0.55) 1px, transparent 1px);
+            linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+            linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
         background-size: 64px 64px;
         mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, #000 40%, transparent 100%);
     }
 
+    .logo-glow {
+        filter: drop-shadow(var(--logo-glow));
+    }
+
     .chrome-text {
-        background: linear-gradient(180deg, #ffffff 0%, #cfd8ea 45%, #93a3c0 100%);
+        background: linear-gradient(
+            180deg,
+            var(--chrome-text-top) 0%,
+            var(--chrome-text-mid) 45%,
+            var(--chrome-text-bottom) 100%
+        );
         -webkit-background-clip: text;
         background-clip: text;
         color: transparent;
     }
 
     .card {
-        border: 1px solid rgba(22, 32, 58, 1);
-        background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.012));
+        border: 1px solid var(--color-ink-line);
+        background: linear-gradient(180deg, var(--card-face-top), var(--card-face-bottom));
         border-radius: 0.875rem;
+        box-shadow: var(--card-shadow);
         transition:
             border-color 0.2s ease,
             transform 0.2s ease;
     }
 
     .card:hover {
-        border-color: rgba(18, 165, 255, 0.4);
+        border-color: color-mix(in srgb, var(--color-brand) 40%, transparent);
         transform: translateY(-2px);
     }
 
     .rule {
-        background: linear-gradient(90deg, transparent, rgba(18, 165, 255, 0.55), transparent);
+        background: linear-gradient(
+            90deg,
+            transparent,
+            color-mix(in srgb, var(--color-brand) 55%, transparent),
+            transparent
+        );
     }
 }

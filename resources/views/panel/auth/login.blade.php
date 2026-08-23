@@ -16,7 +16,7 @@
                        autocomplete="username"
                        class="mt-2 w-full rounded-lg border border-ink-line bg-ink px-4 py-2.5 text-chrome outline-none focus:border-brand">
                 @error('email')
-                    <p class="mt-2 text-sm text-amber-300">{{ $message }}</p>
+                    <p class="mt-2 text-sm text-warn">{{ $message }}</p>
                 @enderror
             </div>
 
@@ -25,7 +25,7 @@
                 <input id="password" name="password" type="password" required autocomplete="current-password"
                        class="mt-2 w-full rounded-lg border border-ink-line bg-ink px-4 py-2.5 text-chrome outline-none focus:border-brand">
                 @error('password')
-                    <p class="mt-2 text-sm text-amber-300">{{ $message }}</p>
+                    <p class="mt-2 text-sm text-warn">{{ $message }}</p>
                 @enderror
             </div>
 

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pl" class="scroll-smooth">
+<html lang="pl" class="scroll-smooth" data-theme="dark">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -12,6 +12,7 @@
     <meta property="og:image" content="{{ url('/images/pensec-logo.webp') }}">
     <meta property="og:type" content="website">
     <meta property="og:locale" content="pl_PL">
+    @include('partials.theme-boot')
     @vite('resources/css/app.css')
 </head>
 <body class="antialiased">
@@ -20,9 +21,15 @@
         <div class="pointer-events-none absolute inset-0 backdrop-glow"></div>
         <div class="pointer-events-none absolute inset-0 backdrop-grid"></div>
 
-        <header class="relative mx-auto max-w-6xl px-6 pt-24 pb-20 text-center sm:pt-32">
+        <div class="relative mx-auto flex max-w-6xl justify-end px-6 pt-6">
+            @include('partials.theme-toggle')
+        </div>
+
+        <header class="relative mx-auto max-w-6xl px-6 pt-14 pb-20 text-center sm:pt-20">
             <img src="/images/pensec-logo.webp" alt="Pensec" width="900" height="889"
-                 class="mx-auto w-64 sm:w-80 drop-shadow-[0_0_60px_rgba(18,165,255,0.35)]">
+                 class="theme-when-dark logo-glow mx-auto w-64 sm:w-80">
+            <img src="/images/pensec-logo-light.webp" alt="Pensec" width="900" height="889"
+                 class="theme-when-light logo-glow mx-auto w-64 sm:w-80">
 
             <p class="mt-10 text-xs uppercase tracking-[0.35em] text-brand">Security beyond the surface</p>
 
@@ -164,7 +171,8 @@
     <footer class="border-t border-ink-line">
         <div class="mx-auto flex max-w-6xl flex-col items-center gap-4 px-6 py-10 text-sm text-muted sm:flex-row sm:justify-between">
             <div class="flex items-center gap-3">
-                <img src="/images/pensec-mark.webp" alt="" width="512" height="590" class="h-7 w-auto">
+                <img src="/images/pensec-mark.webp" alt="" width="512" height="590" class="theme-when-dark h-7 w-auto">
+                <img src="/images/pensec-mark-light.webp" alt="" width="512" height="590" class="theme-when-light h-7 w-auto">
                 <span class="font-semibold tracking-wide text-chrome">PENSEC</span>
             </div>
             <p>Security beyond the surface</p>

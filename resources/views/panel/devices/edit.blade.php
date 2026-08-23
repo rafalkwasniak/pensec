@@ -16,7 +16,7 @@
                 <input id="name" name="name" type="text" value="{{ old('name', $device->name) }}" required
                        class="mt-2 w-full rounded-lg border border-ink-line bg-ink px-4 py-2.5 text-chrome outline-none focus:border-brand">
                 @error('name')
-                    <p class="mt-2 text-sm text-amber-300">{{ $message }}</p>
+                    <p class="mt-2 text-sm text-warn">{{ $message }}</p>
                 @enderror
             </div>
 
@@ -29,7 +29,7 @@
                     @endforeach
                 </select>
                 @error('status')
-                    <p class="mt-2 text-sm text-amber-300">{{ $message }}</p>
+                    <p class="mt-2 text-sm text-warn">{{ $message }}</p>
                 @enderror
             </div>
 
@@ -64,7 +64,7 @@
                   onsubmit="return confirm('Usunąć sondę {{ $device->name }}?')">
                 @csrf
                 <button type="submit"
-                        class="rounded-lg border border-ink-line px-4 py-2.5 text-sm text-muted transition hover:border-amber-500/60 hover:text-amber-200">
+                        class="rounded-lg border border-ink-line px-4 py-2.5 text-sm text-muted transition hover:border-warn-line hover:text-warn">
                     Usuń sondę
                 </button>
             </form>

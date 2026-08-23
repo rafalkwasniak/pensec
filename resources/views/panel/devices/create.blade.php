@@ -18,7 +18,7 @@
                        placeholder="np. Sonda - magazyn Kraków"
                        class="mt-2 w-full rounded-lg border border-ink-line bg-ink px-4 py-2.5 text-chrome outline-none focus:border-brand">
                 @error('name')
-                    <p class="mt-2 text-sm text-amber-300">{{ $message }}</p>
+                    <p class="mt-2 text-sm text-warn">{{ $message }}</p>
                 @enderror
             </div>
 

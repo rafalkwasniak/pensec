@@ -41,7 +41,7 @@
                                 <form method="POST" action="{{ route('panel.administrators.destroy', $administrator) }}"
                                       onsubmit="return confirm('Usunąć konto {{ $administrator->name }}? Straci dostęp do panelu.')">
                                     @csrf
-                                    <button type="submit" class="text-muted transition hover:text-amber-200">Usuń</button>
+                                    <button type="submit" class="text-muted transition hover:text-warn">Usuń</button>
                                 </form>
                             @endunless
                         </td>

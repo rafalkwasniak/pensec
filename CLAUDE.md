@@ -129,6 +129,32 @@ delegates to it.
   API's `en`.
 - Documentation in `docs/`: English.
 
+### Light and dark theme
+
+One token set serves both themes. `@theme` in `resources/css/app.css` defines the dark
+values; `:root[data-theme='light']` re-points **the same names**, so no utility class
+carries a theme variant and no view knows which theme is on. Anything added must be
+expressed in those tokens - `ink`, `ink-raised`, `ink-line`, `brand`, `brand-deep`,
+`chrome`, `muted`, `warn`, `warn-line`, `warn-soft`. A literal colour or a `text-amber-300`
+will only be right in one theme.
+
+Gradients, glows and the grid cannot be written as utilities, so they read plain custom
+properties (`--glow-near`, `--card-face-top`, `--chrome-text-top`, `--logo-glow`…) that
+the light block re-points as well.
+
+The choice is stored in `localStorage` under `pensec.theme`; with nothing stored the
+system preference decides. `partials/theme-boot` is included **before** the stylesheet and
+runs synchronously, so the stored theme is on `<html>` before the first paint - moving it
+lower, or into a bundle, brings the flash back. `<html data-theme="dark">` in the markup is
+what a browser without JavaScript keeps.
+
+Both logos ship in the markup and CSS hides the one that does not apply
+(`theme-when-dark` / `theme-when-light`), so the right one is correct on the first paint
+without a JavaScript `src` swap. The light files are built onto the same canvas as the dark
+ones - `900x889` for the logo, `512x590` for the mark, content scaled to the same fraction
+of it - so switching moves nothing on the page. Sources live in `resources/images/`;
+everything in `public/images/` is derived from them.
+
 ### Landing page
 
 Deliberately contains **nothing about the API** - no endpoints, no tokens, no contract.

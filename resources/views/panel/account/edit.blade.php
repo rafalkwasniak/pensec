@@ -17,7 +17,7 @@
                 <input id="name" name="name" type="text" value="{{ old('name', $user->name) }}" required
                        class="mt-2 w-full rounded-lg border border-ink-line bg-ink px-4 py-2.5 text-chrome outline-none focus:border-brand">
                 @error('name')
-                    <p class="mt-2 text-sm text-amber-300">{{ $message }}</p>
+                    <p class="mt-2 text-sm text-warn">{{ $message }}</p>
                 @enderror
             </div>
 
@@ -27,7 +27,7 @@
                        autocomplete="username"
                        class="mt-2 w-full rounded-lg border border-ink-line bg-ink px-4 py-2.5 text-chrome outline-none focus:border-brand">
                 @error('email')
-                    <p class="mt-2 text-sm text-amber-300">{{ $message }}</p>
+                    <p class="mt-2 text-sm text-warn">{{ $message }}</p>
                 @enderror
                 <p class="mt-2 text-xs text-muted">Tym adresem logujesz się do panelu.</p>
             </div>
@@ -52,7 +52,7 @@
                 <input id="password" name="password" type="password" required autocomplete="new-password"
                        class="mt-2 w-full rounded-lg border border-ink-line bg-ink px-4 py-2.5 text-chrome outline-none focus:border-brand">
                 @error('password')
-                    <p class="mt-2 text-sm text-amber-300">{{ $message }}</p>
+                    <p class="mt-2 text-sm text-warn">{{ $message }}</p>
                 @enderror
                 <p class="mt-2 text-xs text-muted">Co najmniej 12 znaków.</p>
             </div>

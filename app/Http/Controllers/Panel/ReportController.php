@@ -31,7 +31,7 @@ class ReportController extends Controller
 
     public function show(Report $report): View
     {
-        return view('panel.reports.show', ['report' => $report->load('device')]);
+        return view('panel.reports.show', ['report' => $report->load('device', 'narratives')]);
     }
 
     /**

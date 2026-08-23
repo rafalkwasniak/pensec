@@ -7,6 +7,7 @@ use App\Http\Controllers\Panel\DeviceController;
 use App\Http\Controllers\Panel\DeviceTokenController;
 use App\Http\Controllers\Panel\PasswordController;
 use App\Http\Controllers\Panel\ReportController;
+use App\Http\Controllers\Panel\ReportNarrativeController;
 use App\Http\Controllers\Panel\SessionController;
 use Illuminate\Support\Facades\Route;
 
@@ -48,5 +49,16 @@ Route::prefix('panel')->name('panel.')->middleware('panel.locale')->group(functi
         Route::get('reports/{report}', [ReportController::class, 'show'])->name('reports.show');
         Route::get('reports/{report}/payload', [ReportController::class, 'payload'])->name('reports.payload');
         Route::get('reports/{report}/download', [ReportController::class, 'download'])->name('reports.download');
+
+        // {variant} binds to the NarrativeVariant enum, so an unknown value is
+        // a 404 before the controller runs.
+        Route::post('reports/{report}/narrative/{variant}', [ReportNarrativeController::class, 'store'])
+            ->name('reports.narrative.store');
+        Route::post('reports/{report}/narrative/{variant}/regenerate', [ReportNarrativeController::class, 'regenerate'])
+            ->name('reports.narrative.regenerate');
+        Route::get('reports/{report}/narrative/{variant}/status', [ReportNarrativeController::class, 'status'])
+            ->name('reports.narrative.status');
+        Route::get('reports/{report}/narrative/{variant}/pdf', [ReportNarrativeController::class, 'show'])
+            ->name('reports.narrative.pdf');
     });
 });

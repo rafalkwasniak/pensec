@@ -5,16 +5,9 @@
 @section('content')
     <a href="{{ route('panel.reports.index') }}" class="text-sm text-muted hover:text-chrome">&larr; Badania</a>
 
-    <div class="mt-4 flex flex-wrap items-start justify-between gap-4">
-        <div>
-            <h1 class="text-2xl font-semibold chrome-text">Badanie</h1>
-            <p class="mt-2 font-mono text-sm text-muted">{{ $report->report_uid }}</p>
-        </div>
-
-        <a href="{{ route('panel.reports.download', $report) }}"
-           class="rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-ink transition hover:bg-brand/90">
-            Pobierz raport
-        </a>
+    <div class="mt-4">
+        <h1 class="text-2xl font-semibold chrome-text">Badanie</h1>
+        <p class="mt-2 font-mono text-sm text-muted">{{ $report->report_uid }}</p>
     </div>
 
     <dl class="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -37,13 +30,25 @@
         </div>
     </dl>
 
+    @include('panel.reports.partials.narratives', ['report' => $report])
+
     <section class="card mt-8 overflow-hidden">
         <div class="flex flex-wrap items-center justify-between gap-3 border-b border-ink-line px-5 py-3">
             <h2 class="text-xs uppercase tracking-widest text-muted">Treść raportu</h2>
-            <button type="button" id="load-payload"
-                    class="rounded-lg border border-ink-line px-3 py-1.5 text-sm text-chrome transition hover:border-brand">
-                Pokaż treść
-            </button>
+
+            <div class="flex flex-wrap items-center gap-3">
+                <button type="button" id="load-payload"
+                        class="rounded-lg border border-ink-line px-3 py-1.5 text-sm text-chrome transition hover:border-brand">
+                    Pokaż treść
+                </button>
+
+                {{-- Pobiera zapisany dokument, nie PDF. Stoi przy treści raportu,
+                     bo to ta sama rzecz: jedno ją pokazuje, drugie zapisuje na dysk. --}}
+                <a href="{{ route('panel.reports.download', $report) }}"
+                   class="rounded-lg border border-ink-line px-3 py-1.5 text-sm text-chrome transition hover:border-brand">
+                    Pobierz plik JSON
+                </a>
+            </div>
         </div>
 
         <p id="payload-hint" class="px-5 py-6 text-sm text-muted">

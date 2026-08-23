@@ -140,6 +140,7 @@
                             'Rozpoznawanie sondy oraz pojedynczego badania',
                             'Odporność na zerwane połączenie i powtórną wysyłkę',
                             'Panel: lista sond, przeprowadzone badania i podgląd szczegółów',
+                            'Raport PDF z badania w dwóch wersjach: technicznej i dla klienta',
                         ] as $item)
                             <li class="flex gap-3">
                                 <span aria-hidden="true" class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-brand"></span>
@@ -153,7 +154,6 @@
                     <h3 class="text-base font-semibold text-chrome">Przed nami</h3>
                     <ul class="mt-4 space-y-3 text-sm leading-relaxed text-muted">
                         @foreach ([
-                            'Prezentacja wyników badania w czytelnej formie',
                             'Zestawianie kolejnych badań tej samej sieci',
                         ] as $item)
                             <li class="flex gap-3">

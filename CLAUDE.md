@@ -60,6 +60,7 @@ not finish, hand the command to Rafał to run in his own terminal.
 /usr/local/bin/php8.5 vendor/bin/pint           # code style
 npm run lint:api                                # Spectral over the OpenAPI contract
 /usr/local/bin/php8.5 artisan pensec:create-admin   # first panel account, asks for a password
+/usr/local/bin/php8.5 artisan queue:work --stop-when-empty   # what the crontab runs each minute
 ```
 
 Tests run against in-memory SQLite (see `phpunit.xml`). **Never cache config on this
@@ -129,6 +130,82 @@ delegates to it.
   API's `en`.
 - Documentation in `docs/`: English.
 
+### PDF reports
+
+A report yields two documents - `expert` and `client`. Same scan, same figures, different
+wording. Both live in `report_narratives`, one row per report per variant, unique on the
+pair.
+
+**The model never supplies a number.** `ReportFacts` derives every figure from the stored
+document - hosts, open ports, findings, ICS endpoints - and the same array feeds both the
+tables in `resources/views/pdf/` and the brief the model is given. DeepSeek writes prose
+around facts it was handed and sees nothing else, so it cannot name a host that was not
+discovered. `NmapOutput` is what makes this possible: the probe stores nmap's console
+output verbatim, and that text is parsed rather than shown. If a section's prose is missing,
+the facts still render.
+
+**"Nothing found" and "did not run" are different results and must never render alike.**
+`ReportFacts::exposure()` classifies each check as absent, failed, clean, or carrying
+findings. This is not theoretical: on a real report every nuclei entry was an error
+(`no templates provided for scan`), and counting those entries as findings put "5 trafień
+skanowania szablonami" into a document where the scanner had produced nothing. The brief
+says so in as many words, because a model shown a bare count will report it as a result.
+
+**Severity is graded in code.** `App\Support\Severity` turns evidence into weight and
+`ReportFacts::ranked()` gathers every section's findings into one ordered list, so the
+document opens with what to do first instead of six sections of equal-looking text. The
+model is handed the ranking and told not to re-grade anything.
+
+The grading is deliberately cautious, and one rule carries most of the value: **nmap's own
+confidence wins.** `http-phpmyadmin-dir-traversal` prints `VULNERABLE:` and a CVE and then
+admits `State: UNKNOWN (unable to test)` - that is graded medium, not critical, because the
+script announced what it looks for and then failed to confirm it. A script that timed out or
+errored is not a finding at any weight: it joins `gaps`, which is kept apart from `findings`
+so a hole in the coverage can never be sorted below the problems it may be hiding.
+
+**The closing section is chosen from the evidence.** `facts['plan']` is `repair` when
+anything is actionable **or** any coverage gap exists, `maintain` only when neither is true -
+a badanie with holes never earns the congratulatory ending, because nobody can vouch for what
+was not examined. The template, not the model, writes the standing final bullet, so it
+appears on every report word for word.
+
+**The two variants differ in register, not in facts.** Expert is impersonal and passive with
+recommendations as verbal nouns ("Wyłączenie obsługi SSLv3 na 192.168.100.1"); client is
+plain second person with the reason it matters. Both must attribute every finding to a
+specific IP where the brief supplies one.
+
+**Diagnostics are described, not dumped.** The probe sends these as small objects of
+technical flags, and `{"gratuitous_arp_blocked": false}` printed as key and value tells a
+reader nothing - worse, a bare `false` looks like a failure when it is sometimes the good
+outcome and here is the bad one. `App\Support\Diagnostics` holds the sentence each known
+flag means in both directions plus which way round is a concern; `TsharkEndpoints` parses
+the `top_talkers` console dump into a real table. Unknown keys and fields still render under
+a humanised name, so a new test on the probe appears in the report rather than vanishing.
+
+**Generation is queued, rendering is not.** `POST …/narrative/{variant}` only enqueues
+`GenerateReportNarrative`; the row exists as `pending` first so the panel has something to
+poll. The PDF route renders from what is on file and never waits on a model, which is why a
+second download is free and gives the same document. Re-generating is a separate,
+confirmed action.
+
+**The queue needs its worker.** `QUEUE_CONNECTION=database` and a crontab entry runs
+`queue:work --stop-when-empty --timeout=330` every minute. Without it a click leaves the
+report `pending` for ever. The worker timeout must stay above the job's `$timeout`, which
+must stay above `services.deepseek.timeout`.
+
+Two DeepSeek settings are scars, not preferences, and both are commented where they live:
+`max_tokens` is never sent (v4 reasoning tokens count against it and truncate the report
+silently), and `reasoning_effort` is pinned low. The same lesson is recorded in
+`device.ursalogic.pl`, which is worth reading before changing either.
+
+dompdf cannot read WebP, so the cover uses `public/images/pensec-logo-print.png` - flattened
+onto white, no alpha. Polish diacritics need DejaVu Sans; do not swap the font family
+without checking them.
+
+One Blade trap cost real time here: a directive glued to a word character
+(`…czystym@endif`) is left uncompiled and surfaces as `syntax error, unexpected end of
+file`. Keep whitespace before `@if`/`@endif` in prose.
+
 ### Light and dark theme
 
 One token set serves both themes. `@theme` in `resources/css/app.css` defines the dark
@@ -193,8 +270,9 @@ minute per probe, token length. They are config, not `.env`, and not class const
 - **Code map** (`code-map.html`, FOUNDATION §4) - skipped by decision: the API is a single
   endpoint and the map would cost more to maintain than it returns.
 - **Discord alerting** (FOUNDATION §5) - deferred, to be picked up later.
-- **Report parsing and analysis** - a later stage. `ReportStatus` therefore has one value,
-  `received`; new values are added as parsing lands, and the contract's enum must grow
-  with it.
+- **Report parsing in the API** - still a later stage. `ReportFacts` reads the document to
+  build a PDF, but nothing is parsed on the way in and nothing derived is stored:
+  `ReportStatus` still has one value, `received`. New values are added as parsing lands,
+  and the contract's enum must grow with it.
 - **Password reset for another administrator** - an administrator sets the initial
   password when creating an account; the account owner changes it themselves.

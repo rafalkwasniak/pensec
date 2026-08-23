@@ -40,4 +40,24 @@ class ReportFactory extends Factory
             $report->payload()->create(['payload' => $document]);
         });
     }
+
+    /**
+     * Replaces the stored document, keeping the size and checksum honest so a
+     * test can never end up asserting against a report that describes itself
+     * wrongly.
+     *
+     * @param  array<string, mixed>  $document
+     */
+    public function withDocument(array $document): static
+    {
+        $encoded = json_encode($document);
+
+        return $this->state([
+            'payload_bytes' => strlen($encoded),
+            'payload_sha256' => hash('sha256', $encoded),
+        ])->afterCreating(function (Report $report) use ($encoded): void {
+            $report->payload()->update(['payload' => $encoded]);
+            $report->unsetRelation('payload');
+        });
+    }
 }

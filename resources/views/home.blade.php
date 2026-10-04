@@ -220,46 +220,24 @@
             </div>
         </section>
 
-        <!-- STAN PRAC -->
+        <!-- ZASADY BADANIA -->
         <section class="mt-28 border-t border-ink-line pt-20">
-            <h2 class="text-sm uppercase tracking-[0.25em] text-brand">Stan prac</h2>
+            <h2 class="text-sm uppercase tracking-[0.25em] text-brand">Zasady badania</h2>
             <p class="mt-4 max-w-3xl text-2xl leading-snug chrome-text">
-                System powstaje etapami. To jest stan na dziś.
+                Kontrolowane, poufne i potwierdzone.
             </p>
 
-            <div class="mt-12 grid gap-6 lg:grid-cols-2">
-                <div class="card p-6">
-                    <h3 class="text-base font-semibold text-chrome">Działa</h3>
-                    <ul class="mt-4 space-y-3 text-sm leading-relaxed text-muted">
-                        @foreach ([
-                            'Odbieranie i bezpieczne przechowywanie kompletnych raportów z sond, niezależnie od ich rozmiaru.',
-                            'Rozpoznawanie sondy i pojedynczego badania; odporność na zerwane połączenie i powtórną wysyłkę.',
-                            'Panel: lista sond, przeprowadzone badania, podgląd szczegółów i pobranie raportu źródłowego.',
-                            'Generowanie dwóch dokumentów z każdego badania — raportu menedżerskiego i eksperckiego.',
-                            'Obsługa najnowszej generacji sond i pełnego zakresu testów.',
-                        ] as $item)
-                            <li class="flex gap-3 items-start">
-                                <span aria-hidden="true" class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-brand"></span>
-                                <span>{{ $item }}</span>
-                            </li>
-                        @endforeach
-                    </ul>
-                </div>
-
-                <div class="card p-6">
-                    <h3 class="text-base font-semibold text-chrome">Przed nami</h3>
-                    <ul class="mt-4 space-y-3 text-sm leading-relaxed text-muted">
-                        @foreach ([
-                            'Zestawianie kolejnych badań tej samej sieci i śledzenie zmian w czasie.',
-                            'Powiadomienia o nowym raporcie zaraz po jego dostarczeniu.',
-                        ] as $item)
-                            <li class="flex gap-3 items-start">
-                                <span aria-hidden="true" class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-ink-line"></span>
-                                <span>{{ $item }}</span>
-                            </li>
-                        @endforeach
-                    </ul>
-                </div>
+            <div class="mt-12 grid gap-6 lg:grid-cols-3">
+                @foreach ([
+                    ['Uzgodniony zakres', 'Badanie działa wyłącznie w granicach ustalonych z klientem przed startem (Rules of Engagement). Nic poza uzgodnioną siecią nie jest dotykane.'],
+                    ['Poufność danych', 'Współpraca objęta umową NDA. Surowe dowody pozostają na urządzeniu, a raport opisuje je w bezpiecznej, ograniczonej formie.'],
+                    ['Weryfikacja po naprawie', 'Po wdrożeniu poprawek przeprowadzamy audyt potwierdzający, że wykryte podatności zostały faktycznie usunięte.'],
+                ] as [$title, $body])
+                    <div class="card p-6">
+                        <h3 class="text-base font-semibold text-chrome">{{ $title }}</h3>
+                        <p class="mt-3 text-sm leading-relaxed text-muted">{{ $body }}</p>
+                    </div>
+                @endforeach
             </div>
         </section>
 

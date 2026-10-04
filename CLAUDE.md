@@ -363,7 +363,12 @@ everything in `public/images/` is derived from them.
 
 Deliberately contains **nothing about the API** - no endpoints, no tokens, no contract.
 It is a client-facing page; the technical layer is internal. Keep it that way when
-editing. Its "Stan prac" section describes real status, so update it when that changes.
+editing. Every claim about what the audit does must be backed by the probe; the engine
+spec on `/` and `/tests` is kept true to the firmware, not aspirational. There is no longer
+a "Stan prac" section - Rafał dropped it as not useful on a client page; the sections now
+are the two-report value, the engine spec, and the "Zasady badania" trust block (scope/NDA/
+verifying re-audit). Sample reports under `public/reports/` are generated from a synthetic,
+anonymised scan - regenerate them if the report layout changes.
 
 ### Panel
 

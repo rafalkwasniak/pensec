@@ -8,6 +8,7 @@ use App\Models\Report;
 use App\Models\ReportNarrative;
 use App\Services\DeepSeek;
 use App\Services\NarrativePrompt;
+use App\Services\RemediationPrompt;
 use App\Services\ReportFacts;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -62,9 +63,13 @@ class GenerateReportNarrative implements ShouldQueue
 
         $facts = ReportFacts::forReport($report);
 
+        // The repair guide is a different document with its own brief; the two
+        // reports share one.
+        $remediation = $this->variant->isRemediation();
+
         $result = $deepSeek->write(
-            NarrativePrompt::system($this->variant),
-            NarrativePrompt::user($facts, $report),
+            $remediation ? RemediationPrompt::system() : NarrativePrompt::system($this->variant),
+            $remediation ? RemediationPrompt::user($facts, $report) : NarrativePrompt::user($facts, $report),
         );
 
         if (! $result['ok']) {
@@ -76,7 +81,11 @@ class GenerateReportNarrative implements ShouldQueue
         // A well-formed answer carries the labelled blocks the template renders.
         // Anything else would leave a document with facts but no commentary, so
         // it counts as a failure rather than a half-finished success.
-        if (NarrativePrompt::split($result['content']) === []) {
+        $blocks = $remediation
+            ? RemediationPrompt::split($result['content'])
+            : NarrativePrompt::split($result['content']);
+
+        if ($blocks === []) {
             $this->fail($narrative, 'Model nie zwrócił żadnej rozpoznawalnej sekcji.');
 
             return;

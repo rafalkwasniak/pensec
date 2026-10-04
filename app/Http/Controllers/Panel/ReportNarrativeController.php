@@ -82,7 +82,9 @@ class ReportNarrativeController extends Controller
         $report->loadMissing('device');
         $narrative->setRelation('report', $report);
 
-        $pdf = Pdf::loadView('pdf.report', [
+        // The repair guide is its own document: the actionable findings, each
+        // with the steps written for it, rather than the report's sections.
+        $pdf = Pdf::loadView($variant->isRemediation() ? 'pdf.remediation' : 'pdf.report', [
             'report' => $report,
             'variant' => $variant,
             'narrative' => $narrative,

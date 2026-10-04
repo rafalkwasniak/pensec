@@ -771,58 +771,99 @@ class ReportFacts
     private static function databaseFindings(array $value, string $ip): array
     {
         // The module nests per-engine results, so the signal flags sit at
-        // varying depths; gather them wherever they are.
+        // varying depths; gather them wherever they are, remembering the engine
+        // each came from - "RCE on the database" is not actionable until it
+        // says which one.
         $signals = [];
-        self::collectDbSignals($value, $signals);
+        self::collectDbSignals($value, $signals, null);
+
+        $kinds = [
+            'rce' => [Severity::CRITICAL, 'Potwierdzone zdalne wykonanie kodu na bazie danych (RCE)', 'Sonda wykonała polecenie systemowe przez usługę bazy danych.', ', '],
+            'creds' => [Severity::CRITICAL, 'Złamane poświadczenia dostępu do bazy danych', 'Usługa przyjęła domyślne lub słabe hasło.', ', '],
+            'no_auth' => [Severity::HIGH, 'Baza danych dostępna bez uwierzytelnienia', null, ', '],
+            'empty_pw' => [Severity::HIGH, 'Konto bazy danych bez hasła', null, ', '],
+            'pii' => [Severity::HIGH, 'Dane wrażliwe dostępne w bazie danych', null, '; '],
+        ];
 
         $findings = [];
 
-        if ($signals['rce'] ?? false) {
-            $findings[] = self::finding(Severity::CRITICAL, 'Potwierdzone zdalne wykonanie kodu na bazie danych (RCE)', $ip, null, 'Bazy danych', [], true, 'Sonda wykonała polecenie systemowe przez usługę bazy danych.');
-        }
+        foreach ($kinds as $kind => [$level, $title, $note, $glue]) {
+            if (! isset($signals[$kind])) {
+                continue;
+            }
 
-        if ($signals['creds'] ?? false) {
-            $findings[] = self::finding(Severity::CRITICAL, 'Złamane poświadczenia dostępu do bazy danych', $ip, null, 'Bazy danych', [], true, 'Usługa przyjęła domyślne lub słabe hasło.');
-        }
+            $items = array_values(array_unique($signals[$kind]['items']));
+            $engines = array_values(array_unique($signals[$kind]['engines']));
 
-        if ($signals['no_auth'] ?? false) {
-            $findings[] = self::finding(Severity::HIGH, 'Baza danych dostępna bez uwierzytelnienia', $ip, null, 'Bazy danych', [], true, null);
-        }
-
-        if (($signals['empty_pw'] ?? []) !== []) {
-            $findings[] = self::finding(Severity::HIGH, 'Konto bazy danych bez hasła', $ip, null, 'Bazy danych', [], true, implode(', ', array_slice($signals['empty_pw'], 0, 8)));
-        }
-
-        if (($signals['pii'] ?? []) !== []) {
-            $findings[] = self::finding(Severity::HIGH, 'Dane wrażliwe dostępne w bazie danych', $ip, null, 'Bazy danych', [], true, implode('; ', array_slice($signals['pii'], 0, 8)));
+            $findings[] = self::finding(
+                $level,
+                $title,
+                $ip,
+                $engines === [] ? null : implode(', ', $engines),
+                'Bazy danych',
+                [],
+                true,
+                $items === [] ? $note : implode($glue, array_slice($items, 0, 8)),
+            );
         }
 
         return $findings;
     }
 
+    /** How a database engine key from the probe's module reads in a report. */
+    private const DB_ENGINES = [
+        'postgresql' => 'PostgreSQL',
+        'postgres' => 'PostgreSQL',
+        'mysql' => 'MySQL',
+        'mssql' => 'Microsoft SQL Server',
+        'oracle' => 'Oracle',
+        'mongodb' => 'MongoDB',
+        'redis' => 'Redis',
+        'memcached' => 'Memcached',
+        'elasticsearch' => 'Elasticsearch',
+        'couchdb' => 'CouchDB',
+        'cassandra' => 'Cassandra',
+        'influxdb' => 'InfluxDB',
+        'prometheus' => 'Prometheus',
+        'sap_hana' => 'SAP HANA',
+    ];
+
     /**
-     * Walks a database result for the scanner's own finding flags, at any depth.
+     * Walks a database result for the scanner's own finding flags, at any depth,
+     * noting the engine key each one sat under.
      *
-     * @param  array{rce?: bool, creds?: bool, no_auth?: bool, empty_pw?: list<string>, pii?: list<string>}  $acc
+     * @param  array<string, array{engines: list<string>, items: list<string>}>  $acc
      */
-    private static function collectDbSignals(mixed $value, array &$acc): void
+    private static function collectDbSignals(mixed $value, array &$acc, ?string $engine): void
     {
         if (! is_array($value)) {
             return;
         }
 
         foreach ($value as $key => $item) {
-            match ($key) {
-                'critical_rce_confirmed' => $item === true ? $acc['rce'] = true : null,
-                'critical_no_auth' => $item === true ? $acc['no_auth'] = true : null,
-                'critical_compromised_credentials' => is_scalar($item) && (string) $item !== '' ? $acc['creds'] = true : null,
-                'nse_empty_password_accounts' => $acc['empty_pw'] = [...($acc['empty_pw'] ?? []), ...array_filter((array) $item, is_string(...))],
-                'deep_pii_radar' => $acc['pii'] = [...($acc['pii'] ?? []), ...array_filter((array) $item, is_string(...))],
+            $items = match ($key) {
+                'critical_rce_confirmed' => $item === true ? ['rce', []] : null,
+                'critical_no_auth' => $item === true ? ['no_auth', []] : null,
+                'critical_compromised_credentials' => is_scalar($item) && (string) $item !== '' ? ['creds', []] : null,
+                'nse_empty_password_accounts' => ['empty_pw', array_values(array_filter((array) $item, is_string(...)))],
+                'deep_pii_radar' => ['pii', array_values(array_filter((array) $item, is_string(...)))],
                 default => null,
             };
 
+            // An empty list is the check reporting nothing, not a finding.
+            if ($items !== null && ! (in_array($items[0], ['empty_pw', 'pii'], true) && $items[1] === [])) {
+                [$kind, $found] = $items;
+                $acc[$kind] ??= ['engines' => [], 'items' => []];
+                $acc[$kind]['items'] = [...$acc[$kind]['items'], ...$found];
+
+                if ($engine !== null) {
+                    $acc[$kind]['engines'][] = $engine;
+                }
+            }
+
             if (is_array($item)) {
-                self::collectDbSignals($item, $acc);
+                $name = is_string($key) ? (self::DB_ENGINES[mb_strtolower($key)] ?? null) : null;
+                self::collectDbSignals($item, $acc, $name ?? $engine);
             }
         }
     }

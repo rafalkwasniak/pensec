@@ -12,13 +12,14 @@
         <div>
             <h2 class="text-base font-semibold text-chrome">Raporty PDF</h2>
             <p class="mt-2 max-w-2xl text-sm leading-relaxed text-muted">
-                Oba dokumenty powstają z tego samego badania. Liczby, urządzenia i porty pochodzą
-                wprost z zapisanego raportu; różni je język opisu.
+                Wszystkie dokumenty powstają z tego samego badania. Liczby, urządzenia i porty
+                pochodzą wprost z zapisanego raportu; raporty różni język opisu, a przewodnik
+                naprawy rozpisuje usterki na kroki dla technika.
             </p>
         </div>
     </div>
 
-    <div class="mt-6 grid gap-4 lg:grid-cols-2">
+    <div class="mt-6 grid gap-4 lg:grid-cols-3">
         @foreach (NarrativeVariant::cases() as $variant)
             @php
                 $narrative = $report->narrative($variant);
@@ -30,9 +31,7 @@
                     <div>
                         <h3 class="text-sm font-semibold text-chrome">{{ $variant->heading() }}</h3>
                         <p class="mt-1 text-xs leading-relaxed text-muted">
-                            {{ $variant === NarrativeVariant::Expert
-                                ? 'Język techniczny, dla administratora sieci.'
-                                : 'Prosty język, dla osoby nietechnicznej.' }}
+                            {{ $variant->description() }}
                         </p>
                     </div>
 

@@ -346,4 +346,114 @@ class ReportNarrativeTest extends TestCase
         $this->assertSame('Jetty 9.4', $facts['services'][0]['version']);
         $this->assertStringStartsWith('%PDF', $pdf);
     }
+
+    /*
+     * The technician's repair guide: a third document, built from the ranked
+     * findings with the device each one sits on.
+     */
+
+    /** A scan with one actionable finding: telnet open on a known camera. */
+    private function reportWithTelnet(): Report
+    {
+        return Report::factory()->withDocument([
+            'hosts' => ['192.0.2.20'],
+            'nmap_structured' => ['192.0.2.20' => ['status' => 'ok', 'ports' => [
+                ['protocol' => 'tcp', 'port' => 23, 'state' => 'open', 'name' => 'telnet'],
+            ]]],
+            'asset_inventory' => ['192.0.2.20' => ['manufacturer' => 'Visinet', 'model' => 'IP-Cam 3']],
+        ])->create();
+    }
+
+    public function test_the_report_page_offers_the_repair_guide(): void
+    {
+        $this->signIn();
+        $report = Report::factory()->create();
+
+        $this->get("/panel/reports/{$report->id}")
+            ->assertOk()
+            ->assertSee('Przewodnik naprawy')
+            ->assertSee('Kroki naprawy dla technika');
+    }
+
+    public function test_the_guide_is_written_from_the_findings_and_the_device_they_sit_on(): void
+    {
+        $this->fakeDeepSeek("### KROK: 1\n1. Wyłącz usługę Telnet w panelu kamery.\nWeryfikacja: port 23 zamknięty.");
+
+        $report = $this->reportWithTelnet();
+
+        GenerateReportNarrative::dispatchSync($report->id, NarrativeVariant::Technician);
+
+        $narrative = $report->fresh()->narrative(NarrativeVariant::Technician);
+
+        $this->assertSame(NarrativeStatus::Ready, $narrative->status);
+        $this->assertStringContainsString('Wyłącz usługę Telnet', $narrative->content);
+
+        // The model was handed the finding, its address and the device - and
+        // asked for repair steps, not for a report.
+        Http::assertSent(function ($request): bool {
+            $user = $request['messages'][1]['content'];
+
+            return str_contains($user, 'USTERKA 1')
+                && str_contains($user, '192.0.2.20')
+                && str_contains($user, 'Visinet, IP-Cam 3')
+                && str_contains($request['messages'][0]['content'], 'technikiem');
+        });
+    }
+
+    public function test_a_guide_answer_without_repair_blocks_counts_as_a_failure(): void
+    {
+        $this->fakeDeepSeek('### SEKCJA: podsumowanie
+To nie jest przewodnik.');
+
+        $report = $this->reportWithTelnet();
+
+        GenerateReportNarrative::dispatchSync($report->id, NarrativeVariant::Technician);
+
+        $this->assertSame(NarrativeStatus::Failed, $report->fresh()->narrative(NarrativeVariant::Technician)->status);
+    }
+
+    public function test_a_ready_guide_downloads_as_its_own_document(): void
+    {
+        $this->signIn();
+        $report = $this->reportWithTelnet();
+
+        ReportNarrative::create([
+            'report_id' => $report->id,
+            'variant' => NarrativeVariant::Technician,
+            'status' => NarrativeStatus::Ready,
+            'content' => "### KROK: 1\n1. Wyłącz Telnet.\nWeryfikacja: port 23 zamknięty.",
+            'generated_at' => now(),
+        ]);
+
+        $response = $this->get("/panel/reports/{$report->id}/narrative/technician/pdf");
+
+        $response->assertOk();
+        $this->assertStringContainsString('przewodnik-naprawy', $response->headers->get('content-disposition'));
+        $this->assertStringStartsWith('%PDF', $response->getContent());
+    }
+
+    /**
+     * A finding the model wrote no steps for still appears in the guide, so
+     * nothing the scan found can drop out of it.
+     */
+    public function test_a_finding_without_steps_still_appears_in_the_guide(): void
+    {
+        $report = $this->reportWithTelnet();
+        $narrative = new ReportNarrative([
+            'variant' => NarrativeVariant::Technician,
+            'content' => "### KROK: 7\n1. Krok do usterki, której nie ma.",
+        ]);
+
+        $html = view('pdf.remediation', [
+            'report' => $report->load('device'),
+            'variant' => NarrativeVariant::Technician,
+            'narrative' => $narrative,
+            'facts' => ReportFacts::forReport($report),
+        ])->render();
+
+        $this->assertStringContainsString('Telnet', $html);
+        $this->assertStringContainsString('192.0.2.20', $html);
+        $this->assertStringContainsString('nie zostały wygenerowane', $html);
+        $this->assertStringNotContainsString('usterki, której nie ma', $html);
+    }
 }

@@ -313,6 +313,22 @@ lists (findings 60/80, a module's results 15/40, CVEs 8/10) and always say how m
 out; counts are never computed from a cut list. dompdf embeds font subsets
 (`isFontSubsettingEnabled`): 165 KB instead of 1.2 MB per PDF.
 
+**The repair guide is a third document, not a third register.** `NarrativeVariant::Technician`
+shares the row, queue, polling and facts snapshot with the two reports, but has its own brief
+(`RemediationPrompt`) and template (`pdf/remediation.blade.php`); `isRemediation()` is where
+the job and controller branch. The model is handed only the actionable findings from
+`facts['findings']`, numbered, each with the device it sits on (vendor, model, system) and the
+host's services with versions, and answers in `### KROK: N` blocks. The list of what to fix
+comes from the facts, not the answer: a finding the model skipped still renders with a note,
+and a block for a number not on the list is dropped. Concrete steps are the point of it, at
+Rafał's request - the prompt asks for commands and settings, but where a menu path depends on
+firmware the model must say to confirm it, and the template carries a standing caveat
+(AI-assisted, back up the config, use a service window). The guide does not replace the
+reports' own recommendations; both stay. It is not published on the landing page.
+
+A database finding names its engine (`DB_ENGINES`) in `where`: without it the first generated
+guide fixed MySQL for an RCE the probe found in PostgreSQL.
+
 **The queue needs its worker.** `QUEUE_CONNECTION=database` and a crontab entry runs
 `queue:work --stop-when-empty --timeout=330` every minute. Without it a click leaves the
 report `pending` for ever. The chain is `queue.connections.database.retry_after` (360) >

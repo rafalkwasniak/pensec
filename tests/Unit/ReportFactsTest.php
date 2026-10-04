@@ -927,6 +927,11 @@ class ReportFactsTest extends TestCase
         $db = collect($facts['findings'])->where('source', 'Bazy danych');
 
         $this->assertSame(Severity::CRITICAL, $db->firstWhere('title', 'Potwierdzone zdalne wykonanie kodu na bazie danych (RCE)')['level']);
+
+        // Each finding names the engine it came from, so the fix lands on the right database.
+        $this->assertSame('PostgreSQL', $db->firstWhere('title', 'Potwierdzone zdalne wykonanie kodu na bazie danych (RCE)')['where']);
+        $this->assertSame('MySQL', $db->firstWhere('title', 'Dane wrażliwe dostępne w bazie danych')['where']);
+        $this->assertSame('Redis', $db->firstWhere('title', 'Baza danych dostępna bez uwierzytelnienia')['where']);
         $this->assertNotNull($db->firstWhere('title', 'Baza danych dostępna bez uwierzytelnienia'));
         $this->assertNotNull($db->firstWhere('title', 'Konto bazy danych bez hasła'));
         $pii = $db->firstWhere('title', 'Dane wrażliwe dostępne w bazie danych');

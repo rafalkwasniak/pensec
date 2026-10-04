@@ -25,3 +25,11 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Not part of the app: server logs and stats, the probe repository
+# (its own git repo, edited and committed separately), and the VS Code
+# thread-cleanup package.
+/awstats
+/logs
+/rpi-pentest
+/vscode-czystka-pakiet

@@ -173,7 +173,10 @@ class ReportFacts
     private const OUTCOMES = [
         'completed' => null,
         'completed_with_module_errors' => 'Badanie zostało ukończone, ale część testów nie wykonała się poprawnie.',
+        'completed_with_hardware_limits' => 'Badanie zostało ukończone, ale część testów ograniczyły możliwości sprzętowe sondy.',
         'operator_stop' => 'Badanie zostało przerwane przez operatora przed ukończeniem - wyniki są niepełne.',
+        'timeout' => 'Badanie zostało przerwane po przekroczeniu dopuszczalnego czasu - wyniki są niepełne.',
+        'fatal_error' => 'Badanie zostało przerwane przez błąd krytyczny - wyniki są niepełne.',
     ];
 
     /**
@@ -445,6 +448,14 @@ class ReportFacts
             // unconfirmed - never below what the probe asserts.
             if (($finding['state'] ?? null) === 'vulnerable' && $grade['level'] === Severity::INFO) {
                 $grade = ['level' => Severity::HIGH, 'confirmed' => false, 'inconclusive' => false];
+            }
+
+            // The probe also marks a script that ran but could not confirm as
+            // `inconclusive`. Honour that even when the 512-byte excerpt was too
+            // short to carry nmap's "unable to test" line: unconfirmed, and if
+            // nothing graded above it, a coverage gap rather than a finding.
+            if (($finding['state'] ?? null) === 'inconclusive' && ! $grade['inconclusive']) {
+                $grade = ['level' => $grade['level'], 'confirmed' => false, 'inconclusive' => true];
             }
 
             if ($grade['inconclusive'] && $grade['level'] === Severity::INFO) {

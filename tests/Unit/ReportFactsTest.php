@@ -879,4 +879,33 @@ class ReportFactsTest extends TestCase
         // The current owner's own finding is still shown.
         $this->assertNotNull(collect($facts['findings'])->firstWhere('title', 'Panel po HTTP'));
     }
+
+    public function test_an_inconclusive_nse_state_without_evidence_is_counted_not_flagged(): void
+    {
+        // Short evidence (<512 B on the probe) means no excerpt reaches us and
+        // the script cited no CVE. It ran but determined nothing, so it is
+        // counted among the deep results without becoming a finding or a gap -
+        // flagging every empty inconclusive script would bury the real ones.
+        $facts = ReportFacts::from(['nse_script_evidence' => ['192.168.0.9' => [
+            ['script_id' => 'http-vuln-cve2017-1001000', 'state' => 'inconclusive', 'port' => 80, 'cve_ids' => [], 'evidence_sha256' => 'q'],
+        ]]]);
+
+        $this->assertSame([], collect($facts['findings'])->where('source', 'Pogłębione testy')->all());
+        $this->assertSame([], collect($facts['gaps'])->where('source', 'Pogłębione testy')->all());
+        $this->assertSame(1, $facts['totals']['deep_findings']);
+    }
+
+    public function test_an_inconclusive_state_with_a_cve_is_shown_but_marked_unconfirmed(): void
+    {
+        $facts = ReportFacts::from(['nse_script_evidence' => ['192.168.0.9' => [
+            ['script_id' => 'http-phpmyadmin-dir-traversal', 'state' => 'inconclusive', 'port' => 80,
+                'cve_ids' => ['CVE-2005-3299'], 'evidence_sha256' => 'r',
+                'evidence_excerpt' => 'VULNERABLE: phpMyAdmin traversal CVE-2005-3299 (short)'],
+        ]]]);
+
+        $finding = collect($facts['findings'])->firstWhere('source', 'Pogłębione testy');
+        $this->assertNotNull($finding);
+        $this->assertFalse($finding['confirmed']);
+        $this->assertNotNull($finding['note']);
+    }
 }

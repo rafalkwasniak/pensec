@@ -71,7 +71,7 @@
             </h1>
 
             <p class="mx-auto mt-6 max-w-2xl text-balance text-lg leading-relaxed text-muted">
-                Zaprojektowany od podstaw system diagnostyczny przeprowadza nieinwazyjne testy penetracyjne wewnątrz sieci firmowych i przemysłowych. Wykrywa błędne konfiguracje, ukryte podatności i otwarte wektory ataków, zanim zostaną wykorzystane. Wynikiem audytu jest raport zawierający informacje o brakach w zabezpieczeniach, wykaz diagnostyczny sieci oraz instrukcje dotyczące jej naprawy.
+                Zaprojektowany od podstaw system diagnostyczny przeprowadza testy penetracyjne wewnątrz sieci firmowych i przemysłowych. Wykrywa błędne konfiguracje, ukryte podatności i otwarte wektory ataków, zanim zostaną wykorzystane. Wynikiem audytu jest raport zawierający informacje o brakach w zabezpieczeniach, wykaz diagnostyczny sieci oraz instrukcje dotyczące jej naprawy.
             </p>
             
             <div class="mt-12 text-center">

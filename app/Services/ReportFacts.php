@@ -482,6 +482,10 @@ class ReportFacts
             );
         }
 
+        foreach (self::structuredDeepFindings($document) as $finding) {
+            $findings[] = $finding;
+        }
+
         foreach (self::map($document, 'device_security_posture') as $ip => $posture) {
             foreach (is_array($posture) && is_array($posture['findings'] ?? null) ? $posture['findings'] : [] as $finding) {
                 $level = is_array($finding) ? Severity::ofProbeWord($finding['severity'] ?? null) : Severity::INFO;
@@ -711,6 +715,181 @@ class ReportFacts
         }
 
         return array_values($groups);
+    }
+
+    /**
+     * Findings the probe routes into `deep_vulnerabilities` as structured
+     * entries rather than NSE text: the database module (`<ip>_databases`) and
+     * web fuzzing (`<ip>_web_fuzz`). deepFindings() reads only the string (NSE)
+     * entries, so without this a confirmed database RCE or an exposed `.env`
+     * never reaches the document.
+     *
+     * Every finding here comes from a flag the scanner itself set - a confirmed
+     * RCE, cracked credentials, an unauthenticated database, exposed PII, a
+     * discovered path - never from inference. An entry that only timed out or
+     * did not apply carries no such flag and yields nothing; its coverage gap
+     * comes from the audit groups.
+     *
+     * @param  array<string, mixed>  $document
+     * @return list<array<string, mixed>>
+     */
+    private static function structuredDeepFindings(array $document): array
+    {
+        $findings = [];
+
+        foreach (self::map($document, 'deep_vulnerabilities') as $key => $value) {
+            if (! is_array($value)) {
+                continue;
+            }
+
+            $key = (string) $key;
+
+            if (str_ends_with($key, '_databases')) {
+                foreach (self::databaseFindings($value, substr($key, 0, -10)) as $finding) {
+                    $findings[] = $finding;
+                }
+            } elseif (str_ends_with($key, '_web_fuzz')) {
+                $finding = self::webFuzzFinding($value, substr($key, 0, -9));
+
+                if ($finding !== null) {
+                    $findings[] = $finding;
+                }
+            }
+        }
+
+        return $findings;
+    }
+
+    /**
+     * @param  array<string, mixed>  $value
+     * @return list<array<string, mixed>>
+     */
+    private static function databaseFindings(array $value, string $ip): array
+    {
+        // The module nests per-engine results, so the signal flags sit at
+        // varying depths; gather them wherever they are.
+        $signals = [];
+        self::collectDbSignals($value, $signals);
+
+        $findings = [];
+
+        if ($signals['rce'] ?? false) {
+            $findings[] = self::finding(Severity::CRITICAL, 'Potwierdzone zdalne wykonanie kodu na bazie danych (RCE)', $ip, null, 'Bazy danych', [], true, 'Sonda wykonała polecenie systemowe przez usługę bazy danych.');
+        }
+
+        if ($signals['creds'] ?? false) {
+            $findings[] = self::finding(Severity::CRITICAL, 'Złamane poświadczenia dostępu do bazy danych', $ip, null, 'Bazy danych', [], true, 'Usługa przyjęła domyślne lub słabe hasło.');
+        }
+
+        if ($signals['no_auth'] ?? false) {
+            $findings[] = self::finding(Severity::HIGH, 'Baza danych dostępna bez uwierzytelnienia', $ip, null, 'Bazy danych', [], true, null);
+        }
+
+        if (($signals['empty_pw'] ?? []) !== []) {
+            $findings[] = self::finding(Severity::HIGH, 'Konto bazy danych bez hasła', $ip, null, 'Bazy danych', [], true, implode(', ', array_slice($signals['empty_pw'], 0, 8)));
+        }
+
+        if (($signals['pii'] ?? []) !== []) {
+            $findings[] = self::finding(Severity::HIGH, 'Dane wrażliwe dostępne w bazie danych', $ip, null, 'Bazy danych', [], true, implode('; ', array_slice($signals['pii'], 0, 8)));
+        }
+
+        return $findings;
+    }
+
+    /**
+     * Walks a database result for the scanner's own finding flags, at any depth.
+     *
+     * @param  array{rce?: bool, creds?: bool, no_auth?: bool, empty_pw?: list<string>, pii?: list<string>}  $acc
+     */
+    private static function collectDbSignals(mixed $value, array &$acc): void
+    {
+        if (! is_array($value)) {
+            return;
+        }
+
+        foreach ($value as $key => $item) {
+            match ($key) {
+                'critical_rce_confirmed' => $item === true ? $acc['rce'] = true : null,
+                'critical_no_auth' => $item === true ? $acc['no_auth'] = true : null,
+                'critical_compromised_credentials' => is_scalar($item) && (string) $item !== '' ? $acc['creds'] = true : null,
+                'nse_empty_password_accounts' => $acc['empty_pw'] = [...($acc['empty_pw'] ?? []), ...array_filter((array) $item, is_string(...))],
+                'deep_pii_radar' => $acc['pii'] = [...($acc['pii'] ?? []), ...array_filter((array) $item, is_string(...))],
+                default => null,
+            };
+
+            if (is_array($item)) {
+                self::collectDbSignals($item, $acc);
+            }
+        }
+    }
+
+    /**
+     * Web fuzzing surfaces as one finding per host when the scan discovered
+     * reachable paths. These are candidates, not confirmed exposures: a server
+     * that answers 200 to anything (`favicon.ico.zip`, `favicon.ico.env`, …)
+     * floods the list with soft-404 noise. Such a catch-all is detected and
+     * dropped rather than reported as a vulnerability - overstating a finding
+     * costs trust once - and the rest are graded medium and unconfirmed, for a
+     * person to verify.
+     *
+     * @param  array<array-key, mixed>  $value
+     */
+    private static function webFuzzFinding(array $value, string $ip): ?array
+    {
+        $entries = array_is_list($value) ? $value : [$value];
+        $paths = [];
+
+        foreach ($entries as $entry) {
+            if (is_array($entry)) {
+                $paths = [...$paths, ...array_filter((array) ($entry['discovered_paths'] ?? []), is_string(...))];
+            }
+        }
+
+        $paths = array_values(array_unique($paths));
+
+        if ($paths === [] || self::looksLikeSoftFourOhFour($paths)) {
+            return null;
+        }
+
+        return self::finding(
+            Severity::MEDIUM,
+            'Serwer WWW ujawnił ścieżki wymagające weryfikacji',
+            $ip,
+            null,
+            'Aplikacje webowe',
+            [],
+            false,
+            'Wykryte podczas fuzzingu katalogów; część może być fałszywa - wymaga ręcznego potwierdzenia. '
+                .implode(', ', array_slice($paths, 0, 8)).(count($paths) > 8 ? ' i '.(count($paths) - 8).' innych' : ''),
+        );
+    }
+
+    /**
+     * A catch-all server returns 200 for every `<base>.<anything>`, so the
+     * fuzzer's hits collapse to one stem across many extensions. When one stem
+     * dominates, the list is noise rather than discovered files.
+     *
+     * @param  list<string>  $paths
+     */
+    private static function looksLikeSoftFourOhFour(array $paths): bool
+    {
+        if (count($paths) < 4) {
+            return false;
+        }
+
+        $stems = [];
+
+        foreach ($paths as $path) {
+            // Drop the scheme, then keep the directory and the final segment up
+            // to its first dot, so http/https variants of favicon.ico.zip,
+            // favicon.ico.bak and favicon.ico.tar.gz all share one stem.
+            $bare = preg_replace('#^[a-z]+://#i', '', $path);
+            preg_match('#^(.*/)?([^/.]*)#', $bare, $m);
+            $stems[($m[1] ?? '').($m[2] ?? '')] = true;
+        }
+
+        // Many paths, one or two stems: a wildcard responder, not real finds.
+        return count($stems) <= 2;
     }
 
     /**

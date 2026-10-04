@@ -908,4 +908,72 @@ class ReportFactsTest extends TestCase
         $this->assertFalse($finding['confirmed']);
         $this->assertNotNull($finding['note']);
     }
+
+    /*
+     * Database and web-fuzzing findings routed into deep_vulnerabilities as
+     * structured entries (deepFindings reads only the NSE string entries).
+     */
+
+    public function test_database_rce_and_exposure_signals_become_findings(): void
+    {
+        $facts = ReportFacts::from(['deep_vulnerabilities' => [
+            '192.0.2.30_databases' => [
+                'postgres' => ['status' => 'ok', 'critical_rce_confirmed' => true],
+                'mysql' => ['status' => 'ok', 'deep_pii_radar' => ['PESEL w crm.klienci'], 'nse_empty_password_accounts' => ['root']],
+                'redis' => ['critical_no_auth' => true],
+            ],
+        ]]);
+
+        $db = collect($facts['findings'])->where('source', 'Bazy danych');
+
+        $this->assertSame(Severity::CRITICAL, $db->firstWhere('title', 'Potwierdzone zdalne wykonanie kodu na bazie danych (RCE)')['level']);
+        $this->assertNotNull($db->firstWhere('title', 'Baza danych dostępna bez uwierzytelnienia'));
+        $this->assertNotNull($db->firstWhere('title', 'Konto bazy danych bez hasła'));
+        $pii = $db->firstWhere('title', 'Dane wrażliwe dostępne w bazie danych');
+        $this->assertStringContainsString('PESEL', $pii['note']);
+        $this->assertTrue($pii['confirmed']);
+    }
+
+    public function test_a_database_result_that_only_timed_out_is_not_a_finding(): void
+    {
+        $facts = ReportFacts::from(['deep_vulnerabilities' => [
+            '192.0.2.40_databases' => ['mysql' => ['status' => 'timeout', 'test' => 'databases']],
+        ]]);
+
+        $this->assertSame([], collect($facts['findings'])->where('source', 'Bazy danych')->all());
+    }
+
+    public function test_web_fuzz_paths_surface_as_an_unconfirmed_finding(): void
+    {
+        $facts = ReportFacts::from(['deep_vulnerabilities' => [
+            '192.0.2.40_web_fuzz' => [['discovered_paths' => [
+                'http://192.0.2.40/.git/config', 'http://192.0.2.40/backup.sql', 'http://192.0.2.40/admin/',
+            ]]],
+        ]]);
+
+        $finding = collect($facts['findings'])->firstWhere('source', 'Aplikacje webowe');
+
+        $this->assertSame(Severity::MEDIUM, $finding['level']);
+        $this->assertFalse($finding['confirmed']);
+        $this->assertStringContainsString('backup.sql', $finding['note']);
+    }
+
+    /**
+     * A server answering 200 to every favicon.ico.<ext> floods web fuzzing with
+     * soft-404 noise; reporting it as a finding would overstate.
+     */
+    public function test_a_soft_404_wildcard_is_not_reported(): void
+    {
+        $paths = array_map(
+            fn (string $ext): string => "http://192.0.2.40/favicon.ico.$ext",
+            ['zip', 'bak', 'sql', 'php', 'txt', 'env', 'config'],
+        );
+        $paths[] = 'https://192.0.2.40/favicon.ico.tar.gz';
+
+        $facts = ReportFacts::from(['deep_vulnerabilities' => [
+            '192.0.2.40_web_fuzz' => [['discovered_paths' => $paths]],
+        ]]);
+
+        $this->assertSame([], collect($facts['findings'])->where('source', 'Aplikacje webowe')->all());
+    }
 }

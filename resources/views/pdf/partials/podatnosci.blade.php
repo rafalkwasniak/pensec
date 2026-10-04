@@ -63,3 +63,40 @@
         w tym wymagających uwagi: <strong>{{ $totals['deep_findings_notable'] }}</strong>{{ $quiet > 0 ? ", pozostałe {$quiet} zakończyło się wynikiem czystym" : '' }}.
     </p>
 @endif
+
+@php
+    // Database and web-fuzzing results do not come through NSE; they are their
+    // own findings (ReportFacts), so this section lists them here too rather
+    // than leaving them only in the ranked table.
+    $deepExtra = array_values(array_filter(
+        $facts['findings'],
+        fn ($f) => in_array($f['source'], ['Bazy danych', 'Aplikacje webowe'], true),
+    ));
+@endphp
+
+@if ($deepExtra !== [])
+    <h3 style="font-size:12px; color:#0b1426; margin:16px 0 8px;">Bazy danych i aplikacje webowe</h3>
+    <table class="data">
+        <thead>
+            <tr>
+                <th style="width:13%;">Waga</th>
+                <th style="width:20%;">Gdzie</th>
+                <th>Ustalenie</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach ($deepExtra as $finding)
+                <tr>
+                    <td><span class="tag {{ $finding['level'] === App\Support\Severity::INFO ? 'tag-calm' : 'tag-warn' }}">{{ App\Support\Severity::label($finding['level']) }}</span></td>
+                    <td class="mono">{{ $finding['ip'] ?? 'cała sieć' }}</td>
+                    <td>
+                        {{ $finding['title'] }}
+                        @if ($finding['note'])
+                            <div style="color:#55647f;">{{ Illuminate\Support\Str::limit($finding['note'], $evidence) }}</div>
+                        @endif
+                    </td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
+@endif

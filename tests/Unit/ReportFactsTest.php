@@ -976,4 +976,12 @@ class ReportFactsTest extends TestCase
 
         $this->assertSame([], collect($facts['findings'])->where('source', 'Aplikacje webowe')->all());
     }
+
+    public function test_the_probe_headline_risk_is_carried_to_the_facts(): void
+    {
+        $facts = ReportFacts::from(['report_summary' => ['overall_result' => 'completed', 'highest_observed_risk' => 'high']]);
+
+        $this->assertSame('high', $facts['scan']['highest_risk']);
+        $this->assertNull(ReportFacts::from([])['scan']['highest_risk']);
+    }
 }

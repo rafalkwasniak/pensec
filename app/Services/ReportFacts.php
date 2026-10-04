@@ -209,6 +209,10 @@ class ReportFacts
                 'orchestrator_ip' => self::string($document, 'orchestrator_ip'),
                 'outcome' => $coverage['outcome'],
                 'outcome_note' => $coverage['outcome_note'],
+                // The probe's own one-word verdict for the run, shown on the
+                // cover. Our own severity_counts drive the tiles; this is the
+                // probe's headline, kept beside them.
+                'highest_risk' => self::string(self::map($document, 'report_summary'), 'highest_observed_risk'),
             ],
             'totals' => [
                 'hosts_discovered' => max(count($hosts), self::int($document, 'discovered_hosts_count')),

@@ -239,6 +239,52 @@
     @endforeach
 </table>
 
+@php
+    // The probe's own headline verdict for the run, shown as a badge beside our
+    // tiles. Unknown/none are not alarming and read as neutral.
+    $risk = $facts['scan']['highest_risk'] ?? null;
+    $riskLabels = [
+        'critical' => ['Krytyczne', '#7f1d1d', '#fdeaea'],
+        'high' => ['Wysokie', '#8a4b06', '#fdf0d5'],
+        'medium' => ['Średnie', '#5b4a1a', '#fbf6e4'],
+        'low' => ['Niskie', '#55647f', '#eef2f9'],
+        'info' => ['Informacyjne', '#55647f', '#eef2f9'],
+        'none' => ['Brak', '#2f6b3d', '#e9f5ec'],
+        'unknown' => ['Nieustalone', '#55647f', '#eef2f9'],
+    ];
+
+    // The devices carrying the most weight, so a reader sees where to look
+    // first. Network-wide findings (no IP) are not a device.
+    $byHost = [];
+    foreach ($facts['findings'] as $f) {
+        if ($f['ip'] === null) {
+            continue;
+        }
+        $byHost[$f['ip']] ??= ['count' => 0, 'rank' => count(App\Support\Severity::ORDER)];
+        $byHost[$f['ip']]['count']++;
+        $byHost[$f['ip']]['rank'] = min($byHost[$f['ip']]['rank'], App\Support\Severity::rank($f['level']));
+    }
+    uasort($byHost, fn ($a, $b) => [$a['rank'], -$a['count']] <=> [$b['rank'], -$b['count']]);
+    $hotspots = array_slice($byHost, 0, 3, true);
+@endphp
+
+@if ($risk !== null && isset($riskLabels[$risk]))
+    @php ([$riskName, $riskInk, $riskBg] = $riskLabels[$risk]) @endphp
+    <div style="width:86%; margin:18px auto 0 auto; text-align:center;">
+        <span style="font-size:10px; color:#55647f;">Najwyższe stwierdzone ryzyko:</span>
+        <span style="font-size:11px; font-weight:bold; color:{{ $riskInk }}; background:{{ $riskBg }}; border-radius:6px; padding:2px 10px; margin-left:6px;">{{ $riskName }}</span>
+    </div>
+@endif
+
+@if ($hotspots !== [])
+    <div style="width:86%; margin:14px auto 0 auto; font-size:9px; color:#667a96; text-align:center;">
+        Najbardziej narażone urządzenia:
+        @foreach ($hotspots as $ip => $h)
+            <span class="mono" style="color:#0b1426;">{{ $ip }}</span> ({{ App\Support\Polish::count($h['count'], 'ustalenie', 'ustalenia', 'ustaleń') }}){{ ! $loop->last ? ', ' : '' }}
+        @endforeach
+    </div>
+@endif
+
 {{-- The summary used to sit here, but two paragraphs of prose overflowed the
      cover and left a near-empty page behind it. It has its own section now. --}}
 

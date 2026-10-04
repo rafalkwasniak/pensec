@@ -65,7 +65,10 @@ class ReportSections
      */
     private static function nuclei(string $json, int $offset): mixed
     {
-        $members = JsonOutline::members($json, ['representation', 'templates', 'targets', 'scans', 'findings'], $offset);
+        $members = JsonOutline::members($json, [
+            'representation', 'templates', 'targets', 'scans', 'findings',
+            'grouped_observations', 'security_location_observations',
+        ], $offset);
 
         if (! isset($members['representation'], $members['findings'])) {
             return JsonOutline::decode($json, $offset);
@@ -73,7 +76,10 @@ class ReportSections
 
         $section = [];
 
-        foreach (['representation', 'templates', 'targets', 'scans'] as $key) {
+        // Everything but the findings list is bounded and decoded whole; the
+        // grouped observations are the counted technical context ReportFacts
+        // tallies, so they have to survive the section read.
+        foreach (['representation', 'templates', 'targets', 'scans', 'grouped_observations', 'security_location_observations'] as $key) {
             if (isset($members[$key])) {
                 $section[$key] = JsonOutline::decode($json, $members[$key]);
             }

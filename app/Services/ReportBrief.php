@@ -313,13 +313,18 @@ class ReportBrief
                     .' - wynik dotyczy tylko sprawdzonej części.'
                 : '';
 
+            // Grouped non-security extractor hits; counted context, not findings.
+            $observations = ($module['observations'] ?? 0) > 0
+                ? ' Ponadto '.$module['observations'].' technicznych obserwacji narzędzia (nie podatności).'
+                : '';
+
             if ($module['findings'] === []) {
-                $lines[] = $module['label'].': nie stwierdzono podatności.'.$partial;
+                $lines[] = $module['label'].': nie stwierdzono podatności.'.$partial.$observations;
 
                 continue;
             }
 
-            $lines[] = $module['label'].': '.count($module['findings']).' ustaleń.'.$partial;
+            $lines[] = $module['label'].': '.count($module['findings']).' ustaleń.'.$partial.$observations;
 
             foreach (array_slice($module['findings'], 0, self::MAX_LIST) as $finding) {
                 $lines[] = '  - '.self::clip(ResultText::describe($finding), self::MAX_FINDING);

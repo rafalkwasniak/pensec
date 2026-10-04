@@ -281,7 +281,32 @@ software per host, graded by the worst CVSS, and - being version matches nobody 
 one step lower than the score says (`Severity::ofCvss`), the same rule as an NSE script that
 could not confirm itself. Where they exist, the `vulners` script findings for that host are
 dropped, because the correlation is built from them. Nuclei matches are folded per template
-and host with a count.
+and host with a count, and are never marked confirmed - a template match is an observation,
+not a proven vulnerability.
+
+**Schema 3 moved the deep-scan evidence.** Up to schema 2 the NSE output was nmap console
+text in `deep_vulnerabilities`; schema 3 sends one entry per script in `nse_script_evidence`,
+each with a bounded `evidence_excerpt`, a `state` and the CVEs it cited. Both are read into
+the same deep-finding shape. The entry's `state` is the probe's verdict and overrides the
+excerpt: `not_vulnerable` is clean even when the excerpt quotes a CVE (what the script looks
+for), `vulnerable` floors the grade to high. Exact-duplicate records collapse; two ports
+(443 and 4443) stay as two endpoints.
+
+**The probe's own verdict, where it gives one, decides a finding's fate.** `finding_state`
+(`false_positive`, `not_applicable` → dropped; `confirmed` → confirmed; `candidate`/
+`probable`/`unverified` → shown unconfirmed) is honoured on CVE and posture findings when
+present; older reports without it fall back to CVSS confirmation and evidence classification.
+A nuclei template match is never confirmed. Grouped non-security extractor hits
+(`grouped_observations`, `security_location_observations`: clock times, hex colours) are
+tallied as `observations` and shown as a note, never as findings.
+
+**Diagnostics went structured in schema 3.** `top_talkers_evidence` carries pre-parsed
+endpoint rows (the old `top_talkers` was tshark console text, still handled); `App\Support\Diagnostics`
+builds the traffic table from either. `bandwidth_evidence.metrics` renders as labelled
+readings. An address that changed owner mid-scan lands in `unattributed_identity_attempts`
+and is set aside as a coverage note - never pinned on a device. Full per-device history
+(`device_observations`) is not rendered yet; the IP-keyed sections describe the current
+owner, which is what the contract says they do, so nothing is misattributed.
 
 **Lists are whole in the facts and cut where they are shown.** The PDF and the brief cap long
 lists (findings 60/80, a module's results 15/40, CVEs 8/10) and always say how many were left

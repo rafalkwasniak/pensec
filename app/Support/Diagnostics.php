@@ -130,7 +130,19 @@ class Diagnostics
             ],
         ],
         'top_talkers' => ['label' => 'Najbardziej obciążające urządzenia'],
+        'top_talkers_evidence' => ['label' => 'Najbardziej obciążające urządzenia'],
+        'top_talkers_context' => ['label' => 'Pomiar ruchu — warunki'],
         'bandwidth' => ['label' => 'Przepustowość łącza'],
+        'bandwidth_evidence' => ['label' => 'Przepustowość łącza'],
+        'wpad' => ['label' => 'WPAD (automatyczna konfiguracja proxy)'],
+    ];
+
+    /** Readings of the bandwidth test, in the order a reader expects them. */
+    private const BANDWIDTH_METRICS = [
+        'ping' => 'Opóźnienie (ping)',
+        'jitter' => 'Zmienność opóźnienia (jitter)',
+        'download' => 'Pobieranie',
+        'upload' => 'Wysyłanie',
     ];
 
     public static function label(string $key): string
@@ -160,17 +172,37 @@ class Diagnostics
             'error' => null,
         ];
 
-        if ($key === 'top_talkers' && is_string($value)) {
-            $entry['kind'] = 'talkers';
-            $entry['rows'] = TsharkEndpoints::parse($value);
+        if (in_array($key, ['top_talkers', 'top_talkers_evidence'], true)) {
+            // Up to schema 2 the probe sent tshark's console dump as text;
+            // schema 3 pre-parses it into endpoint rows.
+            if (is_string($value)) {
+                $entry['kind'] = 'talkers';
+                $entry['rows'] = TsharkEndpoints::parse($value);
 
-            // Unparseable output still has to reach the page as something.
-            if ($entry['rows'] === []) {
-                $entry['kind'] = 'text';
-                $entry['text'] = trim($value);
+                // Unparseable output still has to reach the page as something.
+                if ($entry['rows'] === []) {
+                    $entry['kind'] = 'text';
+                    $entry['text'] = trim($value);
+                }
+
+                return $entry;
             }
 
-            return $entry;
+            if (is_array($value) && ($rows = self::endpointRows($value)) !== []) {
+                $entry['kind'] = 'talkers';
+                $entry['rows'] = $rows;
+
+                return $entry;
+            }
+        }
+
+        if ($key === 'bandwidth_evidence' && is_array($value) && is_array($value['metrics'] ?? null)) {
+            $entry['kind'] = 'fields';
+            $entry['fields'] = self::bandwidthFields($value['metrics']);
+
+            if ($entry['fields'] !== []) {
+                return $entry;
+            }
         }
 
         if (is_string($value)) {
@@ -370,6 +402,78 @@ class Diagnostics
             }
 
             $fields[] = ['label' => trim($m[1]), 'value' => trim($m[2]), 'concern' => false, 'level' => Severity::INFO, 'gap' => false];
+        }
+
+        return $fields;
+    }
+
+    /**
+     * The traffic table in schema-3 form: `{endpoints: [{endpoint, counters:
+     * {packets, bytes, tx_*, rx_*}}]}` or a bare list of the same. Sorted by
+     * total bytes so the busiest address leads, like the parsed console dump.
+     *
+     * @param  array<string, mixed>  $value
+     * @return list<array{address: string, packets: int, bytes: int, tx_packets: int, tx_bytes: int, rx_packets: int, rx_bytes: int}>
+     */
+    private static function endpointRows(array $value): array
+    {
+        $list = is_array($value['endpoints'] ?? null) ? $value['endpoints'] : (array_is_list($value) ? $value : []);
+        $rows = [];
+
+        foreach ($list as $endpoint) {
+            if (! is_array($endpoint)) {
+                continue;
+            }
+
+            $address = $endpoint['endpoint'] ?? $endpoint['address'] ?? null;
+            $counters = is_array($endpoint['counters'] ?? null) ? $endpoint['counters'] : $endpoint;
+
+            if (! is_scalar($address) || ! isset($counters['bytes'])) {
+                continue;
+            }
+
+            $int = static fn (string $k): int => isset($counters[$k]) && is_numeric($counters[$k]) ? (int) $counters[$k] : 0;
+
+            $rows[] = [
+                'address' => (string) $address,
+                'packets' => $int('packets'),
+                'bytes' => $int('bytes'),
+                'tx_packets' => $int('tx_packets'),
+                'tx_bytes' => $int('tx_bytes'),
+                'rx_packets' => $int('rx_packets'),
+                'rx_bytes' => $int('rx_bytes'),
+            ];
+        }
+
+        usort($rows, fn (array $a, array $b): int => $b['bytes'] <=> $a['bytes']);
+
+        return $rows;
+    }
+
+    /**
+     * @param  array<string, mixed>  $metrics
+     * @return list<array{label: ?string, value: string, concern: bool, level: string, gap: bool}>
+     */
+    private static function bandwidthFields(array $metrics): array
+    {
+        $fields = [];
+
+        foreach (self::BANDWIDTH_METRICS as $key => $label) {
+            $metric = $metrics[$key] ?? null;
+
+            if (! is_array($metric) || ! is_scalar($metric['value'] ?? null)) {
+                continue;
+            }
+
+            $unit = is_scalar($metric['unit'] ?? null) ? ' '.$metric['unit'] : '';
+
+            $fields[] = [
+                'label' => $label,
+                'value' => trim($metric['value'].$unit),
+                'concern' => false,
+                'level' => Severity::INFO,
+                'gap' => false,
+            ];
         }
 
         return $fields;

@@ -6,6 +6,7 @@ use App\Enums\PayloadFormat;
 use App\Enums\ReportStatus;
 use App\Models\Device;
 use App\Models\Report;
+use App\Services\ReportFacts;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Testing\TestResponse;
@@ -489,6 +490,37 @@ class SubmitReportTest extends TestCase
 
         $this->assertLessThan(2 * $bytes, memory_get_peak_usage() - $before);
         $this->assertSame('2026-08-16 11:38:12', Report::sole()->scanned_at->toDateTimeString());
+    }
+
+    /**
+     * The probe ships a schema-3 handoff fixture (docs/report-contract-v3.md)
+     * and asks the backend to keep it in its own tests. Submitted under a fresh
+     * run id, it must be accepted, stored byte-for-byte, and read back into
+     * facts without error - the whole v3 report shape exercised end to end.
+     */
+    public function test_it_accepts_and_reads_the_probe_schema_v3_fixture(): void
+    {
+        $device = $this->activeDevice();
+
+        $fixture = json_decode((string) file_get_contents(base_path('tests/fixtures/schema-v3-backend-request.json')), true);
+        $body = json_encode(['report_id' => self::REPORT_ID, 'report' => $fixture['report']]);
+
+        // The body goes up gzip-compressed, so Spectator cannot read it as the
+        // request JSON schema; the response is what the contract is asserted on.
+        $this->send(gzencode($body), 'gzip')
+            ->assertValidResponse(201)
+            ->assertJsonPath('data.payload_sha256', hash('sha256', $body));
+
+        $report = Report::sole();
+
+        $this->assertSame($body, $this->storedDocument());
+        $this->assertSame(PayloadFormat::Submission, $report->payload_format);
+
+        // Facts derive from the stored v3 document without decoding it whole.
+        $facts = ReportFacts::forReport($report);
+        $this->assertSame('3.0', $report->document()['schema_version']);
+        $this->assertIsArray($facts['findings']);
+        $this->assertArrayHasKey('nuclei_results', $facts['exposure']);
     }
 
     public function test_it_throttles_a_device_that_submits_too_often(): void

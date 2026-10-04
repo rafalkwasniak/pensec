@@ -71,6 +71,15 @@
                             więc wynik dotyczy tylko sprawdzonej części.
                         </div>
                     @endif
+
+                    @if (($module['observations'] ?? 0) > 0)
+                        {{-- Grouped non-security extractor hits (clock times, hex
+                             colours). Counted context, never vulnerabilities. --}}
+                        <div style="margin-top:4px; color:#8a97ab;">
+                            Dodatkowo {{ App\Support\Polish::count($module['observations'], 'techniczna obserwacja', 'techniczne obserwacje', 'technicznych obserwacji') }}
+                            narzędzia (np. znaczniki czasu) - nie są to podatności.
+                        </div>
+                    @endif
                 </td>
             </tr>
         @endforeach

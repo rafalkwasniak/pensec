@@ -202,26 +202,40 @@ components:
         This object is deliberately unconstrained: the device firmware evolves
         independently of the API, and the API stores the document as the source
         of truth precisely so that a later change of the parser cannot lose
-        data. Nothing in this API depends on the keys below - they are shown
-        only to illustrate the scale and shape of a real report.
+        data. The API validates none of the keys below and depends on none of
+        them (it reads only `scan_time`, if present); they illustrate the scale
+        and shape of a real report.
+
+        `schema_version` names the report format the firmware produced. The
+        current firmware sends `"3.0"`; older stored reports have no such field.
+        The authoritative description of each format is the firmware's own
+        `report-contract-v3.md`, not this schema, which does not enumerate the
+        report's contents on purpose.
       additionalProperties: true
       example:
+        schema_version: "3.0"
         scan_time: "2026-08-16 13:38:12"
         orchestrator_ip: 192.168.0.107
         discovered_hosts_count: 2
         hosts:
-          - 192.168.0.101
           - 192.168.0.1
-        nmap_results:
-          192.168.0.1: "Starting Nmap 7.95 ( https://nmap.org ) at 2026-08-16 13:39 CEST\nNmap done: 1 IP address (1 host up) scanned in 3.54 seconds\n"
-        ics_ot_risks:
-          192.168.0.101:
-            - port: 2404
-              transport: UDP
-              protocol: IEC 60870-5-104
-              state: open|filtered
-              severity: INCONCLUSIVE
-        nuclei_results: []
+        nmap_structured:
+          192.168.0.1:
+            status: ok
+            ports:
+              - { protocol: tcp, port: 53, state: open, name: domain, product: dnsmasq, version: "2.83" }
+        audit_group_status:
+          port_scanning:
+            status: ok
+            evidence:
+              - { path: module_status.host.192.168.0.1.nmap_primary, status: ok }
+        report_summary:
+          overall_result: completed
+        nuclei_results:
+          representation: normalized-ai-semantic-grouped-v2
+          templates: []
+          targets: []
+          findings: []
 
     ReportSubmission:
       type: object

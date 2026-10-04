@@ -39,10 +39,10 @@ class ReportFacts
     public const SECTIONS = [
         'scan_time', 'scan_started_at', 'orchestrator_ip', 'discovered_hosts_count', 'hosts',
         'nmap_results', 'nmap_structured', 'asset_inventory', 'deep_vulnerabilities',
-        'ics_ot_risks', 'service_fingerprints', 'diagnostics', 'module_status',
+        'ics_ot_risks', 'service_fingerprints', 'nse_script_evidence', 'diagnostics', 'module_status',
         'audit_group_status', 'report_summary', 'device_security_posture', 'cve_correlations',
         'smb_null_sessions', 'broadcast_poisoning_risks', 'nuclei_results',
-        'default_credentials', 'ldap_leaks', 'infrastructure_risks',
+        'default_credentials', 'ldap_leaks', 'infrastructure_risks', 'unattributed_identity_attempts',
     ];
 
     /**
@@ -382,6 +382,20 @@ class ReportFacts
             $gaps[] = self::gap($coverage['outcome_note'], 'Przebieg badania');
         }
 
+        // An address that changed owner mid-scan: the probe sets those results
+        // aside rather than pin them on either device. We never show them as
+        // findings - saying so is the honest coverage note. The IP-keyed data
+        // the rest of this class reads describes the address's current owner.
+        $unattributed = self::list($document, 'unattributed_identity_attempts');
+
+        if ($unattributed !== []) {
+            $gaps[] = self::gap(
+                'Dla '.Polish::count(count($unattributed), 'urządzenia', 'urządzeń', 'urządzeń')
+                    .' tożsamość zmieniła się w trakcie badania; ich ustaleń nie przypisano do żadnego urządzenia',
+                'Tożsamość urządzeń',
+            );
+        }
+
         $groups = $coverage['groups'];
         $stopped = $groups !== [] && array_filter($groups, fn (array $g): bool => ! $g['problem'] || $g['ran']) === [];
 
@@ -425,19 +439,33 @@ class ReportFacts
 
             $grade = Severity::ofScript($finding['output']);
 
+            // The probe already decided this script found a vulnerability; if
+            // the bounded excerpt was cut before nmap's own State: line, the
+            // grade reads INFO and would understate it. Floor it to high and
+            // unconfirmed - never below what the probe asserts.
+            if (($finding['state'] ?? null) === 'vulnerable' && $grade['level'] === Severity::INFO) {
+                $grade = ['level' => Severity::HIGH, 'confirmed' => false, 'inconclusive' => false];
+            }
+
             if ($grade['inconclusive'] && $grade['level'] === Severity::INFO) {
                 $gaps[] = self::gap('Test '.$finding['name'].' nie uzyskał odpowiedzi', 'Pogłębione testy', [$finding['ip']]);
 
                 continue;
             }
 
+            // vulners prints a CPE or a raw CVE/URL line first, which titleOf
+            // would pick up; its CVEs are already listed beside the finding.
+            $title = $finding['name'] === 'vulners'
+                ? 'Znane podatności usługi (dopasowanie po wersji)'
+                : Severity::titleOf($finding['output'], $finding['name']);
+
             $findings[] = self::finding(
                 $grade['level'],
-                Severity::titleOf($finding['output'], $finding['name']),
+                $title,
                 $finding['ip'],
-                $finding['name'],
+                $finding['name'].(($finding['port'] ?? null) !== null ? ' · port '.$finding['port'] : ''),
                 'Pogłębione testy',
-                Severity::cvesIn($finding['output']),
+                $finding['cves'] ?? Severity::cvesIn($finding['output']),
                 $grade['confirmed'],
                 $grade['inconclusive'] ? 'Test nie zdołał potwierdzić ustalenia.' : null,
             );
@@ -446,8 +474,9 @@ class ReportFacts
         foreach (self::map($document, 'device_security_posture') as $ip => $posture) {
             foreach (is_array($posture) && is_array($posture['findings'] ?? null) ? $posture['findings'] : [] as $finding) {
                 $level = is_array($finding) ? Severity::ofProbeWord($finding['severity'] ?? null) : Severity::INFO;
+                $state = is_array($finding) ? self::findingState($finding) : null;
 
-                if ($level === Severity::INFO) {
+                if ($level === Severity::INFO || self::isDroppedState($state)) {
                     continue;
                 }
 
@@ -460,7 +489,11 @@ class ReportFacts
                     $ports !== [] ? 'port '.implode(', ', $ports) : null,
                     'Konfiguracja urządzeń',
                     [],
-                    ($finding['evidence']['classification'] ?? null) !== 'candidate',
+                    match ($state) {
+                        'confirmed' => true,
+                        null => ($finding['evidence']['classification'] ?? null) !== 'candidate',
+                        default => false,
+                    },
                     is_string($finding['remediation'] ?? null) ? $finding['remediation'] : null,
                 );
             }
@@ -558,7 +591,9 @@ class ReportFacts
                         : null,
                     $module['label'],
                     [],
-                    true,
+                    // A nuclei template match is an observation the contract is
+                    // explicit must not be presented as a confirmed finding.
+                    ! isset($finding['template']),
                     null,
                 );
             }
@@ -639,7 +674,7 @@ class ReportFacts
 
         foreach (self::map($document, 'cve_correlations') as $ip => $correlation) {
             foreach (is_array($correlation) && is_array($correlation['findings'] ?? null) ? $correlation['findings'] : [] as $cve) {
-                if (! is_array($cve) || ! is_string($cve['cve_id'] ?? null)) {
+                if (! is_array($cve) || ! is_string($cve['cve_id'] ?? null) || self::isDroppedState(self::findingState($cve))) {
                     continue;
                 }
 
@@ -654,7 +689,9 @@ class ReportFacts
                 $groups[$key] ??= ['ip' => (string) $ip, 'port' => $port, 'software' => $software, 'cves' => [], 'score' => 0.0, 'confirmed' => false];
                 $groups[$key]['cves'][] = mb_strtoupper($cve['cve_id']);
                 $groups[$key]['score'] = max($groups[$key]['score'], is_numeric($cve['cvss_score_reported'] ?? null) ? (float) $cve['cvss_score_reported'] : 0.0);
-                $groups[$key]['confirmed'] = $groups[$key]['confirmed'] || ($cve['verification_required'] ?? true) === false;
+                $groups[$key]['confirmed'] = $groups[$key]['confirmed']
+                    || self::findingState($cve) === 'confirmed'
+                    || (self::findingState($cve) === null && ($cve['verification_required'] ?? true) === false);
             }
         }
 
@@ -728,6 +765,7 @@ class ReportFacts
                 'findings' => $sorted['findings'],
                 'errors' => $sorted['errors'],
                 'checked' => $sorted['checked'],
+                'observations' => $sorted['observations'] ?? 0,
                 'failed' => $failed,
                 'not_applicable' => $notApplicable,
                 // Ran somewhere but not everywhere: a clean result covers only
@@ -765,7 +803,9 @@ class ReportFacts
             $template = is_array($templates[$tuple[0]] ?? null) ? $templates[$tuple[0]] : [];
             $target = is_array($targets[$tuple[1] ?? -1] ?? null) ? $targets[$tuple[1]] : [];
             $fields = is_array($target['fields'] ?? null) ? $target['fields'] : [];
-            $host = (string) ($fields['host'] ?? $fields['ip'] ?? $target['attributed_target'] ?? '?');
+            // Attribute to the address, not the URL: `host` can be a scheme://…
+            // form, so the IP is preferred when the probe supplies one.
+            $host = (string) ($fields['ip'] ?? $fields['host'] ?? $target['attributed_target'] ?? '?');
             $id = (string) ($template['template-id'] ?? 'szablon '.$tuple[0]);
 
             $folded[$id.'|'.$host] ??= [
@@ -811,7 +851,34 @@ class ReportFacts
             }
         }
 
-        return ['findings' => $findings, 'errors' => $errors, 'checked' => $checked];
+        return ['findings' => $findings, 'errors' => $errors, 'checked' => $checked, 'observations' => self::nucleiObservations($section)];
+    }
+
+    /**
+     * How many technical extractor hits (clock times, hex colours and the like)
+     * the probe grouped away from the findings. The contract is explicit they
+     * are counted context, not vulnerabilities, so they are tallied and shown
+     * as a note - never as findings.
+     *
+     * @param  array<string, mixed>  $section
+     */
+    private static function nucleiObservations(array $section): int
+    {
+        $total = 0;
+
+        foreach (is_array($section['grouped_observations'] ?? null) ? $section['grouped_observations'] : [] as $group) {
+            $total += is_array($group) && is_numeric($group['occurrence_count'] ?? null) ? (int) $group['occurrence_count'] : 0;
+        }
+
+        $location = is_array($section['security_location_observations'] ?? null) ? $section['security_location_observations'] : [];
+        $columns = is_array($location['columns'] ?? null) ? array_values($location['columns']) : [];
+        $index = array_search('occurrence_count', $columns, true);
+
+        foreach (is_array($location['rows'] ?? null) ? $location['rows'] : [] as $row) {
+            $total += is_array($row) && $index !== false && is_numeric($row[$index] ?? null) ? (int) $row[$index] : 0;
+        }
+
+        return $total;
     }
 
     /**
@@ -1031,6 +1098,15 @@ class ReportFacts
     /**
      * NSE findings from the deep scan, attributed to the host they came from.
      *
+     * Two shapes. Up to schema 2 the probe sent nmap's console text per host in
+     * `deep_vulnerabilities`, parsed here by NmapOutput. Schema 3 sends one
+     * entry per script in `nse_script_evidence`, already carrying a bounded
+     * `evidence_excerpt`, the script's own `state` and the CVEs it cited; the
+     * two sources do not overlap on any stored report. The entry's `state` is
+     * the probe's verdict and wins over the excerpt: `not_vulnerable` is clean
+     * even when the excerpt quotes a CVE (`broadcast-avahi-dos` does), because
+     * the quote is what the script looks for, not what it found.
+     *
      * @param  array<string, mixed>  $document
      * @return list<array<string, mixed>>
      */
@@ -1049,6 +1125,54 @@ class ReportFacts
                     'name' => $script['name'],
                     'output' => $script['output'],
                     'notable' => self::isNotable($script['output']),
+                    'state' => null,
+                    'cves' => null,
+                ];
+            }
+        }
+
+        $seen = [];
+
+        foreach (self::map($document, 'nse_script_evidence') as $ip => $entries) {
+            foreach (is_array($entries) ? $entries : [] as $entry) {
+                if (! is_array($entry)) {
+                    continue;
+                }
+
+                $script = (string) ($entry['script_id'] ?? 'skrypt NSE');
+                $port = is_scalar($entry['port'] ?? null) ? (string) $entry['port'] : null;
+
+                // The same script on the same port can be listed twice; two
+                // ports (443 and 4443) are different endpoints and both stay.
+                $key = $ip.'|'.$script.'|'.$port.'|'.($entry['evidence_sha256'] ?? '');
+
+                if (isset($seen[$key])) {
+                    continue;
+                }
+
+                $seen[$key] = true;
+
+                $excerpt = is_string($entry['evidence_excerpt'] ?? null) && $entry['evidence_excerpt'] !== ''
+                    ? $entry['evidence_excerpt']
+                    : implode("\n", array_filter((array) ($entry['security_signals'] ?? []), is_string(...)));
+                // The excerpt is raw NSE console text; parsing it strips the
+                // "| name:" prefixes so titleOf() reads the real first line.
+                $parsed = NmapOutput::scripts($excerpt);
+                $output = $parsed !== [] ? $parsed[0]['output'] : trim(preg_replace('/^\|_?\s?/m', '', $excerpt) ?? '');
+                $state = is_string($entry['state'] ?? null) ? mb_strtolower($entry['state']) : null;
+                $cves = array_values(array_unique(array_map(
+                    mb_strtoupper(...),
+                    array_filter((array) ($entry['cve_ids'] ?? []), is_string(...)),
+                )));
+
+                $findings[] = [
+                    'ip' => (string) $ip,
+                    'name' => $script,
+                    'port' => $port,
+                    'output' => $output,
+                    'notable' => self::nseNotable($state, $output, $cves),
+                    'state' => $state,
+                    'cves' => $cves,
                 ];
             }
         }
@@ -1056,6 +1180,23 @@ class ReportFacts
         usort($findings, fn (array $a, array $b): int => [$b['notable'], $a['ip']] <=> [$a['notable'], $b['ip']]);
 
         return $findings;
+    }
+
+    /**
+     * Whether a schema-3 NSE entry is worth attention. The probe's `state` is
+     * authoritative: `vulnerable` always, `not_vulnerable` never. An `observed`
+     * script is only notable when it cited a CVE or its excerpt grades above
+     * informational - an http-title or server-header stays an observation.
+     *
+     * @param  list<string>  $cves
+     */
+    private static function nseNotable(?string $state, string $output, array $cves): bool
+    {
+        return match ($state) {
+            'not_vulnerable' => false,
+            'vulnerable' => true,
+            default => $cves !== [] || Severity::ofScript($output)['level'] !== Severity::INFO,
+        };
     }
 
     /**
@@ -1229,6 +1370,31 @@ class ReportFacts
     private static function isProblem(string $status): bool
     {
         return in_array($status, self::FAILED_STATUSES, true) || $status === 'partial';
+    }
+
+    /**
+     * The probe's verification verdict for a single finding, when it supplies
+     * one. Schema-3 grouped reports carry `finding_state`; older reports do
+     * not, and callers fall back to their own signals (CVSS confirmation,
+     * evidence classification) when this is null.
+     *
+     * @param  array<string, mixed>  $finding
+     */
+    private static function findingState(array $finding): ?string
+    {
+        $state = $finding['finding_state'] ?? $finding['verification']['finding_state'] ?? null;
+
+        return is_string($state) ? mb_strtolower($state) : null;
+    }
+
+    /**
+     * A finding the probe cleared or ruled irrelevant never reaches the
+     * document: a false positive would frighten a client over nothing, and a
+     * not-applicable check is not a result.
+     */
+    private static function isDroppedState(?string $state): bool
+    {
+        return in_array($state, ['false_positive', 'not_applicable'], true);
     }
 
     /**

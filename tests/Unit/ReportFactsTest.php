@@ -634,4 +634,249 @@ class ReportFactsTest extends TestCase
         $this->assertLessThan(700, mb_strlen($error['error']));
         $this->assertSame('192.168.0.1', $error['ip']);
     }
+
+    /*
+     * Schema 3 - NSE findings arrive one per script in nse_script_evidence.
+     */
+
+    public function test_schema_3_nse_evidence_becomes_deep_findings(): void
+    {
+        $facts = ReportFacts::from([
+            'nse_script_evidence' => [
+                '192.168.0.1' => [
+                    [
+                        'script_id' => 'http-slowloris-check', 'state' => 'vulnerable', 'port' => 80,
+                        'cve_ids' => ['CVE-2007-6750'], 'evidence_sha256' => 'a',
+                        'evidence_excerpt' => "| http-slowloris-check: \n|   VULNERABLE:\n|   Slowloris DOS attack\n|     State: LIKELY VULNERABLE\n|     IDs:  CVE:CVE-2007-6750",
+                    ],
+                    [
+                        'script_id' => 'http-title', 'state' => 'observed', 'port' => 80, 'evidence_sha256' => 'b',
+                        'evidence_excerpt' => '| http-title: Router',
+                    ],
+                ],
+            ],
+        ]);
+
+        $deep = collect($facts['findings'])->where('source', 'Pogłębione testy');
+
+        $slowloris = $deep->firstWhere('title', 'Slowloris DOS attack');
+        $this->assertSame(Severity::HIGH, $slowloris['level']);
+        $this->assertSame('http-slowloris-check · port 80', $slowloris['where']);
+        $this->assertSame(['CVE-2007-6750'], $slowloris['cves']);
+
+        // An http-title observation is counted but is not a finding.
+        $this->assertSame(2, $facts['totals']['deep_findings']);
+        $this->assertSame(1, $facts['totals']['deep_findings_notable']);
+        $this->assertNull($deep->firstWhere('where', 'http-title · port 80'));
+    }
+
+    /**
+     * broadcast-avahi-dos quotes a CVE in what it checks for; the probe's
+     * not_vulnerable state must win, or a clean host reads as critical.
+     */
+    public function test_a_not_vulnerable_state_wins_over_a_cve_in_the_excerpt(): void
+    {
+        $facts = ReportFacts::from([
+            'nse_script_evidence' => [
+                '192.168.0.56' => [[
+                    'script_id' => 'broadcast-avahi-dos', 'state' => 'not_vulnerable', 'port' => null,
+                    'cve_ids' => ['CVE-2011-1002'], 'evidence_sha256' => 'c',
+                    'evidence_excerpt' => "| broadcast-avahi-dos: \n|   Discovered hosts:\n|   DoS CVE-2011-1002\n|_  Hosts are all up (not vulnerable).",
+                ]],
+            ],
+        ]);
+
+        $this->assertSame([], collect($facts['findings'])->where('source', 'Pogłębione testy')->all());
+        $this->assertSame(1, $facts['totals']['deep_findings']);
+        $this->assertSame(0, $facts['totals']['deep_findings_notable']);
+    }
+
+    public function test_exact_duplicate_nse_records_collapse_but_distinct_ports_stay(): void
+    {
+        $poodle = fn (int $port): array => [
+            'script_id' => 'ssl-poodle', 'state' => 'vulnerable', 'port' => $port, 'cve_ids' => ['CVE-2014-3566'],
+            'evidence_sha256' => 'sha'.$port,
+            'evidence_excerpt' => "| ssl-poodle: \n|   VULNERABLE:\n|   SSL POODLE information leak\n|     State: VULNERABLE\n|     IDs:  CVE:CVE-2014-3566",
+        ];
+
+        $facts = ReportFacts::from(['nse_script_evidence' => [
+            '192.168.0.9' => [$poodle(443), $poodle(4443), $poodle(443)],
+        ]]);
+
+        $poodles = collect($facts['findings'])->where('title', 'SSL POODLE information leak');
+
+        $this->assertSame(2, $poodles->count());
+        $this->assertEqualsCanonicalizing(
+            ['ssl-poodle · port 443', 'ssl-poodle · port 4443'],
+            $poodles->pluck('where')->all(),
+        );
+        $this->assertSame(Severity::CRITICAL, $poodles->first()['level']);
+    }
+
+    public function test_a_vulnerable_state_floors_severity_when_the_excerpt_was_truncated(): void
+    {
+        // The excerpt was cut before nmap's State: line, so it grades INFO.
+        $facts = ReportFacts::from(['nse_script_evidence' => [
+            '192.168.0.1' => [[
+                'script_id' => 'http-fileupload-exploiter', 'state' => 'vulnerable', 'port' => 80,
+                'evidence_sha256' => 'd', 'evidence_excerpt' => '| http-fileupload-exploiter: uploaded shell',
+            ]],
+        ]]);
+
+        $finding = collect($facts['findings'])->firstWhere('where', 'http-fileupload-exploiter · port 80');
+
+        $this->assertSame(Severity::HIGH, $finding['level']);
+        $this->assertFalse($finding['confirmed']);
+    }
+
+    public function test_vulners_deep_findings_are_dropped_where_cve_correlations_cover_the_host(): void
+    {
+        $doc = [
+            'nse_script_evidence' => ['192.168.0.1' => [[
+                'script_id' => 'vulners', 'state' => 'observed', 'port' => 53, 'cve_ids' => ['CVE-2021-3448'],
+                'evidence_sha256' => 'e', 'evidence_excerpt' => "| vulners: \n|   cpe:/a:thekelleys:dnsmasq:2.83:\n|_    CVE-2021-3448\t4.3",
+            ]]],
+            'cve_correlations' => ['192.168.0.1' => ['findings' => [[
+                'cve_id' => 'CVE-2021-3448', 'cvss_score_reported' => 7.5, 'port' => 53,
+                'affected_service' => ['product' => 'dnsmasq', 'version' => '2.83'], 'verification_required' => true,
+            ]]]],
+        ];
+
+        $facts = ReportFacts::from($doc);
+
+        $this->assertNull(collect($facts['findings'])->firstWhere('source', 'Pogłębione testy'));
+        $this->assertNotNull(collect($facts['findings'])->firstWhere('source', 'Korelacja wersji z bazą CVE'));
+    }
+
+    public function test_a_nuclei_match_is_attributed_to_the_ip_and_never_confirmed(): void
+    {
+        $facts = ReportFacts::from(['nuclei_results' => [
+            'representation' => 'normalized-ai-semantic-grouped-v2',
+            'templates' => [['template-id' => 'exposed-panel', 'info' => ['name' => 'Exposed panel', 'severity' => 'high']]],
+            'targets' => [['attributed_target' => 'https://10.0.0.5:8443/', 'fields' => ['host' => 'https://10.0.0.5:8443', 'ip' => '10.0.0.5', 'port' => '8443']]],
+            'scans' => ['10.0.0.5' => ['host' => ['status' => 'ok']]],
+            'findings' => [[0, 0, ['matched-at' => 'https://10.0.0.5:8443/admin']]],
+        ]]);
+
+        $finding = collect($facts['findings'])->firstWhere('source', 'Skanowanie szablonami znanych podatności');
+
+        $this->assertSame('10.0.0.5', $finding['ip']);
+        $this->assertSame(Severity::HIGH, $finding['level']);
+        $this->assertFalse($finding['confirmed']);
+    }
+
+    public function test_finding_state_drops_false_positives_and_confirms_only_confirmed(): void
+    {
+        $facts = ReportFacts::from([
+            'cve_correlations' => ['10.0.0.1' => ['findings' => [
+                ['cve_id' => 'CVE-1', 'cvss_score_reported' => 9.5, 'finding_state' => 'false_positive', 'affected_service' => ['product' => 'x', 'version' => '1']],
+                ['cve_id' => 'CVE-2', 'cvss_score_reported' => 9.5, 'finding_state' => 'confirmed', 'affected_service' => ['product' => 'x', 'version' => '1']],
+            ]]],
+            'device_security_posture' => ['10.0.0.2' => ['findings' => [
+                ['severity' => 'high', 'title' => 'Fałszywy alarm', 'finding_state' => 'false_positive'],
+                ['severity' => 'high', 'title' => 'Potwierdzone', 'finding_state' => 'confirmed'],
+                ['severity' => 'medium', 'title' => 'Kandydat', 'finding_state' => 'candidate'],
+                ['severity' => 'high', 'title' => 'Nie dotyczy', 'finding_state' => 'not_applicable'],
+            ]]],
+        ]);
+
+        $titles = array_column($facts['findings'], 'title');
+        $this->assertNotContains('Fałszywy alarm', $titles);
+        $this->assertNotContains('Nie dotyczy', $titles);
+
+        // The false-positive CVE is gone, so the group holds one confirmed CVE.
+        $cve = collect($facts['findings'])->firstWhere('source', 'Korelacja wersji z bazą CVE');
+        $this->assertStringContainsString('1 CVE', $cve['title']);
+        $this->assertSame(Severity::CRITICAL, $cve['level']);
+        $this->assertTrue($cve['confirmed']);
+
+        $confirmed = collect($facts['findings'])->firstWhere('title', 'Potwierdzone');
+        $this->assertTrue($confirmed['confirmed']);
+        $this->assertFalse(collect($facts['findings'])->firstWhere('title', 'Kandydat')['confirmed']);
+    }
+
+    public function test_schema_3_structured_traffic_becomes_a_table(): void
+    {
+        $facts = ReportFacts::from(['diagnostics' => ['top_talkers_evidence' => [
+            'status' => 'parsed_endpoint_rows',
+            'endpoints' => [
+                ['endpoint' => '192.168.0.1', 'counters' => ['packets' => 10, 'bytes' => 1000, 'tx_packets' => 6, 'tx_bytes' => 600, 'rx_packets' => 4, 'rx_bytes' => 400]],
+                ['endpoint' => '10.0.0.9', 'counters' => ['packets' => 99, 'bytes' => 9_000_000, 'tx_packets' => 50, 'tx_bytes' => 5_000_000, 'rx_packets' => 49, 'rx_bytes' => 4_000_000]],
+            ],
+        ]]]);
+
+        $talkers = collect($facts['diagnostics'])->firstWhere('kind', 'talkers');
+
+        $this->assertNotNull($talkers);
+        // Sorted by total bytes, busiest first.
+        $this->assertSame(['10.0.0.9', '192.168.0.1'], array_column($talkers['rows'], 'address'));
+        $this->assertSame(5_000_000, $talkers['rows'][0]['tx_bytes']);
+    }
+
+    public function test_schema_3_bandwidth_metrics_read_as_labelled_values(): void
+    {
+        $facts = ReportFacts::from(['diagnostics' => ['bandwidth_evidence' => [
+            'status' => 'ok',
+            'metrics' => [
+                'ping' => ['value' => '35.1', 'unit' => 'ms'],
+                'download' => ['value' => '91.6', 'unit' => 'Mbit/s'],
+                'upload' => ['value' => '88.8', 'unit' => 'Mbit/s'],
+            ],
+        ]]]);
+
+        $bandwidth = collect($facts['diagnostics'])->firstWhere('label', 'Przepustowość łącza');
+
+        $this->assertSame('fields', $bandwidth['kind']);
+        $values = collect($bandwidth['fields'])->pluck('value', 'label');
+        $this->assertSame('91.6 Mbit/s', $values['Pobieranie']);
+        $this->assertSame('88.8 Mbit/s', $values['Wysyłanie']);
+        // A bandwidth reading is never a finding.
+        $this->assertSame([], collect($bandwidth['fields'])->where('concern', true)->all());
+    }
+
+    public function test_grouped_technical_observations_are_counted_not_turned_into_findings(): void
+    {
+        $facts = ReportFacts::from(['nuclei_results' => [
+            'representation' => 'normalized-ai-semantic-grouped-v2',
+            'templates' => [['template-id' => 'secrets-patterns-pii', 'info' => ['name' => 'PII', 'severity' => 'info']]],
+            'targets' => [['fields' => ['ip' => '10.0.0.5']]],
+            'scans' => ['10.0.0.5' => ['host' => ['status' => 'ok']]],
+            'findings' => [],
+            'grouped_observations' => [
+                ['extractor' => 'times', 'occurrence_count' => 7, 'distinct_location_count' => 3],
+                ['extractor' => 'hex_colors', 'occurrence_count' => 2, 'distinct_location_count' => 1],
+            ],
+            'security_location_observations' => [
+                'columns' => ['template_ref', 'target_ref', 'extractor_ref', 'location_ref', 'occurrence_count', 'matcher_status'],
+                'rows' => [[0, 0, 0, 0, 4, true]],
+            ],
+        ]]);
+
+        $module = $facts['exposure']['nuclei_results'];
+
+        $this->assertSame(13, $module['observations']);
+        // They are not findings and change nothing in the ranked list.
+        $this->assertSame([], collect($facts['findings'])->where('source', 'Skanowanie szablonami znanych podatności')->all());
+        $this->assertSame(0, $facts['severity_counts']['info']);
+    }
+
+    public function test_an_identity_that_changed_owner_mid_scan_is_set_aside_not_misattributed(): void
+    {
+        $facts = ReportFacts::from([
+            'unattributed_identity_attempts' => [
+                ['address_at_observation' => '192.168.0.50', 'confirmed_finding_owner' => null],
+            ],
+            // The current owner's data stays attributed to its IP as usual.
+            'device_security_posture' => ['192.168.0.50' => ['findings' => [
+                ['severity' => 'medium', 'title' => 'Panel po HTTP', 'finding_state' => 'confirmed'],
+            ]]],
+        ]);
+
+        $gap = collect($facts['gaps'])->firstWhere('source', 'Tożsamość urządzeń');
+        $this->assertNotNull($gap);
+        $this->assertStringContainsString('nie przypisano', $gap['title']);
+
+        // The current owner's own finding is still shown.
+        $this->assertNotNull(collect($facts['findings'])->firstWhere('title', 'Panel po HTTP'));
+    }
 }

@@ -1,0 +1,181 @@
+{
+  "report": {
+    "nuclei_results": {
+      "evidence_record_count": 1,
+      "exact_duplicate_record_count": 0,
+      "finding_count": 1,
+      "finding_occurrences": [
+        0
+      ],
+      "findings": [
+        [
+          0,
+          0,
+          {
+            "matched-at": "https://192.0.2.10:8443/example",
+            "matcher-name": "synthetic-marker",
+            "unknown-upstream-field": {
+              "preserved": true
+            }
+          }
+        ]
+      ],
+      "ai_projection_contract": {
+        "finding_columns": [
+          "template_ref",
+          "target_ref",
+          "unique_data"
+        ],
+        "finding_occurrences": "filtered_positional_refs",
+        "inline_text": "bounded_excerpt_sha256_bytes_truncation",
+        "local_template_paths": "omitted",
+        "source_representation": "normalized-lossless-v1",
+        "semantic_filter": "named-extractor-nonsecurity-grouped-v2",
+        "grouped_observations": "bounded_samples_counts_local_evidence",
+        "security_location_observations": "exact_locations_interned_technical_values_not_findings"
+      },
+      "representation": "normalized-ai-semantic-grouped-v2",
+      "scans": {
+        "192.0.2.10": {
+          "host": [],
+          "web": {
+            "complete": false,
+            "finding_count": 1,
+            "finding_refs": [
+              0
+            ],
+            "partial": true,
+            "raw_artifact": {
+              "bytes": 1234,
+              "kind": "nuclei_raw_jsonl_gzip",
+              "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "storage": "local_only"
+            },
+            "status": "partial",
+            "unattributed_finding_refs": [],
+            "raw_finding_count": 3
+          }
+        }
+      },
+      "schema_version": 1,
+      "target_findings": [
+        [
+          0
+        ]
+      ],
+      "targets": [
+        {
+          "attributed_target": "https://192.0.2.10:8443",
+          "fields": {
+            "host": "https://192.0.2.10:8443",
+            "port": "8443",
+            "scheme": "https"
+          }
+        }
+      ],
+      "templates": [
+        {
+          "info": {
+            "name": "Synthetic management exposure",
+            "severity": "medium"
+          },
+          "template-id": "backend-contract-example"
+        },
+        {
+          "template-id": "secrets-patterns-pii",
+          "info": {
+            "name": "Synthetic extractor collision",
+            "severity": "info"
+          }
+        }
+      ],
+      "unique_finding_count": 1,
+      "grouped_observations": [
+        {
+          "template_ref": 1,
+          "target_ref": 0,
+          "extractor": "times",
+          "normalized_value_class": "clock_time",
+          "grouping_reason": "non_security_named_extractor_value",
+          "occurrence_count": 1,
+          "distinct_location_count": 1,
+          "representative_locations": [
+            "https://192.0.2.10:8443/login"
+          ],
+          "representative_values": [
+            "08:21"
+          ],
+          "projected_group_sha256": "ea78c29ade75a3de8330278326edee609d7e0c4fffb10a2cc873b2d503be354a",
+          "local_canonical_evidence": "preserved_local_only"
+        }
+      ],
+      "security_location_observations": {
+        "representation": "technical-location-context-v2",
+        "columns": [
+          "template_ref",
+          "target_ref",
+          "extractor_ref",
+          "location_ref",
+          "occurrence_count",
+          "matcher_status",
+          "global_matchers",
+          "observation_type",
+          "security_evidence_ref"
+        ],
+        "extractors": [
+          "hex_colors"
+        ],
+        "locations": [
+          {
+            "matched-at": "https://192.0.2.10:8443/account/settings"
+          }
+        ],
+        "rows": [
+          [
+            1,
+            0,
+            0,
+            0,
+            1,
+            true,
+            true,
+            "http",
+            null
+          ]
+        ],
+        "security_interpretation": "candidate_context_not_confirmed_by_extractor",
+        "local_canonical_evidence": "preserved_local_only",
+        "security_evidence": [],
+        "verification_required": true,
+        "scanner_match_is_confirmation": false
+      },
+      "grouped_occurrence_count": 2,
+      "semantic_filter": {
+        "policy": "named-extractor-nonsecurity-grouped-v2",
+        "classification": "grouped_non_security_pattern",
+        "source_finding_count": 3,
+        "suppressed_finding_count": 2,
+        "suppressed_unique_finding_count": 2,
+        "suppressed_by_pattern": {
+          "css_color": 1,
+          "time": 1
+        },
+        "retained_finding_count": 1,
+        "security_location_group_count": 1,
+        "source_evidence": "local_canonical_preserved"
+      }
+    },
+    "report_contract": {
+      "ai_transport_projection": "semantic-bounded-v1",
+      "backend_compatibility": "ai-nuclei-projection-consumer-support-required",
+      "max_compressed_request_bytes": 30000000,
+      "max_decoded_request_bytes": 268435456,
+      "nuclei_representation": "normalized-ai-semantic-grouped-v2",
+      "raw_nuclei_evidence": "local_artifact_only",
+      "policy_ledger_representation": "grouped-policy-decisions-v2"
+    },
+    "schema_version": "3.0",
+    "status": "partial"
+  },
+  "report_id": "pensec-schema-v3-synthetic-001"
+}

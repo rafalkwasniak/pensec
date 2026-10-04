@@ -133,7 +133,8 @@
                 <td>
                     The complete scan document, as a JSON object. The API does not validate its structure and requires
                     none of its fields. It reads <code>scan_time</code>, when present, to record when the scan ran; a
-                    missing or unreadable value is accepted.
+                    missing or unreadable value is accepted. <code>schema_version</code> (the current firmware sends
+                    <code>"3.0"</code>) names the report format; the API stores every version unchanged.
                 </td>
             </tr>
         </tbody>

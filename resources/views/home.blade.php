@@ -85,7 +85,7 @@
     <main class="flex-grow w-full mx-auto max-w-6xl px-6 py-10">
 
         <!-- RAPORTY -->
-        <section id="testy" class="border-t border-ink-line pt-20">
+        <section id="raporty" class="border-t border-ink-line pt-20">
             <h2 class="text-sm uppercase tracking-[0.25em] text-brand">Wartość raportu</h2>
             <p class="mt-4 max-w-3xl text-2xl leading-snug chrome-text">
                 Jeden audyt, dwa dokumenty dostosowane do celu.
@@ -100,8 +100,8 @@
                         
                         <ul class="mt-6 space-y-3 text-sm leading-relaxed text-muted">
                             @foreach ([
-                                'Zrozumiały opis stanu sieci, skupiony na ocenie stanu sieci w kontekście ryzyka biznesowego.',
-                                'Stanowi formalny dowód przeprowadzonych testów (m.in. na potrzeby dyrektywy NIS2).',
+                                'Zrozumiały opis stanu bezpieczeństwa sieci w kontekście ryzyka biznesowego.',
+                                'Wspiera wykazanie należytej staranności i przygotowanie do wymogów dyrektywy NIS2.',
                                 'Ułatwia podejmowanie strategicznych decyzji i alokację zasobów IT, dzięki jasnemu wskazaniu priorytetów naprawczych.',
                             ] as $item)
                                 <li class="flex gap-3 items-start">
@@ -117,11 +117,11 @@
                             @foreach ([
                                 'Ocena ryzyka i skategoryzowana lista wykrytych luk.',
                                 'Wykaz aktywnych hostów, ich producentów oraz otwartych portów w warstwie sieciowej.',
-                                'Wyniki skanowania podatności i struktury webowej (CVE & aplikacje).',
+                                'Wyniki skanowania podatności i struktury webowej (CVE i aplikacje webowe).',
                                 'Ekspozycja poufnych poświadczeń, wycieki z LDAP, anonimowe udziały SMB i słabe hasła.',
                                 'Wykrywanie infrastruktury przemysłowej (ICS/OT) w otwartych segmentach sieci LAN.',
                                 'Diagnostyka sieci i bezpieczeństwo Wi-Fi, podatności na podsłuch, VLAN Hopping czy fałszywe DHCP.',
-                                'Plan naprawczy lub utrzymania ułożony według priorytetów instrukcje wyeliminowania wykrytych podatności.',
+                                'Plan naprawy lub utrzymania — uszeregowane według priorytetu zalecenia usunięcia wykrytych podatności.',
                             ] as $item)
                                 <li class="flex gap-3 items-start">
                                     <span aria-hidden="true" class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-ink-line"></span>
@@ -162,11 +162,11 @@
                             @foreach ([
                                 'Ocena ryzyka i skategoryzowana lista wykrytych luk.',
                                 'Wykaz aktywnych hostów, ich producentów oraz otwartych portów w warstwie sieciowej.',
-                                'Wyniki skanowania podatności i struktury webowej (CVE & aplikacje).',
+                                'Wyniki skanowania podatności i struktury webowej (CVE i aplikacje webowe).',
                                 'Ekspozycja poufnych poświadczeń, wycieki z LDAP, anonimowe udziały SMB i słabe hasła.',
                                 'Wykrywanie infrastruktury przemysłowej (ICS/OT) w otwartych segmentach sieci LAN.',
                                 'Diagnostyka sieci i bezpieczeństwo Wi-Fi, podatności na podsłuch, VLAN Hopping czy fałszywe DHCP.',
-                                'Plan naprawczy lub utrzymania ułożony według priorytetów instrukcje wyeliminowania wykrytych podatności.',
+                                'Plan naprawy lub utrzymania — uszeregowane według priorytetu zalecenia usunięcia wykrytych podatności.',
                             ] as $item)
                                 <li class="flex gap-3 items-start">
                                     <span aria-hidden="true" class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-ink-line"></span>
@@ -187,7 +187,7 @@
         </section>
 
         <!-- SPECYFIKACJA -->
-        <section id="raporty" class="mt-28 border-t border-ink-line pt-20">
+        <section id="testy" class="mt-28 border-t border-ink-line pt-20">
             <h2 class="text-sm uppercase tracking-[0.25em] text-brand">Silnik Audytowy</h2>
             <p class="mt-4 max-w-3xl text-2xl leading-snug chrome-text">
                 Zakres wykonywanych testów penetracyjnych.
@@ -217,6 +217,49 @@
                 <a href="/tests" class="inline-block rounded-full border border-ink-line bg-ink-raised px-6 py-2.5 text-sm font-medium text-chrome hover:border-brand transition-colors">
                     Zobacz pełną specyfikację
                 </a>
+            </div>
+        </section>
+
+        <!-- STAN PRAC -->
+        <section class="mt-28 border-t border-ink-line pt-20">
+            <h2 class="text-sm uppercase tracking-[0.25em] text-brand">Stan prac</h2>
+            <p class="mt-4 max-w-3xl text-2xl leading-snug chrome-text">
+                System powstaje etapami. To jest stan na dziś.
+            </p>
+
+            <div class="mt-12 grid gap-6 lg:grid-cols-2">
+                <div class="card p-6">
+                    <h3 class="text-base font-semibold text-chrome">Działa</h3>
+                    <ul class="mt-4 space-y-3 text-sm leading-relaxed text-muted">
+                        @foreach ([
+                            'Odbieranie i bezpieczne przechowywanie kompletnych raportów z sond, niezależnie od ich rozmiaru.',
+                            'Rozpoznawanie sondy i pojedynczego badania; odporność na zerwane połączenie i powtórną wysyłkę.',
+                            'Panel: lista sond, przeprowadzone badania, podgląd szczegółów i pobranie raportu źródłowego.',
+                            'Generowanie dwóch dokumentów z każdego badania — raportu menedżerskiego i eksperckiego.',
+                            'Obsługa najnowszej generacji sond i pełnego zakresu testów.',
+                        ] as $item)
+                            <li class="flex gap-3 items-start">
+                                <span aria-hidden="true" class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-brand"></span>
+                                <span>{{ $item }}</span>
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+
+                <div class="card p-6">
+                    <h3 class="text-base font-semibold text-chrome">Przed nami</h3>
+                    <ul class="mt-4 space-y-3 text-sm leading-relaxed text-muted">
+                        @foreach ([
+                            'Zestawianie kolejnych badań tej samej sieci i śledzenie zmian w czasie.',
+                            'Powiadomienia o nowym raporcie zaraz po jego dostarczeniu.',
+                        ] as $item)
+                            <li class="flex gap-3 items-start">
+                                <span aria-hidden="true" class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-ink-line"></span>
+                                <span>{{ $item }}</span>
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
             </div>
         </section>
 

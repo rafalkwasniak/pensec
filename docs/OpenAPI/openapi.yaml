@@ -48,9 +48,19 @@ paths:
         duplicate. A device whose connection dropped mid-upload can therefore
         retry safely.
 
-        The `report` object is stored verbatim. The API does not parse it, does
-        not validate its internal structure and does not depend on any field
-        inside it.
+        The request body is stored verbatim - the exact bytes the device sent,
+        envelope included. The API does not parse the `report` object, does not
+        validate its internal structure and requires no field inside it. The one
+        field it reads is `scan_time`, when present, to record when the scan
+        ran; a missing or unreadable value is accepted and recorded as unknown.
+
+        The body may be gzip-compressed, announced with `Content-Encoding: gzip`.
+        This is recommended for every report and practically required for large
+        ones: scanner output compresses roughly eightfold. Compression is
+        transport only - the stored document, its size and its checksum are
+        always those of the uncompressed body.
+      parameters:
+        - $ref: '#/components/parameters/ContentEncoding'
       requestBody:
         required: true
         content:
@@ -68,6 +78,8 @@ paths:
           $ref: '#/components/responses/DeviceDisabled'
         "413":
           $ref: '#/components/responses/PayloadTooLarge'
+        "415":
+          $ref: '#/components/responses/UnsupportedEncoding'
         "422":
           $ref: '#/components/responses/ValidationFailed'
         "429":
@@ -87,6 +99,22 @@ components:
         string; it is shown once at registration and stored only as a hash, so
         it cannot be read back from the system afterwards. A lost token has to
         be regenerated.
+
+  parameters:
+
+    ContentEncoding:
+      name: Content-Encoding
+      in: header
+      required: false
+      description: >
+        `gzip` when the body is gzip-compressed. Omit it, or send `identity`,
+        for a plain JSON body. Any other value is refused with `415`.
+      schema:
+        type: string
+        enum:
+          - gzip
+          - identity
+      example: gzip
 
   schemas:
 
@@ -120,6 +148,7 @@ components:
         - device_token_invalid
         - device_disabled
         - payload_too_large
+        - unsupported_encoding
         - rate_limit_exceeded
         - server_error
       example: device_token_invalid
@@ -244,15 +273,17 @@ components:
           type: integer
           minimum: 0
           description: >
-            Size of the stored raw report in bytes, as received. Lets the device
-            confirm the whole document arrived.
+            Size of the stored document in bytes: the request body as the device
+            sent it, after removing gzip compression if there was any. Lets the
+            device confirm the whole document arrived.
         payload_sha256:
           type: string
           pattern: '^[a-f0-9]{64}$'
           description: >
-            SHA-256 of the stored raw report, lowercase hex. On a repeated
-            submission this is the checksum of the document stored first, which
-            is not necessarily the one just sent.
+            SHA-256 of the stored document, lowercase hex - the same value
+            `sha256sum` gives for the uncompressed file the device submitted. On
+            a repeated submission this is the checksum of the document stored
+            first, which is not necessarily the one just sent.
       example:
         report_id: 0f1d4e9c-6a2b-4f7e-9d31-5c8ba0f2e7a4
         status: received
@@ -339,8 +370,10 @@ components:
 
     PayloadTooLarge:
       description: >
-        The request body exceeded the accepted report size limit of 32 MB.
-        Retrying the same document will not help.
+        The document exceeded the accepted size limit of 256 MB. The limit
+        applies to the uncompressed body, so compressing it does not get a larger
+        document through - and to the bytes on the wire as well. Retrying the
+        same document will not help.
       content:
         application/json:
           schema:
@@ -353,7 +386,9 @@ components:
     ValidationFailed:
       description: >
         The request body is malformed: `report_id` is missing or is not a UUID,
-        or `report` is missing or is not a JSON object.
+        or `report` is missing or is not a JSON object. A body that is not a
+        JSON object at all, or a gzip stream that cannot be decompressed, is
+        reported under `body`.
       content:
         application/json:
           schema:
@@ -365,6 +400,19 @@ components:
             errors:
               report_id:
                 - The report id must be a valid UUID.
+
+    UnsupportedEncoding:
+      description: >
+        The body was sent with a `Content-Encoding` other than `gzip` or
+        `identity`. Resend it uncompressed or gzip-compressed.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+          example:
+            success: false
+            code: unsupported_encoding
+            message: The body must be plain or gzip-compressed JSON.
 
     TooManyRequests:
       description: >

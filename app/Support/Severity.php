@@ -91,11 +91,12 @@ class Severity
         $hasCve = (bool) preg_match('/CVE-\d{4}-\d{4,7}/i', $output);
 
         // The script never produced a verdict - it timed out, got no answer, or
-        // fell over. None of those is a finding; they belong to the gaps.
-        if (str_contains($text, 'timeout')
-            || str_contains($text, 'no reply from server')
-            || str_contains($text, 'script execution failed')
-            || str_starts_with($text, 'error:')) {
+        // fell over. None of those is a finding; they belong to the gaps. Only
+        // nmap's own words count: the output also carries whatever the target
+        // sent back, and a router page saying "The session is timeout." once
+        // demoted two real findings to "no response". A script that reached a
+        // State: line produced a verdict, whatever else it printed.
+        if (! str_contains($text, 'state:') && self::neverAnswered($output)) {
             return ['level' => self::INFO, 'confirmed' => false, 'inconclusive' => true];
         }
 
@@ -119,6 +120,24 @@ class Severity
     }
 
     /**
+     * nmap's ways of saying a script never got an answer: an `ERROR:` line,
+     * "Script execution failed", or a short output that is nothing but a
+     * timeout or a missing reply. A long output that merely contains the word
+     * is the target talking, not nmap.
+     */
+    private static function neverAnswered(string $output): bool
+    {
+        if (preg_match('/^\s*ERROR:|script execution failed/im', $output)) {
+            return true;
+        }
+
+        $text = mb_strtolower(trim($output));
+
+        return mb_strlen($text) <= 80
+            && (str_contains($text, 'timeout') || str_contains($text, 'timed out') || str_contains($text, 'no reply from server'));
+    }
+
+    /**
      * @return array{level: string, name: string, why: string}|null
      */
     public static function ofPort(int $port): ?array
@@ -126,10 +145,32 @@ class Severity
         return self::EXPOSED_SERVICES[$port] ?? null;
     }
 
-    /** Maps a severity word the probe supplied onto our own scale. */
-    public static function ofProbeWord(?string $word): string
+    /**
+     * Grades a CVE from its CVSS score. Unconfirmed correlations - the probe
+     * matched a version number against a CVE list, nothing was exploited - land
+     * one step lower, the same rule ofScript() applies to a script that could
+     * not confirm what it announced.
+     */
+    public static function ofCvss(float $score, bool $confirmed): string
     {
-        return match (mb_strtoupper((string) $word)) {
+        $level = match (true) {
+            $score >= 9.0 => self::CRITICAL,
+            $score >= 7.0 => self::HIGH,
+            $score >= 4.0 => self::MEDIUM,
+            default => self::INFO,
+        };
+
+        if ($confirmed) {
+            return $level;
+        }
+
+        return self::ORDER[min(self::rank($level) + 1, count(self::ORDER) - 1)];
+    }
+
+    /** Maps a severity word the probe supplied onto our own scale. */
+    public static function ofProbeWord(mixed $word): string
+    {
+        return match (is_string($word) ? mb_strtoupper($word) : '') {
             'CRITICAL' => self::CRITICAL,
             'HIGH' => self::HIGH,
             'MEDIUM', 'WARNING', 'MODERATE' => self::MEDIUM,

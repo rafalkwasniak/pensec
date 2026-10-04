@@ -13,6 +13,10 @@ use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'home')->name('home');
 
+Route::view('/tests', 'tests.tests')->name('tests');
+
+Route::view('/contact', 'contact.contact')->name('contact');
+
 Route::get('docs/{slug}.html', [DocumentationController::class, 'page'])
     ->where('slug', '[A-Za-z0-9_-]+')
     ->name('docs.page');
@@ -23,7 +27,9 @@ Route::prefix('panel')->name('panel.')->middleware('panel.locale')->group(functi
         Route::post('login', [SessionController::class, 'store'])->name('login.store');
     });
 
-    Route::middleware('auth')->group(function (): void {
+    // auth.session is what makes Auth::logoutOtherDevices() mean anything: it
+    // signs a session out once the password it was opened with has changed.
+    Route::middleware(['auth', 'auth.session'])->group(function (): void {
         Route::post('logout', [SessionController::class, 'destroy'])->name('logout');
 
         Route::redirect('/', '/panel/devices')->name('home');

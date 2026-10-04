@@ -79,7 +79,7 @@ class NarrativePrompt
             Terminologii branżowej (skrypty NSE, NetNTLMv2, VLAN hopping, WPAD, egress filtering,
             ICS/OT) używaj swobodnie i nie tłumacz jej.
 
-            W sekcji "rekomendacje" każdy punkt zaczynaj rzeczownikiem odczasownikowym:
+            W sekcji "rekomendacje" stwórz listę numerowaną (1., 2., 3...), każdy punkt zaczynaj rzeczownikiem odczasownikowym:
             "Wyłączenie obsługi SSLv3 na 192.168.0.1", "Wdrożenie izolacji segmentu OT",
             "Aktualizacja oprogramowania". Nie "należy wyłączyć" ani "wyłącz".
 

@@ -95,6 +95,21 @@ class DeviceManagementTest extends TestCase
         $this->assertSame(DeviceStatus::Active, $device->fresh()->status);
     }
 
+    /**
+     * The name lands inside a JavaScript string in an onsubmit attribute. HTML
+     * escaping alone does not protect that: the browser decodes &#039; back to
+     * a quote before the script runs.
+     */
+    public function test_a_device_name_cannot_break_out_of_the_delete_confirmation(): void
+    {
+        $device = Device::factory()->create(['name' => "x');alert(1);('"]);
+
+        $this->get("/panel/devices/{$device->id}")
+            ->assertOk()
+            ->assertDontSee("confirm('Usunąć sondę x&#039;);alert(1)", false)
+            ->assertSee("confirm('Usunąć sondę x\\u0027);alert(1);(\\u0027?')", false);
+    }
+
     public function test_a_device_without_reports_can_be_deleted(): void
     {
         $device = Device::factory()->create();

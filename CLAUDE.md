@@ -88,17 +88,69 @@ Two things keep the contract honest, and both must stay:
 
 ### Report storage
 
-- `reports` holds system data, `report_payloads` holds the document, one-to-one. Listings
-  never carry megabytes.
-- The payload column is MariaDB `JSON`, which is `LONGTEXT` with a `json_valid` check.
-- The stored document is a **canonical re-encoding** of what arrived, not the original
-  bytes. `payload_bytes` and `payload_sha256` describe what was stored, so a probe
-  comparing checksums against its own file will see a mismatch. This is documented in the
-  guide. Preserving the exact bytes would mean changing the request shape so the report is
-  the whole body.
+- `reports` holds system data; the document is a gzip file on the `local` disk,
+  `storage/app/private/reports/{report_uid}.json.gz`, named in `payload_path`. Files, not a
+  column, because a row is sent to MariaDB whole (capped by `max_allowed_packet`, 256 MB)
+  and held in PHP memory on the way, and reports now run to hundreds of megabytes.
+- `report_payloads` was the old home of the documents. It was dropped on 2026-10-04 once
+  the files had proved out; the files are the only copy.
+- `payload_format` says what a file holds. `submission` (everything since 2026-10-01) is
+  the request body exactly as sent - envelope included, gzip removed - so `payload_bytes`
+  and `payload_sha256` match the probe's own file. `report` is the older form: the `report`
+  object alone, canonically re-encoded. `Report::document()` returns the report either way.
 - Submission is idempotent on `report_uid`. The first document wins; a repeat answers
-  `200` with what is on file. The race where two submissions pass the lookup together is
-  settled by the unique index and handled in `ReportIntake`.
+  `200` with what is on file, **even when its content differs** - the contract says so, and
+  the probe retries anything that is not 2xx for ever. The race where two submissions pass
+  the lookup together is settled by the unique index and handled in `ReportIntake`.
+
+**A report body is never decoded on the way in.** `json_decode` costs about 5.6 times the
+document, and the old path did it twice - once inside Laravel, which decodes every JSON body
+while building the request, and once in the middleware - so anything over ~37 MB died at
+`memory_limit` (512 MB). Now:
+
+- `public/index.php` captures `App\Http\IncomingRequest`, which leaves the decoded input of
+  `POST /api/v1/reports` empty. The test client does not go through it;
+  `IncomingRequestTest` covers it on its own.
+- `StreamReportUpload` streams the body, inflates gzip chunk by chunk and enforces
+  `max_payload_bytes` on the uncompressed size while it grows (a gzip bomb is refused before
+  it is held). The document is then held **once**: `json_validate()` checks it without
+  building values, and `App\Support\JsonOutline` finds `report_id`, the type of `report` and
+  `scan_time` by byte offset. `UploadedReport` carries that to the request and `ReportIntake`.
+- `JsonOutline` is only correct on input `json_validate()` accepted - that is what lets it
+  skip a value by counting brackets. Never hand it anything else.
+- `IncomingRequest::getContent()` also answers `''` for that route: Laravel calls it when it
+  builds the FormRequest (`Request::createFrom`), which would otherwise hold a second copy.
+- Multi-member gzip (`cat a.gz b.gz`, pigz) is read whole; bytes after the end that are not
+  another member are refused. A body over PHP's `post_max_size` is mapped to the 413 envelope
+  in `bootstrap/app.php`.
+- `ReportIntake` checks both the write and the move of the file; a failure is a 500, never a
+  `201` for a row pointing at nothing.
+- Peak memory is about the document plus a few megabytes: a 55 MB report stores in 0.6 s on
+  59 MB. `test_a_large_report_is_stored_without_decoding_it` holds that line.
+
+**Reading is bounded too.** `ReportFacts::forReport()` goes through `App\Support\ReportSections`,
+which holds the document once as a string and decodes only the top-level keys listed in
+`ReportFacts::SECTIONS`, each on its own. Nuclei's findings - the part that grows with the
+network, 13 549 entries and 90% of a real report - are never decoded at once: they arrive as
+a generator and are folded as they are read. A key `ReportFacts` reads but `SECTIONS` does
+not list silently reads as absent; keep the two in step. `Report::document()` still decodes
+everything and is for tests and small documents only.
+
+**`scanned_at` is the one field read out of the document on the way in**, and it exists for
+a single question: did the probe scan late, or did it hold a finished report? Without it
+the panel shows only `received_at`, so a document that sat on a device for four days
+arrives at the top of the list wearing today's date. `ReportIntake` fills it through
+`App\Support\ScanTime`; the panel shows it beside the receipt with the gap between them.
+This is not the parser: nothing else is interpreted, and `Report::card()` does not carry
+it, so the API contract is untouched.
+
+The probe writes `scan_time` with **no zone in it**, so one has to be assumed before it can
+be compared with `received_at`, which is UTC. `pensec.reports.probe_timezone` holds the
+assumption (`Europe/Warsaw`) and is the first thing to check if every delay is suddenly two
+hours out. `ScanTime` accepts only the formats it knows and returns null for anything else,
+including a 1970 date - a Raspberry Pi has no clock of its own, and a probe that never
+reached NTP would otherwise report a delay measured in decades. Null renders as "nie
+podano" rather than as a zero.
 
 ### Devices and authentication
 
@@ -188,10 +240,60 @@ poll. The PDF route renders from what is on file and never waits on a model, whi
 second download is free and gives the same document. Re-generating is a separate,
 confirmed action.
 
+**The facts are kept with the prose.** The job stores the facts it handed the model in
+`report_narratives.facts`, and the PDF renders its tables from that snapshot, not from a
+fresh reading. The document never changes, so the snapshot holds nothing that is not in it;
+what it buys is that tables and prose always describe the same numbers, even after
+`ReportFacts` learns to read a report better. A narrative written before snapshots existed
+gets one on its first download - its prose then sits beside the newer reading. The
+narratives from before 2026-10-04 are left that way on purpose: they are test runs of no
+value, so do not spend DeepSeek calls regenerating them. Regenerating clears the snapshot.
+
+**Schema 3 reports say which tests ran, and that is what coverage is built from.**
+`audit_group_status` lists 19 test groups, but the probe marks a group `failed` when any one
+path failed - a port scan that worked on twenty hosts and timed out on three is `failed`. So
+the evidence paths are read instead: a group with no `ok` path never ran; otherwise the
+hosts it failed on are named. One gap per group, listing hosts - not one per host per
+module, which once turned 182 timeouts into a 30-page PDF. Reports without groups fall back
+to `module_status` folded per module. `report_summary.overall_result` (`operator_stop`,
+`completed_with_module_errors`) opens the gaps and appears on the cover.
+
+Schema 3 also writes `[]` for a test that was stopped before it started, so once a report
+carries groups at all, an empty exposure module is only "clean" when its group
+(`EXPOSURE_MODULES`) says it ran; a group skipped everywhere makes it "nie dotyczy"; anything
+else is "test nie wykonał się". Only the oldest reports, with no groups, still read `[]` as
+clean. Results in a `timeout`/`failed`/`blocked` state, and any `*_FAILED` type
+(`RESPONDER_START_FAILED` carries severity HIGH), are errors; `skipped`/`not_applicable` are
+nothing; `ok` without a severity is a clean check; `no_observation` counts as a check only
+when the module reported no error. Older `module_status` names are folded into the same
+groups (`MODULE_GROUPS`), so section notes work for both generations.
+
+An NSE script is a gap ("nie uzyskał odpowiedzi") only on nmap's own failure words - an
+`ERROR:` line, "Script execution failed", or a short output that is just a timeout. The
+output also carries the target's reply, and a router page saying "The session is timeout."
+once demoted two real findings. The PDF partials put
+`pdf.partials._pokrycie` above every section whose test did not run in full, and drop their
+"nothing found" sentence when it did not run at all.
+
+**Correlations are folded and graded down.** `cve_correlations` lists every CVE matched to a
+software version on its own - 44 lines for one router. They are folded into one finding per
+software per host, graded by the worst CVSS, and - being version matches nobody exploited -
+one step lower than the score says (`Severity::ofCvss`), the same rule as an NSE script that
+could not confirm itself. Where they exist, the `vulners` script findings for that host are
+dropped, because the correlation is built from them. Nuclei matches are folded per template
+and host with a count.
+
+**Lists are whole in the facts and cut where they are shown.** The PDF and the brief cap long
+lists (findings 60/80, a module's results 15/40, CVEs 8/10) and always say how many were left
+out; counts are never computed from a cut list. dompdf embeds font subsets
+(`isFontSubsettingEnabled`): 165 KB instead of 1.2 MB per PDF.
+
 **The queue needs its worker.** `QUEUE_CONNECTION=database` and a crontab entry runs
 `queue:work --stop-when-empty --timeout=330` every minute. Without it a click leaves the
-report `pending` for ever. The worker timeout must stay above the job's `$timeout`, which
-must stay above `services.deepseek.timeout`.
+report `pending` for ever. The chain is `queue.connections.database.retry_after` (360) >
+worker `--timeout` (330) > the job's `$timeout` (300) > `services.deepseek.timeout` (240).
+`retry_after` is the one that was missed: at Laravel's default of 90 the next minute's
+worker picked a slow job up again and, with `--tries=1`, failed it while it still ran.
 
 Two DeepSeek settings are scars, not preferences, and both are commented where they live:
 `max_tokens` is never sent (v4 reasoning tokens count against it and truncate the report
@@ -228,7 +330,7 @@ what a browser without JavaScript keeps.
 Both logos ship in the markup and CSS hides the one that does not apply
 (`theme-when-dark` / `theme-when-light`), so the right one is correct on the first paint
 without a JavaScript `src` swap. The light files are built onto the same canvas as the dark
-ones - `900x889` for the logo, `512x590` for the mark, content scaled to the same fraction
+ones - `768x256` for the logo, `512x590` for the mark, content scaled to the same fraction
 of it - so switching moves nothing on the page. Sources live in `resources/images/`;
 everything in `public/images/` is derived from them.
 
@@ -246,7 +348,8 @@ refused.
 
 Changing a password does **not** require the current one - deliberate, at Rafał's request,
 because an administrator signed in for weeks rarely remembers it. Every other session is
-dropped when the password changes.
+dropped when the password changes - which only works because the panel's `auth` group also
+carries `auth.session`; `Auth::logoutOtherDevices()` alone re-hashes and nothing more.
 
 ### Documentation URLs
 
@@ -260,7 +363,7 @@ dropped when the password changes.
 
 ### Tunables
 
-`config/pensec.php` holds the business constants: 32 MB report limit, 30 submissions per
+`config/pensec.php` holds the business constants: 256 MB report limit (uncompressed), 30 submissions per
 minute per probe, token length. They are config, not `.env`, and not class constants.
 
 ---

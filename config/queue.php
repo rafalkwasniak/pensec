@@ -40,7 +40,12 @@ return [
             'connection' => env('DB_QUEUE_CONNECTION'),
             'table' => env('DB_QUEUE_TABLE', 'jobs'),
             'queue' => env('DB_QUEUE', 'default'),
-            'retry_after' => (int) env('DB_QUEUE_RETRY_AFTER', 90),
+            // Must stay above the worker's --timeout (330 in the crontab), which
+            // stays above GenerateReportNarrative::$timeout (300), which stays
+            // above services.deepseek.timeout (240). At Laravel's default of 90
+            // a slow DeepSeek call was picked up a second time by the next
+            // minute's worker and marked failed while the first still ran.
+            'retry_after' => (int) env('DB_QUEUE_RETRY_AFTER', 360),
             'after_commit' => false,
         ],
 

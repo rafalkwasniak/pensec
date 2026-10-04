@@ -4,23 +4,28 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
-    <title>@yield('title') - panel Pensec</title>
+    <title>@yield('title') | Pensec</title>
     <link rel="icon" type="image/png" href="/favicon.png">
     @include('partials.theme-boot')
     @vite('resources/css/app.css')
 </head>
-<body class="min-h-screen antialiased">
+<body class="min-h-screen flex flex-col antialiased">
 
-    <header class="border-b border-ink-line">
-        <div class="mx-auto flex max-w-6xl flex-wrap items-center gap-6 px-6 py-4">
-            <a href="{{ route('panel.devices.index') }}" class="flex items-center gap-3">
-                <img src="/images/pensec-mark.webp" alt="" width="512" height="590" class="theme-when-dark h-7 w-auto">
-                <img src="/images/pensec-mark-light.webp" alt="" width="512" height="590" class="theme-when-light h-7 w-auto">
-                <span class="font-semibold tracking-wide text-chrome">PENSEC</span>
+    <!-- ZEWNĘTRZNY KONTENER -->
+    <div class="w-full flex justify-center px-4 sm:px-6 mt-6 mb-10">
+        
+        <!-- NAWIGACJA -->
+        <header class="relative z-50 flex min-w-0 max-w-full items-center gap-3 sm:gap-5 rounded-full border border-ink-line bg-ink-raised/70 px-4 sm:px-5 py-2 sm:py-2.5 shadow-lg backdrop-blur-md">
+            
+            <a href="/" class="group shrink-0 flex items-center hover:opacity-80 transition-opacity">
+                <img src="/images/pensec-logo.webp" alt="Pensec" width="768" height="256" class="theme-when-dark h-4 sm:h-5 w-auto">
+                <img src="/images/pensec-logo-light.webp" alt="Pensec" width="768" height="256" class="theme-when-light h-4 sm:h-5 w-auto">
             </a>
 
             @auth
-                <nav class="flex items-center gap-5 text-sm">
+                <div class="h-4 w-px shrink-0 bg-ink-line"></div>
+
+                <nav class="flex shrink min-w-0 items-center gap-4 sm:gap-5 overflow-x-auto hide-scrollbar">
                     @foreach ([
                         ['panel.devices.index', 'Sondy', 'panel/devices*'],
                         ['panel.reports.index', 'Badania', 'panel/reports*'],
@@ -28,25 +33,34 @@
                         ['panel.account.edit', 'Konto', 'panel/account*'],
                     ] as [$route, $label, $pattern])
                         <a href="{{ route($route) }}"
-                           class="{{ request()->is($pattern) ? 'text-brand' : 'text-muted hover:text-chrome' }}">{{ $label }}</a>
+                           class="shrink-0 transition-colors whitespace-nowrap text-xs sm:text-sm font-medium {{ request()->is($pattern) ? 'text-chrome font-semibold' : 'text-muted hover:text-chrome' }}">
+                            {{ $label }}
+                        </a>
                     @endforeach
                 </nav>
             @endauth
-
-            <div class="ml-auto flex items-center gap-5">
+            
+            <div class="h-4 w-px shrink-0 bg-ink-line"></div>
+            
+            <div class="shrink-0 flex items-center">
                 @include('partials.theme-toggle')
-
-                @auth
-                    <form method="POST" action="{{ route('panel.logout') }}">
-                        @csrf
-                        <button type="submit" class="text-sm text-muted hover:text-chrome">Wyloguj</button>
-                    </form>
-                @endauth
             </div>
-        </div>
-    </header>
+            
+            @auth
+                <div class="h-4 w-px shrink-0 bg-ink-line"></div>
 
-    <main class="mx-auto max-w-6xl px-6 py-10">
+                <form method="POST" action="{{ route('panel.logout') }}" class="m-0 flex shrink-0 items-center">
+                    @csrf
+                    <button type="submit" class="text-xs sm:text-sm font-medium text-muted transition-colors hover:text-chrome whitespace-nowrap">
+                        Wyloguj
+                    </button>
+                </form>
+            @endauth
+            
+        </header>
+    </div>
+
+    <main class="flex-grow w-full mx-auto max-w-6xl px-6 py-10">
         @if (session('status'))
             <div class="mb-6 rounded-lg border border-brand/40 bg-brand/10 px-5 py-3 text-sm text-chrome">
                 {{ session('status') }}
@@ -63,7 +77,7 @@
             <div class="mb-6 card p-6">
                 <h2 class="text-base font-semibold text-chrome">Poświadczenie sondy</h2>
                 <p class="mt-2 text-sm leading-relaxed text-muted">
-                    Zapisz je teraz i wgraj na urządzenie. Po opuszczeniu tej strony nie da się go już odczytać -
+                    Zapisz je teraz i wgraj na urządzenie. Po opuszczeniu tej strony nie da się go już odczytać,
                     w bazie zapisany jest wyłącznie jego skrót. Jeśli je zgubisz, wystawisz nowe.
                 </p>
                 <p class="mt-4 overflow-x-auto rounded-lg border border-ink-line bg-ink px-4 py-3 font-mono text-sm text-brand">{{ session('token') }}</p>
@@ -72,6 +86,17 @@
 
         @yield('content')
     </main>
+    
+    <footer class="border-t border-ink-line mt-auto">
+    <div class="mx-auto flex max-w-6xl items-center justify-center px-6 py-10 text-sm text-muted">
+        <div class="flex items-center gap-1.5">
+            <img src="/images/pensec-logo.webp" alt="Pensec" width="768" height="256" class="theme-when-dark h-4 sm:h-5 w-auto">
+            <img src="/images/pensec-logo-light.webp" alt="Pensec" width="768" height="256" class="theme-when-light h-4 sm:h-5 w-auto">
+            <span class="font-semibold tracking-wide text-chrome">&copy;</span>
+            <span class="font-semibold tracking-wide text-chrome">{{ date('Y') }}</span>
+        </div>
+    </div>
+	</footer>
 
 </body>
 </html>

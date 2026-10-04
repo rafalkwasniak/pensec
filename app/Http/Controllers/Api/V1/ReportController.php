@@ -17,7 +17,7 @@ class ReportController extends Controller
         $result = $intake->store(
             AuthenticateDevice::device($request),
             $request->reportId(),
-            $request->report(),
+            $request->upload(),
             $request->ip(),
         );
 

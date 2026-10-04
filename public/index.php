@@ -1,7 +1,7 @@
 <?php
 
+use App\Http\IncomingRequest;
 use Illuminate\Foundation\Application;
-use Illuminate\Http\Request;
 
 define('LARAVEL_START', microtime(true));
 
@@ -17,4 +17,6 @@ require __DIR__.'/../vendor/autoload.php';
 /** @var Application $app */
 $app = require_once __DIR__.'/../bootstrap/app.php';
 
-$app->handleRequest(Request::capture());
+// IncomingRequest, not Request: see the class for why a report body must not be
+// decoded while the request is built.
+$app->handleRequest(IncomingRequest::capture());

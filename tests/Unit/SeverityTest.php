@@ -57,6 +57,24 @@ class SeverityTest extends TestCase
         }
     }
 
+    /**
+     * From report 37: the router's own page said "The session is timeout.", and
+     * reading that as nmap timing out turned two findings into "no response".
+     */
+    public function test_the_word_timeout_in_what_the_target_sent_back_is_not_a_failure(): void
+    {
+        $output = "VULNERABLE:\n  phpMyAdmin grab_globals.lib.php subform Parameter Traversal Local File Inclusion\n"
+            ."    State: UNKNOWN (unable to test)\n    IDs:  CVE:CVE-2005-3299\n"
+            ."    Extra information:\n  ../../../../../etc/passwd :\n  <html><body>The session is timeout.</body></html>";
+
+        $grade = Severity::ofScript($output);
+
+        $this->assertSame(Severity::MEDIUM, $grade['level']);
+        $this->assertTrue($grade['inconclusive']);
+
+        $this->assertSame(Severity::HIGH, Severity::ofScript("Source code may be disclosed\nCVE-2010-2333\n".str_repeat('x', 100).' session is timeout')['level']);
+    }
+
     public function test_a_bare_cve_mention_is_high(): void
     {
         $this->assertSame(

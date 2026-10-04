@@ -1,4 +1,9 @@
-@if ($facts['services'] === [])
+@php($group = $facts['coverage']['port_scanning'] ?? null)
+@include('pdf.partials._pokrycie', ['group' => $group])
+
+@if ($facts['services'] === [] && (($group['problem'] ?? false) && ! $group['ran']))
+    {{-- The note above already says the scan did not happen; "no open ports" would contradict it. --}}
+@elseif ($facts['services'] === [])
     <div class="empty">
         Żadne z wykrytych urządzeń nie wystawiło otwartego portu spośród badanych. To dobry wynik,
         ale dotyczy wyłącznie portów objętych tym skanowaniem.

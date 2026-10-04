@@ -149,6 +149,7 @@ class ReportNarrativeTest extends TestCase
             'variant' => 'expert',
             'status' => 'pending',
             'content' => null,
+            'facts' => null,
         ]);
     }
 
@@ -205,6 +206,53 @@ class ReportNarrativeTest extends TestCase
         $this->assertSame('deepseek-v4-flash', $narrative->model);
         $this->assertSame(3000, $narrative->input_tokens);
         $this->assertNotNull($narrative->generated_at);
+    }
+
+    public function test_the_job_keeps_the_facts_the_prose_was_written_from(): void
+    {
+        $this->fakeDeepSeek($this->answer());
+
+        $report = Report::factory()->withDocument(['scan_time' => '2026-08-16 13:38:12', 'hosts' => ['192.168.0.1', '192.168.0.2']])->create();
+
+        GenerateReportNarrative::dispatchSync($report->id, NarrativeVariant::Expert);
+
+        $facts = $report->fresh()->narratives->first()->facts;
+
+        $this->assertSame(2, $facts['totals']['hosts_discovered']);
+        $this->assertSame(ReportFacts::forReport($report), $facts);
+    }
+
+    /**
+     * The PDF shows the figures the prose was written around, not a fresh
+     * reading - otherwise improving ReportFacts would silently put tables next
+     * to text that describes different numbers.
+     */
+    public function test_the_pdf_renders_from_the_kept_facts(): void
+    {
+        $this->signIn();
+        $report = Report::factory()->create();
+        $narrative = $this->ready($report);
+
+        $kept = ReportFacts::forReport($report);
+        $kept['totals']['hosts_discovered'] = 77;
+        $narrative->forceFill(['facts' => $kept])->save();
+
+        $this->get("/panel/reports/{$report->id}/narrative/expert/pdf")->assertOk();
+
+        $this->assertSame(77, $narrative->fresh()->facts['totals']['hosts_discovered']);
+    }
+
+    public function test_a_narrative_written_before_facts_were_kept_gets_them_on_first_download(): void
+    {
+        $this->signIn();
+        $report = Report::factory()->create();
+        $narrative = $this->ready($report);
+
+        $this->assertNull($narrative->fresh()->facts);
+
+        $this->get("/panel/reports/{$report->id}/narrative/expert/pdf")->assertOk();
+
+        $this->assertSame(ReportFacts::forReport($report), $narrative->fresh()->facts);
     }
 
     public function test_the_job_never_asks_the_model_to_cap_its_own_tokens(): void
@@ -291,7 +339,7 @@ class ReportNarrativeTest extends TestCase
 
         // dompdf compresses page streams, so assert on the facts the renderer
         // was handed rather than on bytes inside the PDF.
-        $facts = ReportFacts::from($report->document());
+        $facts = ReportFacts::forReport($report);
 
         $this->assertSame(1, $facts['totals']['open_ports']);
         $this->assertSame(8080, $facts['services'][0]['port']);

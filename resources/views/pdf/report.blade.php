@@ -133,6 +133,9 @@
             padding: 5px 6px;
             border-bottom: 1px solid #eef2f9;
             vertical-align: top;
+            /* Scanner evidence carries unbroken tokens - URLs, hashes, CPEs -
+               that would otherwise run past the edge of the page. */
+            word-wrap: break-word;
         }
 
         .mono { font-family: 'DejaVu Sans Mono', monospace; font-size: 9px; }
@@ -154,16 +157,28 @@
 
         .tag-warn { background: #fdf0d5; color: #8a4b06; }
         .tag-calm { background: #eef2f9; color: #55647f; }
+        
+        .pagenum:before {
+            content: counter(page);
+        }
     </style>
 </head>
 <body>
 
 <div class="footer">
-    <table style="width:100%; border-collapse:collapse;">
+    <table style="width:100%; border-collapse:collapse; font-size: 10px; color: #6b7280;">
         <tr>
-            <td style="text-align:left;">Pensec &middot; {{ $variant->heading() }}</td>
-            <td style="text-align:center;" class="mono">{{ $report->report_uid }}</td>
-            <td style="text-align:right;">pensec.top</td>
+            <td style="text-align:left; width: 33%;">
+                {{ $variant->heading() }}
+            </td>
+            
+            <td style="text-align:center; width: 34%;" class="mono">
+                {{ $report->report_uid }}
+            </td>
+            
+            <td style="text-align:right; width: 33%;">
+                Strona <span class="pagenum"></span>
+            </td>
         </tr>
     </table>
 </div>
@@ -213,12 +228,13 @@
         'Sonda' => $report->device->name,
         'Identyfikator badania' => $report->report_uid,
         'Data wykonania badania' => $facts['scan']['performed_at'] ?? '-',
+        'Przebieg badania' => $facts['scan']['outcome_note'] ?? 'zakończone',
         'Adres sondy w badanej sieci' => $facts['scan']['orchestrator_ip'] ?? '-',
         'Raport odebrany' => $report->received_at->format('Y-m-d H:i:s').' UTC',
     ] as $label => $value)
         <tr>
             <td style="padding:4px 0; color:#667a96; width:44%;">{{ $label }}</td>
-            <td style="padding:4px 0; color:#0b1426;" class="{{ $label === 'Identyfikator badania' ? 'mono' : '' }}">{{ $value }}</td>
+            <td style="padding:4px 0; color:{{ $label === 'Przebieg badania' && ($facts['scan']['outcome_note'] ?? null) ? '#8a4b06' : '#0b1426' }};" class="{{ $label === 'Identyfikator badania' ? 'mono' : '' }}">{{ $value }}</td>
         </tr>
     @endforeach
 </table>
@@ -252,7 +268,6 @@
              every report word for word and always matches the ending the
              evidence chose. --}}
         <div style="border-top:1px solid #e2e8f2; margin-top:12px; padding-top:10px;">
-            &bull;
             {{ $repairing
                 ? 'Ponowne przeprowadzenie audytu weryfikującego przy pomocy sprzętowego analizatora w celu technicznego potwierdzenia skuteczności wdrożonych zabezpieczeń.'
                 : 'Okresowe wykonywanie zautomatyzowanych audytów bezpieczeństwa w celu utrzymania wysokiego standardu higieny cyfrowej.' }}

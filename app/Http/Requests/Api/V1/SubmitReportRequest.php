@@ -2,11 +2,30 @@
 
 namespace App\Http\Requests\Api\V1;
 
-use Closure;
+use App\Support\UploadedReport;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
+/**
+ * Validates the envelope of a submission. The body itself was read and checked
+ * by StreamReportUpload; what is validated here is the outline it took, never a
+ * decoded report.
+ */
 class SubmitReportRequest extends FormRequest
 {
+    /**
+     * @return array<string, mixed>
+     */
+    public function validationData(): array
+    {
+        $upload = $this->upload();
+
+        return array_filter([
+            'report_id' => $upload->reportId,
+            'report' => $upload->reportType,
+        ], fn (mixed $value): bool => $value !== null);
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -14,17 +33,7 @@ class SubmitReportRequest extends FormRequest
     {
         return [
             'report_id' => ['required', 'uuid'],
-            'report' => [
-                'required',
-                'array',
-                // A JSON list decodes to a PHP array just like an object does,
-                // and the contract promises an object.
-                function (string $attribute, mixed $value, Closure $fail): void {
-                    if (is_array($value) && $value !== [] && array_is_list($value)) {
-                        $fail('The report must be a JSON object.');
-                    }
-                },
-            ],
+            'report' => ['required', Rule::in(['object'])],
         ];
     }
 
@@ -34,21 +43,18 @@ class SubmitReportRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'report_id.uuid' => 'The report id must be a valid UUID.',
-            'report.array' => 'The report must be a JSON object.',
+            'report_id.uuid' => __('api.errors.report_id_uuid'),
+            'report.in' => __('api.errors.report_not_object'),
         ];
+    }
+
+    public function upload(): UploadedReport
+    {
+        return $this->attributes->get(UploadedReport::class);
     }
 
     public function reportId(): string
     {
-        return $this->string('report_id')->toString();
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    public function report(): array
-    {
-        return $this->array('report');
+        return (string) $this->upload()->reportId;
     }
 }

@@ -8,7 +8,6 @@ use App\Http\Controllers\Controller;
 use App\Jobs\GenerateReportNarrative;
 use App\Models\Report;
 use App\Models\ReportNarrative;
-use App\Services\ReportFacts;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -52,7 +51,7 @@ class ReportNarrativeController extends Controller
     {
         ReportNarrative::updateOrCreate(
             ['report_id' => $report->id, 'variant' => $variant],
-            ['status' => NarrativeStatus::Pending, 'content' => null, 'failure_reason' => null, 'generated_at' => null],
+            ['status' => NarrativeStatus::Pending, 'content' => null, 'facts' => null, 'failure_reason' => null, 'generated_at' => null],
         );
 
         GenerateReportNarrative::dispatch($report->id, $variant);
@@ -80,14 +79,18 @@ class ReportNarrativeController extends Controller
 
         abort_unless($narrative->isReady(), 404);
 
-        $report->loadMissing('device', 'payload');
+        $report->loadMissing('device');
+        $narrative->setRelation('report', $report);
 
         $pdf = Pdf::loadView('pdf.report', [
             'report' => $report,
             'variant' => $variant,
             'narrative' => $narrative,
-            'facts' => ReportFacts::from($report->document()),
-        ])->setPaper('a4');
+            'facts' => $narrative->facts(),
+        ])->setPaper('a4')
+            // Embeds only the glyphs used: about 160 KB instead of 1.2 MB of
+            // DejaVu, at the same rendering time.
+            ->setOption('isFontSubsettingEnabled', true);
 
         return $pdf->download(sprintf(
             'pensec-raport-%s-%s.pdf',

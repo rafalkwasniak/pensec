@@ -6,7 +6,11 @@
     <div class="flex flex-wrap items-end justify-between gap-4">
         <div>
             <h1 class="text-2xl font-semibold chrome-text">Badania</h1>
-            <p class="mt-2 text-sm text-muted">Raporty przesłane przez sondy, od najnowszego.</p>
+            <p class="mt-2 max-w-2xl text-sm leading-relaxed text-muted">
+                Raporty przesłane przez sondy, od najnowszego odebranego. „Badanie" to czas z zegara sondy,
+                „Odebrano" to moment, w którym raport do nas dotarł; różnica pod datą odbioru mówi, jak długo
+                dokument czekał na urządzeniu. Obie daty w UTC.
+            </p>
         </div>
 
         @if ($devices->isNotEmpty())
@@ -32,6 +36,7 @@
             <table class="w-full text-left text-sm">
                 <thead class="border-b border-ink-line text-xs uppercase tracking-widest text-muted">
                     <tr>
+                        <th class="px-5 py-3 font-medium">Badanie</th>
                         <th class="px-5 py-3 font-medium">Odebrano</th>
                         <th class="px-5 py-3 font-medium">Sonda</th>
                         <th class="px-5 py-3 font-medium">Identyfikator badania</th>
@@ -41,8 +46,22 @@
                 </thead>
                 <tbody>
                     @foreach ($reports as $report)
+                        @php($lag = $report->deliverySeconds())
                         <tr class="border-b border-ink-line/60 last:border-0">
-                            <td class="px-5 py-4 text-muted">{{ $report->received_at->format('Y-m-d H:i') }}</td>
+                            <td class="whitespace-nowrap px-5 py-4 text-muted">
+                                {{ $report->scanned_at?->format('Y-m-d H:i') ?? 'nie podano' }}
+                            </td>
+                            <td class="whitespace-nowrap px-5 py-4 text-muted">
+                                {{ $report->received_at->format('Y-m-d H:i') }}
+
+                                @if ($lag !== null)
+                                    {{-- Ujemna różnica to nie opóźnienie, tylko zegar sondy idący
+                                         przed naszym, więc jest wyróżniona tak samo jak zaległość. --}}
+                                    <span class="mt-1 block text-xs {{ $lag < 0 || $lag >= $lagWarningSeconds ? 'text-warn' : 'text-muted' }}">
+                                        {{ $lag < 0 ? '-' : '+' }}{{ App\Support\Duration::compact(abs($lag)) }}
+                                    </span>
+                                @endif
+                            </td>
                             <td class="px-5 py-4 text-chrome">{{ $report->device->name }}</td>
                             <td class="px-5 py-4">
                                 <a href="{{ route('panel.reports.show', $report) }}"

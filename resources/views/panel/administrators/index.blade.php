@@ -39,7 +39,7 @@
                         <td class="px-5 py-4 text-right">
                             @unless ($administrator->is(auth()->user()))
                                 <form method="POST" action="{{ route('panel.administrators.destroy', $administrator) }}"
-                                      onsubmit="return confirm('Usunąć konto {{ $administrator->name }}? Straci dostęp do panelu.')">
+                                      onsubmit="return confirm(@js('Usunąć konto '.$administrator->name.'? Straci dostęp do panelu.'))">
                                     @csrf
                                     <button type="submit" class="text-muted transition hover:text-warn">Usuń</button>
                                 </form>

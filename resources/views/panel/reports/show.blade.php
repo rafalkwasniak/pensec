@@ -10,17 +10,26 @@
         <p class="mt-2 font-mono text-sm text-muted">{{ $report->report_uid }}</p>
     </div>
 
+    @php
+        $lag = $report->deliverySeconds();
+        $lagLabel = $lag === null
+            ? 'nie do ustalenia'
+            : ($lag < 0 ? '-' : '+').App\Support\Duration::compact(abs($lag));
+    @endphp
+
     <dl class="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         @foreach ([
             ['Sonda', $report->device->name],
+            ['Badanie', $report->scanned_at !== null ? $report->scanned_at->format('Y-m-d H:i:s').' UTC' : 'sonda nie podała'],
             ['Odebrano', $report->received_at->format('Y-m-d H:i:s').' UTC'],
+            ['Czekało na sondzie', $lagLabel],
             ['Stan', $report->status->value],
             ['Rozmiar', number_format($report->payload_bytes, 0, ',', ' ').' B'],
             ['Adres źródłowy', $report->source_ip ?? 'nieznany'],
         ] as [$label, $value])
             <div class="card p-5">
                 <dt class="text-xs uppercase tracking-widest text-muted">{{ $label }}</dt>
-                <dd class="mt-2 text-chrome">{{ $value }}</dd>
+                <dd class="mt-2 {{ $label === 'Czekało na sondzie' && $lag !== null && ($lag < 0 || $lag >= $lagWarningSeconds) ? 'text-warn' : 'text-chrome' }}">{{ $value }}</dd>
             </div>
         @endforeach
 
@@ -37,10 +46,12 @@
             <h2 class="text-xs uppercase tracking-widest text-muted">Treść raportu</h2>
 
             <div class="flex flex-wrap items-center gap-3">
-                <button type="button" id="load-payload"
-                        class="rounded-lg border border-ink-line px-3 py-1.5 text-sm text-chrome transition hover:border-brand">
-                    Pokaż treść
-                </button>
+                @if ($previewable)
+                    <button type="button" id="load-payload"
+                            class="rounded-lg border border-ink-line px-3 py-1.5 text-sm text-chrome transition hover:border-brand">
+                        Pokaż treść
+                    </button>
+                @endif
 
                 {{-- Pobiera zapisany dokument, nie PDF. Stoi przy treści raportu,
                      bo to ta sama rzecz: jedno ją pokazuje, drugie zapisuje na dysk. --}}
@@ -52,15 +63,20 @@
         </div>
 
         <p id="payload-hint" class="px-5 py-6 text-sm text-muted">
-            Raport waży {{ number_format($report->payload_bytes / 1024, 1, ',', ' ') }} kB i jest wczytywany dopiero
-            na żądanie, żeby nie obciążać tej strony.
+            @if ($previewable)
+                Raport waży {{ number_format($report->payload_bytes / 1024, 1, ',', ' ') }} kB i jest wczytywany dopiero
+                na żądanie, żeby nie obciążać tej strony.
+            @else
+                Raport waży {{ number_format($report->payload_bytes / 1048576, 1, ',', ' ') }} MB - za dużo, żeby
+                pokazać go w przeglądarce. Pobierz plik JSON i otwórz go w edytorze.
+            @endif
         </p>
 
         <pre id="payload" hidden class="overflow-x-auto px-5 py-5 font-mono text-xs leading-relaxed text-muted"></pre>
     </section>
 
     <script>
-        document.getElementById('load-payload').addEventListener('click', async function () {
+        document.getElementById('load-payload')?.addEventListener('click', async function () {
             const target = document.getElementById('payload');
             const hint = document.getElementById('payload-hint');
 

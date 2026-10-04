@@ -41,7 +41,7 @@ class GenerateReportNarrative implements ShouldQueue
 
     public function handle(DeepSeek $deepSeek): void
     {
-        $report = Report::with('device', 'payload')->find($this->reportId);
+        $report = Report::with('device')->find($this->reportId);
 
         if ($report === null) {
             Log::warning('Narrative job for a report that is gone', ['report_id' => $this->reportId]);
@@ -60,7 +60,7 @@ class GenerateReportNarrative implements ShouldQueue
 
         $narrative->fill(['status' => NarrativeStatus::Processing, 'failure_reason' => null])->save();
 
-        $facts = ReportFacts::from($report->document());
+        $facts = ReportFacts::forReport($report);
 
         $result = $deepSeek->write(
             NarrativePrompt::system($this->variant),
@@ -85,6 +85,8 @@ class GenerateReportNarrative implements ShouldQueue
         $narrative->fill([
             'status' => NarrativeStatus::Ready,
             'content' => $result['content'],
+            // Kept so the PDF shows exactly the figures this prose was written around.
+            'facts' => $facts,
             'model' => $result['model'] ?? null,
             'input_tokens' => $result['input_tokens'] ?? null,
             'output_tokens' => $result['output_tokens'] ?? null,

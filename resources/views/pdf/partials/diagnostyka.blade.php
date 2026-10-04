@@ -28,7 +28,8 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach ($diagnostic['rows'] as $row)
+                        {{-- Sorted by traffic, so the busiest come first; the tail is counted below. --}}
+                        @foreach (array_slice($diagnostic['rows'], 0, 15) as $row)
                             <tr>
                                 <td class="mono">{{ $row['address'] }}</td>
                                 <td>{{ $row['packets'] }}</td>
@@ -39,6 +40,9 @@
                         @endforeach
                     </tbody>
                 </table>
+                @if (count($diagnostic['rows']) > 15)
+                    <p style="font-size:9px; color:#667a96;">Pokazano 15 najaktywniejszych z {{ count($diagnostic['rows']) }} adresów.</p>
+                @endif
             @elseif ($diagnostic['kind'] === 'fields')
                 <table class="data">
                     <tbody>

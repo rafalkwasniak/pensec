@@ -2,12 +2,13 @@
 
 use App\Enums\ApiErrorCode;
 use App\Http\Middleware\AuthenticateDevice;
-use App\Http\Middleware\EnforceReportSizeLimit;
 use App\Http\Middleware\SetPanelLocale;
+use App\Http\Middleware\StreamReportUpload;
 use App\Support\ApiResponse;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Exceptions\PostTooLargeException;
 use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -24,7 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'device.auth' => AuthenticateDevice::class,
-            'report.size' => EnforceReportSizeLimit::class,
+            'report.intake' => StreamReportUpload::class,
             'panel.locale' => SetPanelLocale::class,
         ]);
 
@@ -35,8 +36,6 @@ return Application::configure(basePath: dirname(__DIR__))
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
 
-        // Failures on the API leave in the same envelope as successes, with the
-        // machine-readable code the contract publishes.
         $exceptions->render(function (ValidationException $exception, Request $request) {
             if (! $request->is('api/*')) {
                 return null;
@@ -47,6 +46,21 @@ return Application::configure(basePath: dirname(__DIR__))
                 __('api.errors.validation_failed'),
                 422,
                 $exception->errors(),
+            );
+        });
+
+        // Raised by the framework before any route runs, when Content-Length
+        // passes PHP's post_max_size; without this it leaves without the
+        // envelope and code the contract promises for 413.
+        $exceptions->render(function (PostTooLargeException $exception, Request $request) {
+            if (! $request->is('api/*')) {
+                return null;
+            }
+
+            return ApiResponse::error(
+                ApiErrorCode::PayloadTooLarge,
+                __('api.errors.payload_too_large'),
+                413,
             );
         });
 

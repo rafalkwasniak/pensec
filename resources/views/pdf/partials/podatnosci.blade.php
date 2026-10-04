@@ -10,15 +10,25 @@
     // a page of dumped HTML tells a non-technical reader nothing and buries the
     // sentence that matters.
     $evidence = $variant === App\Enums\NarrativeVariant::Expert ? 700 : 200;
+
+    // A table past this length stops being read. The remainder is counted, not
+    // dropped silently, and stays in the stored report.
+    $listed = array_slice($notable, 0, 40);
+
+    $group = $facts['coverage']['vulnerability_scanning'] ?? null;
 @endphp
 
-@if ($facts['deep_findings'] === [])
+@include('pdf.partials._pokrycie', ['group' => $group])
+
+@if ($facts['deep_findings'] === [] && (($group['problem'] ?? false) && ! $group['ran']))
+    {{-- Not run: the note above says so, and "no findings" would contradict it. --}}
+@elseif ($facts['deep_findings'] === [])
     <div class="empty">Pogłębione testy nie zwróciły żadnych ustaleń.</div>
 @else
     @if ($notable === [])
         <div class="empty">
-            Wszystkie {{ $totals['deep_findings'] }} ustaleń zakończyło się wynikiem czystym -
-            żaden z uruchomionych testów nie wykazał problemu.
+            Żaden z uruchomionych testów nie wykazał problemu - wszystkie zakończyły się wynikiem
+            czystym (łącznie: {{ $totals['deep_findings'] }}).
         </div>
     @else
         <table class="data">
@@ -30,7 +40,7 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach ($notable as $finding)
+                @foreach ($listed as $finding)
                     <tr>
                         <td class="mono">{{ $finding['ip'] }}</td>
                         <td class="mono">{{ $finding['name'] }}</td>
@@ -39,6 +49,13 @@
                 @endforeach
             </tbody>
         </table>
+
+        @if (count($notable) > count($listed))
+            <div class="empty">
+                Pokazano {{ count($listed) }} z {{ count($notable) }} ustaleń wymagających uwagi. Pozostałe
+                znajdują się w pełnym raporcie źródłowym.
+            </div>
+        @endif
     @endif
 
     <p style="font-size:9px; color:#667a96;">

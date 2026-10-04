@@ -85,6 +85,23 @@ class AccountTest extends TestCase
         $this->assertTrue(Hash::check('nowe-dlugie-haslo-2026', $user->fresh()->password));
     }
 
+    public function test_changing_the_password_signs_out_every_other_session(): void
+    {
+        $user = $this->admin();
+
+        // A session opened elsewhere carries the hash of the password it was
+        // opened with; the password then changes somewhere else.
+        $this->actingAs($user)
+            ->withSession(['password_hash_web' => $user->getAuthPassword()])
+            ->get('/panel/devices')
+            ->assertOk();
+
+        $user->forceFill(['password' => 'zmienione-gdzie-indziej-2026'])->save();
+
+        $this->get('/panel/devices')->assertRedirect('/panel/login');
+        $this->assertGuest();
+    }
+
     public function test_the_old_password_is_not_needed_to_set_a_new_one(): void
     {
         $user = $this->admin();

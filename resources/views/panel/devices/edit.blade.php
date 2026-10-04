@@ -61,7 +61,7 @@
                 Sondę z powiązanymi badaniami można wyłącznie wyłączyć - wyniki badań zostają w systemie.
             </p>
             <form method="POST" action="{{ route('panel.devices.destroy', $device) }}" class="mt-4"
-                  onsubmit="return confirm('Usunąć sondę {{ $device->name }}?')">
+                  onsubmit="return confirm(@js('Usunąć sondę '.$device->name.'?'))">
                 @csrf
                 <button type="submit"
                         class="rounded-lg border border-ink-line px-4 py-2.5 text-sm text-muted transition hover:border-warn-line hover:text-warn">

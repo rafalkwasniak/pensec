@@ -1,4 +1,9 @@
-@if ($facts['ics_endpoints'] === [])
+@php($group = $facts['coverage']['ics_ot'] ?? null)
+@include('pdf.partials._pokrycie', ['group' => $group])
+
+@if ($facts['ics_endpoints'] === [] && (($group['problem'] ?? false) && ! $group['ran']))
+    {{-- Not run: the note above says so, and "nothing detected" would contradict it. --}}
+@elseif ($facts['ics_endpoints'] === [])
     <div class="empty">Nie wykryto punktów końcowych protokołów przemysłowych.</div>
 @else
     <table class="data">
@@ -38,7 +43,7 @@
 @if ($facts['fingerprints'] !== [])
     <p style="font-size:9px; color:#667a96; margin-top:10px;">
         Sonda zebrała dodatkowo <strong>{{ count($facts['fingerprints']) }}</strong>
-        {{ count($facts['fingerprints']) === 1 ? 'odcisk usługi' : 'odcisków usług' }}.
+        {{ App\Support\Polish::plural(count($facts['fingerprints']), 'odcisk usługi', 'odciski usług', 'odcisków usług') }}.
         Pełna postać odcisków znajduje się w zapisanym raporcie źródłowym.
     </p>
 @endif

@@ -131,8 +131,9 @@
             <tr>
                 <td><code>report</code></td>
                 <td>
-                    The complete scan document, as a JSON object. The API does not read inside it, does not validate its
-                    structure and depends on none of its fields.
+                    The complete scan document, as a JSON object. The API does not validate its structure and requires
+                    none of its fields. It reads <code>scan_time</code>, when present, to record when the scan ran; a
+                    missing or unreadable value is accepted.
                 </td>
             </tr>
         </tbody>
@@ -162,12 +163,18 @@ Content-Type: application/json
         </p>
     </div>
 
-    <h3>Size</h3>
+    <h3>Compression and size</h3>
 
     <p>
-        A body larger than <strong>32 MB</strong> is refused with <code>413</code>. Retrying an oversized document will
-        not help; it has to get smaller. Raw scanner output for a large network is the usual reason to approach that
-        limit.
+        Send the body gzip-compressed, with <code>Content-Encoding: gzip</code>. Scanner output compresses roughly
+        eightfold, so this is the difference between a few megabytes and a few dozen on a probe's uplink. A plain JSON
+        body is still accepted; any other <code>Content-Encoding</code> is refused with <code>415</code>.
+    </p>
+
+    <p>
+        A document larger than <strong>256 MB</strong> is refused with <code>413</code>. The limit is measured on the
+        uncompressed body, so compression gets a document there faster but does not get a larger one through.
+        Retrying an oversized document will not help; it has to get smaller.
     </p>
 
     <h2>What comes back</h2>
@@ -190,10 +197,10 @@ Content-Type: application/json
 }</code></pre>
 
     <p>
-        <code>payload_bytes</code> and <code>payload_sha256</code> describe the document as stored. Note that the API
-        stores a canonical re-encoding of the JSON you sent - semantically identical, but with your whitespace and
-        escaping normalised - so the checksum will not match one computed over your exact bytes. Compare against the
-        value returned here, not against your own file.
+        <code>payload_bytes</code> and <code>payload_sha256</code> describe the document as stored, which is the body
+        exactly as you sent it, envelope included, with only gzip removed. They match what <code>wc -c</code> and
+        <code>sha256sum</code> report for the uncompressed file the probe submitted, so the probe can verify delivery
+        against its own copy.
     </p>
 
     <p>
@@ -249,12 +256,20 @@ Content-Type: application/json
             <tr>
                 <td>413</td>
                 <td><code>payload_too_large</code></td>
-                <td>Do not retry unchanged. The document exceeds 32 MB.</td>
+                <td>Do not retry unchanged. The document exceeds 256 MB uncompressed.</td>
+            </tr>
+            <tr>
+                <td>415</td>
+                <td><code>unsupported_encoding</code></td>
+                <td>Do not retry unchanged. Send the body plain or with <code>Content-Encoding: gzip</code>.</td>
             </tr>
             <tr>
                 <td>422</td>
                 <td><code>validation_failed</code></td>
-                <td>Do not retry unchanged. The <code>errors</code> object names the offending fields.</td>
+                <td>
+                    Do not retry unchanged. The <code>errors</code> object names the offending fields; a body that is
+                    not a JSON object, or gzip that does not decompress, is reported under <code>body</code>.
+                </td>
             </tr>
             <tr>
                 <td>429</td>
@@ -276,28 +291,41 @@ Content-Type: application/json
 
     <h2>A complete example</h2>
 
-    <p>With curl, sending a document straight from disk:</p>
+    <p>With curl, compressing a document straight from disk:</p>
 
-    <pre><code>curl -X POST https://pensec.top/api/v1/reports \
+    <pre><code>gzip -c submission.json | curl -X POST https://pensec.top/api/v1/reports \
   -H "Authorization: Bearer $PENSEC_TOKEN" \
   -H "Content-Type: application/json" \
-  --data-binary @submission.json</code></pre>
+  -H "Content-Encoding: gzip" \
+  --data-binary @-</code></pre>
+
+    <div class="note">
+        <p>
+            <strong>Use <code>--data-binary</code>, never <code>-d</code>.</strong> <code>-d</code> strips every line
+            break from the file before sending it, so the stored document - and its checksum - is no longer the file
+            on the probe.
+        </p>
+    </div>
 
     <p>From the probe itself, in Python:</p>
 
-    <pre><code>import json, uuid, time, requests
+    <pre><code>import gzip, json, uuid, time, requests
 
 REPORT_ID = str(uuid.uuid4())      # generated before the scan starts
 
 def submit(report: dict, token: str) -> None:
-    body = {"report_id": REPORT_ID, "report": report}
+    body = gzip.compress(json.dumps({"report_id": REPORT_ID, "report": report}).encode())
 
     for attempt in range(5):
         response = requests.post(
             "https://pensec.top/api/v1/reports",
-            json=body,
-            headers={"Authorization": f"Bearer {token}"},
-            timeout=120,
+            data=body,
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/json",
+                "Content-Encoding": "gzip",
+            },
+            timeout=600,
         )
 
         if response.status_code in (200, 201):
@@ -313,7 +341,7 @@ def submit(report: dict, token: str) -> None:
             time.sleep(30 * (attempt + 1))
             continue
 
-        raise RuntimeError(f"refused: {payload['code']}")   # 401, 403, 413, 422</code></pre>
+        raise RuntimeError(f"refused: {payload['code']}")   # 401, 403, 413, 415, 422</code></pre>
 
     <p>
         Note that the same <code>REPORT_ID</code> is reused across every attempt. That is what makes the retry loop

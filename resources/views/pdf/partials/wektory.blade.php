@@ -7,6 +7,10 @@
         Severity::MEDIUM => ['#5b4a1a', '#fbf6e4'],
         Severity::INFO => ['#55647f', '#eef2f9'],
     ];
+
+    // Ranked most severe first, so what falls past the limit is the least
+    // pressing. The tiles above always count everything.
+    $listed = array_slice($facts['findings'], 0, 60);
 @endphp
 
 @if ($facts['findings'] === [])
@@ -39,7 +43,7 @@
             </tr>
         </thead>
         <tbody>
-            @foreach ($facts['findings'] as $finding)
+            @foreach ($listed as $finding)
                 @php ([$ink, $background] = $colours[$finding['level']]) @endphp
                 <tr>
                     <td>
@@ -56,7 +60,9 @@
                     <td>
                         {{ $finding['title'] }}
                         @if ($finding['cves'])
-                            <div class="mono" style="color:#8a97ab;">{{ implode(', ', $finding['cves']) }}</div>
+                            <div class="mono" style="color:#8a97ab;">
+                                {{ implode(', ', array_slice($finding['cves'], 0, 8)) }}{{ count($finding['cves']) > 8 ? ' i '.(count($finding['cves']) - 8).' innych' : '' }}
+                            </div>
                         @endif
                         @if ($finding['note'])
                             <div style="color:#55647f;">{{ $finding['note'] }}</div>
@@ -66,6 +72,13 @@
             @endforeach
         </tbody>
     </table>
+
+    @if (count($facts['findings']) > count($listed))
+        <div class="empty">
+            Pokazano {{ count($listed) }} najpoważniejszych z {{ count($facts['findings']) }} ustaleń. Pozostałe mają
+            niższą wagę i znajdują się w pełnym raporcie źródłowym.
+        </div>
+    @endif
 @endif
 
 @if ($facts['gaps'] !== [])
@@ -81,8 +94,12 @@
             można ich uznać ani za bezpieczne, ani za zagrożone.
         </div>
         @foreach ($facts['gaps'] as $gap)
+            @php ($hosts = $gap['hosts'] ?? []) @endphp
             <div style="margin-bottom:2px;">
                 &bull; {{ $gap['ip'] ? $gap['ip'].' — ' : '' }}{{ $gap['title'] }}
+                @if ($hosts !== [])
+                    <span class="mono" style="color:#8a97ab;">({{ implode(', ', array_slice($hosts, 0, 6)) }}{{ count($hosts) > 6 ? ' i '.(count($hosts) - 6).' innych' : '' }})</span>
+                @endif
             </div>
         @endforeach
     </div>

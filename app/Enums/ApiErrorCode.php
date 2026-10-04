@@ -13,6 +13,7 @@ enum ApiErrorCode: string
     case DeviceTokenInvalid = 'device_token_invalid';
     case DeviceDisabled = 'device_disabled';
     case PayloadTooLarge = 'payload_too_large';
+    case UnsupportedEncoding = 'unsupported_encoding';
     case RateLimitExceeded = 'rate_limit_exceeded';
     case ServerError = 'server_error';
 }

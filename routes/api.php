@@ -8,6 +8,6 @@ Route::get('openapi.yaml', [DocumentationController::class, 'contract'])->name('
 
 Route::prefix('v1')->group(function (): void {
     Route::post('reports', [ReportController::class, 'store'])
-        ->middleware(['device.auth', 'throttle:reports', 'report.size'])
+        ->middleware(['device.auth', 'throttle:reports', 'report.intake'])
         ->name('api.v1.reports.store');
 });

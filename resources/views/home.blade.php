@@ -38,6 +38,9 @@
                 <a href="/tests" class="shrink-0 transition-colors whitespace-nowrap text-xs sm:text-sm font-medium {{ request()->is('tests') ? 'text-chrome font-semibold' : 'text-muted hover:text-chrome' }}">
                     Specyfikacja
                 </a>
+                <a href="/course" class="shrink-0 transition-colors whitespace-nowrap text-xs sm:text-sm font-medium {{ request()->is('course*') ? 'text-chrome font-semibold' : 'text-muted hover:text-chrome' }}">
+					Kurs
+				</a>
                 <a href="/contact" class="shrink-0 transition-colors whitespace-nowrap text-xs sm:text-sm font-medium {{ request()->is('contact') ? 'text-chrome font-semibold' : 'text-muted hover:text-chrome' }}">
                     Kontakt
                 </a>
@@ -220,27 +223,6 @@
             </div>
         </section>
 
-        <!-- ZASADY BADANIA -->
-        <section class="mt-28 border-t border-ink-line pt-20">
-            <h2 class="text-sm uppercase tracking-[0.25em] text-brand">Zasady badania</h2>
-            <p class="mt-4 max-w-3xl text-2xl leading-snug chrome-text">
-                Kontrolowane, poufne i potwierdzone.
-            </p>
-
-            <div class="mt-12 grid gap-6 lg:grid-cols-3">
-                @foreach ([
-                    ['Uzgodniony zakres', 'Badanie działa wyłącznie w granicach ustalonych z klientem przed startem (Rules of Engagement). Nic poza uzgodnioną siecią nie jest dotykane.'],
-                    ['Poufność danych', 'Współpraca objęta umową NDA. Surowe dowody pozostają na urządzeniu, a raport opisuje je w bezpiecznej, ograniczonej formie.'],
-                    ['Weryfikacja po naprawie', 'Po wdrożeniu poprawek przeprowadzamy audyt potwierdzający, że wykryte podatności zostały faktycznie usunięte.'],
-                ] as [$title, $body])
-                    <div class="card p-6">
-                        <h3 class="text-base font-semibold text-chrome">{{ $title }}</h3>
-                        <p class="mt-3 text-sm leading-relaxed text-muted">{{ $body }}</p>
-                    </div>
-                @endforeach
-            </div>
-        </section>
-
     </main>
 
     <footer class="border-t border-ink-line mt-auto">
@@ -254,5 +236,7 @@
     </div>
 	</footer>
 
+
+    @include('partials.cookie-consent')
 </body>
 </html>

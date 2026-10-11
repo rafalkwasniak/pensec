@@ -1,0 +1,282 @@
+{
+    "_comment": "Checkpointy po rozdziałach, kluczowane katalogiem rozdziału (jak w structure.json). 'correct' to indeks poprawnej odpowiedzi (od 0) i zostaje po stronie serwera. Pytania pojawiają się na końcu ostatniej lekcji danego rozdziału.",
+    "00-wprowadzenie": {
+        "questions": [
+            {
+                "prompt": "Co zakłada model Assume Breach?",
+                "options": [
+                    "Że obwód sieci jest szczelny i wystarcza zewnętrzna zapora.",
+                    "Że dostęp do wnętrza sieci już uzyskano i bada się jego skutki.",
+                    "Że test ogranicza się do publicznych adresów organizacji."
+                ],
+                "correct": 1
+            },
+            {
+                "prompt": "Otwarty port wykryty podczas oceny oznacza, że:",
+                "options": [
+                    "usługa jest podatna i stanowi ustalenie do raportu.",
+                    "istnieje kanał komunikacyjny, bez przesądzania o usłudze i jej bezpieczeństwie.",
+                    "host został przejęty."
+                ],
+                "correct": 1
+            },
+            {
+                "prompt": "Którą zasadę stosuje się przy doborze profilu działania?",
+                "options": [
+                    "Najwyższy możliwy profil, aby niczego nie pominąć.",
+                    "Najniższy profil wystarczający do odpowiedzi na postawione pytanie.",
+                    "Profil zależny wyłącznie od możliwości narzędzia."
+                ],
+                "correct": 1
+            }
+        ]
+    },
+    "01-warstwa-dostepowa": {
+        "questions": [
+            {
+                "prompt": "Czym jest adres źródłowy MAC w ramce Ethernet?",
+                "options": [
+                    "Dowodem tożsamości urządzenia, niemożliwym do podrobienia.",
+                    "Deklaracją, którą można dowolnie zmienić.",
+                    "Adresem logicznym przypisanym przez serwer DHCP."
+                ],
+                "correct": 1
+            },
+            {
+                "prompt": "Co wyznacza domena rozgłoszeniowa dla oceny?",
+                "options": [
+                    "Zasięg pasywnej obserwacji ruchu w segmencie.",
+                    "Liczbę otwartych portów na hoście.",
+                    "Wersję systemu operacyjnego stacji."
+                ],
+                "correct": 0
+            },
+            {
+                "prompt": "Czym jest tablica CAM przełącznika?",
+                "options": [
+                    "Nieograniczonym rejestrem adresów logicznych.",
+                    "Sprzętową tablicą adresów fizycznych o skończonej pojemności.",
+                    "Listą kont użytkowników domeny."
+                ],
+                "correct": 1
+            }
+        ]
+    },
+    "02-dostep-l2": {
+        "questions": [
+            {
+                "prompt": "arp-scan po sieci /24 zwraca stopkę \"128 hosts scanned\". Co z tego wynika?",
+                "options": [
+                    "Pokrycie jest pełne.",
+                    "Pokrycie jest częściowe i nie wolno wnioskować o nieobecności hostów.",
+                    "Sieć jest pusta."
+                ],
+                "correct": 1
+            },
+            {
+                "prompt": "Zaobserwowanie ramek DTP na porcie oznacza, że:",
+                "options": [
+                    "segmentacja jest już przełamana.",
+                    "port może negocjować magistralę, co jest warunkiem wstępnym, nie dowodem.",
+                    "przełącznik został zrestartowany."
+                ],
+                "correct": 1
+            },
+            {
+                "prompt": "Do czego służy zmiana własnego adresu MAC poleceniem macchanger -A?",
+                "options": [
+                    "Do obejścia uwierzytelniania MAB i podszycia się pod urządzenie.",
+                    "Do maskowania śladu operatora, jako działanie opcjonalne.",
+                    "Do przełamania szyfrowania WPA2."
+                ],
+                "correct": 1
+            }
+        ]
+    },
+    "02-plaszczyzna-sterowania": {
+        "questions": [
+            {
+                "prompt": "Responder uruchomiony z parametrem -A:",
+                "options": [
+                    "aktywnie zatruwa odpowiedzi w segmencie.",
+                    "jedynie obserwuje zapytania, bez odpowiadania.",
+                    "łamie przechwycone skróty offline."
+                ],
+                "correct": 1
+            },
+            {
+                "prompt": "Przechwycony skrót NetNTLMv2 jest:",
+                "options": [
+                    "hasłem w postaci jawnej, gotowym do logowania.",
+                    "materiałem do łamania offline lub przekazania, nie hasłem.",
+                    "kluczem prywatnym certyfikatu serwera."
+                ],
+                "correct": 1
+            },
+            {
+                "prompt": "Komenda arping -U w tej ocenie służy do:",
+                "options": [
+                    "zatrucia tablicy ARP i przejęcia ruchu.",
+                    "sprawdzenia podatności segmentu na pośrednika, bez zatruwania.",
+                    "skanowania portów hosta docelowego."
+                ],
+                "correct": 1
+            }
+        ]
+    },
+    "04-rozpoznanie": {
+        "questions": [
+            {
+                "prompt": "nmap zakończył się kodem powodzenia po przekroczeniu limitu czasu. Jaki wniosek?",
+                "options": [
+                    "Wynik jest pełny, brak otwartych portów.",
+                    "Wynik może być niepełny i nie dowodzi braku podatności.",
+                    "Skan trzeba powtórzyć z większą liczbą portów bez wyjątku."
+                ],
+                "correct": 1
+            },
+            {
+                "prompt": "Słowo \"failed\" w treści snmp-sysdescr należy potraktować jako:",
+                "options": [
+                    "błąd skryptu oznaczający brak dostępu.",
+                    "możliwy fragment legalnego banera urządzenia.",
+                    "potwierdzenie podatności krytycznej."
+                ],
+                "correct": 1
+            },
+            {
+                "prompt": "Nazwa usługi rozpoznana przez nmap -sV to:",
+                "options": [
+                    "pewny fakt, niewymagający potwierdzenia.",
+                    "wynik dopasowania wzorca, wymagający potwierdzenia.",
+                    "dowód obecności podatności w tej usłudze."
+                ],
+                "correct": 1
+            }
+        ]
+    },
+    "03-tozsamosc-uslugi": {
+        "questions": [
+            {
+                "prompt": "smb-enum-shares pokazuje udział z wpisem \"Anonymous access: READ/WRITE\". To:",
+                "options": [
+                    "ustalenie, czyli realna ekspozycja danych bez uwierzytelnienia.",
+                    "zwykła informacja bez znaczenia.",
+                    "dowód przejęcia kontrolera domeny."
+                ],
+                "correct": 0
+            },
+            {
+                "prompt": "Po co odpytuje się kontroler poleceniem rpcclient enumdomusers?",
+                "options": [
+                    "Aby natychmiast zalogować się na konta.",
+                    "Aby poznać konta i politykę haseł i zaplanować działania bez blokowania kont.",
+                    "Aby usunąć konta zablokowane."
+                ],
+                "correct": 1
+            },
+            {
+                "prompt": "nmap ldap-search zwrócił wyłącznie rekord Root-DSE. Oznacza to:",
+                "options": [
+                    "ujawnienie pełnej zawartości katalogu.",
+                    "zwrot metadanych serwera, co nie jest ujawnieniem danych.",
+                    "anonimowe wiązanie z prawem zapisu."
+                ],
+                "correct": 1
+            }
+        ]
+    },
+    "04-aplikacje-skarbce": {
+        "questions": [
+            {
+                "prompt": "Skrypt redis-info zwrócił wersję i parametry bez pytania o poświadczenia. To:",
+                "options": [
+                    "ekspozycja bazy bez uwierzytelniania, do weryfikacji zawartości.",
+                    "zdalne wykonanie kodu na serwerze.",
+                    "usługa poprawnie zabezpieczona."
+                ],
+                "correct": 0
+            },
+            {
+                "prompt": "Trafienie domyślnej pary poświadczeń potwierdza się przez:",
+                "options": [
+                    "ponowne wpisanie tej samej pary.",
+                    "kontrolę negatywną, czyli odrzucenie celowo błędnej pary.",
+                    "sam fakt zgłoszenia trafienia przez narzędzie."
+                ],
+                "correct": 1
+            },
+            {
+                "prompt": "Korelacja CVE oparta wyłącznie na dopasowaniu wersji:",
+                "options": [
+                    "jest potwierdzonym ustaleniem gotowym do raportu.",
+                    "nie jest findingiem bez dalszej weryfikacji.",
+                    "jest zawsze fałszywym alarmem."
+                ],
+                "correct": 1
+            }
+        ]
+    },
+    "05-specjalistyczne": {
+        "questions": [
+            {
+                "prompt": "Zaobserwowanie ramek EAPOL w nasłuchu oznacza, że:",
+                "options": [
+                    "przechwycono kompletny uścisk i złamano klucz.",
+                    "zarejestrowano ruch uwierzytelniania, co nie równa się złamaniu klucza.",
+                    "sieć bezprzewodowa jest niezabezpieczona."
+                ],
+                "correct": 1
+            },
+            {
+                "prompt": "Dlaczego w środowisku OT zachowuje się szczególną ostrożność?",
+                "options": [
+                    "Bo nawet zapytanie odczytujące może zakłócić pracę sterownika.",
+                    "Bo urządzenia OT są odporne na dowolny ruch.",
+                    "Bo protokoły OT wymagają silnego uwierzytelniania."
+                ],
+                "correct": 0
+            },
+            {
+                "prompt": "Otwarty port 502 na hoście:",
+                "options": [
+                    "potwierdza, że działa tam sterownik Modbus.",
+                    "nie potwierdza protokołu bez odpowiedzi skryptu lub banera.",
+                    "oznacza przejęcie urządzenia."
+                ],
+                "correct": 1
+            }
+        ]
+    },
+    "06-raport": {
+        "questions": [
+            {
+                "prompt": "Kiedy obserwacja staje się ustaleniem (findingiem)?",
+                "options": [
+                    "Gdy narzędzie coś zgłosi.",
+                    "Gdy przejdzie walidację i ocenę wpływu, z zapisanym dowodem.",
+                    "Gdy port jest otwarty."
+                ],
+                "correct": 1
+            },
+            {
+                "prompt": "Gdzie trafia wynik sprawdzenia przerwanego limitem czasu?",
+                "options": [
+                    "Między potwierdzone ustalenia.",
+                    "Do osobnego rejestru luk w pokryciu.",
+                    "Jest całkowicie pomijany."
+                ],
+                "correct": 1
+            },
+            {
+                "prompt": "Czemu służy punkt retest w raporcie?",
+                "options": [
+                    "Potwierdzeniu, że naprawa odniosła skutek.",
+                    "Ponownemu opisaniu tego samego findingu.",
+                    "Zwiększeniu liczby ustaleń."
+                ],
+                "correct": 0
+            }
+        ]
+    }
+}

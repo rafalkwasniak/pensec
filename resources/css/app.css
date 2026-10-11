@@ -157,3 +157,97 @@
         display: none;
     }
 }
+
+@layer components {
+    /* Treść lekcji NIE powtarza tytułu (tytuł renderuje strona z manifestu),
+       więc w tekście zaczynamy od akapitu, a h2/h3/h4 to śródsekcje. */
+    .pensec-markdown > :first-child {
+        @apply mt-0;
+    }
+    .pensec-markdown h2 {
+        @apply text-2xl font-semibold text-chrome mt-12 mb-5 leading-snug;
+    }
+    .pensec-markdown h3 {
+        @apply text-lg font-semibold text-chrome mt-10 mb-4;
+    }
+    .pensec-markdown h4 {
+        @apply text-base font-semibold text-chrome mt-8 mb-3;
+    }
+    .pensec-markdown p {
+        @apply text-base text-muted leading-relaxed mb-6;
+    }
+    .pensec-markdown ul {
+        @apply list-disc pl-5 text-muted mb-6 space-y-2 marker:text-brand;
+    }
+    .pensec-markdown ol {
+        @apply list-decimal pl-5 text-muted mb-6 space-y-2 marker:text-brand;
+    }
+    .pensec-markdown li {
+        @apply leading-relaxed;
+    }
+    .pensec-markdown li > ul,
+    .pensec-markdown li > ol {
+        @apply mt-2 mb-0;
+    }
+    .pensec-markdown strong {
+        @apply text-chrome font-semibold;
+    }
+    .pensec-markdown em {
+        @apply text-muted italic;
+    }
+    .pensec-markdown a {
+        @apply text-brand underline underline-offset-4 hover:text-chrome transition-colors;
+    }
+    .pensec-markdown hr {
+        @apply my-10 border-0 border-t border-ink-line;
+    }
+    .pensec-markdown blockquote {
+        @apply border-l-2 border-brand pl-4 italic text-muted mb-6;
+    }
+
+    /* Tabele - jeszcze nieużywane w treści, ale gotowe i spójne ze stroną. */
+    .pensec-markdown table {
+        @apply w-full text-sm text-muted mb-6 border border-ink-line border-collapse;
+    }
+    .pensec-markdown th {
+        @apply text-left font-semibold text-chrome bg-ink-raised border border-ink-line px-3 py-2;
+    }
+    .pensec-markdown td {
+        @apply border border-ink-line px-3 py-2 align-top;
+    }
+
+    /* Kod w zdaniu - dyskretny element inline. */
+    .pensec-markdown code {
+        @apply font-mono text-sm text-brand bg-ink-raised border border-ink-line px-1.5 py-0.5 rounded;
+    }
+
+    /* Blok kodu BEZ JavaScriptu - czytelny panel (awaryjny wygląd). JS opakowuje
+       go w .pensec-terminal z paskiem i przyciskiem; patrz resources/js/app.js. */
+    .pensec-markdown pre {
+        @apply bg-ink border border-ink-line rounded-lg p-5 mb-6 overflow-x-auto;
+    }
+    .pensec-markdown pre code {
+        @apply font-mono text-sm leading-relaxed text-chrome bg-transparent border-0 p-0;
+    }
+
+    /* Fragment w terminalu: ciemny panel z paskiem (etykieta języka + Kopiuj). */
+    .pensec-terminal {
+        @apply mb-6 overflow-hidden rounded-lg border border-ink-line bg-ink;
+    }
+    .pensec-terminal-bar {
+        @apply flex items-center justify-between gap-4 border-b border-ink-line bg-ink-raised px-4 py-2;
+    }
+    .pensec-terminal-lang {
+        @apply font-mono text-xs uppercase tracking-widest text-muted;
+    }
+    .pensec-terminal-copy {
+        @apply font-mono text-xs uppercase tracking-widest text-muted transition-colors hover:text-chrome focus:outline-none;
+    }
+    .pensec-terminal-copy.is-copied {
+        @apply text-brand;
+    }
+    /* Wewnątrz terminala panelem jest wrapper, więc samo <pre> jest "gołe". */
+    .pensec-markdown .pensec-terminal pre {
+        @apply m-0 rounded-none border-0 bg-transparent p-5 overflow-x-auto;
+    }
+}

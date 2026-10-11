@@ -27,6 +27,9 @@
                 <a href="/tests" class="shrink-0 transition-colors whitespace-nowrap text-xs sm:text-sm font-medium {{ request()->is('tests') ? 'text-chrome font-semibold' : 'text-muted hover:text-chrome' }}">
                     Specyfikacja
                 </a>
+                <a href="/course" class="shrink-0 transition-colors whitespace-nowrap text-xs sm:text-sm font-medium {{ request()->is('course*') ? 'text-chrome font-semibold' : 'text-muted hover:text-chrome' }}">
+					Kurs
+				</a>
                 <a href="/contact" class="shrink-0 transition-colors whitespace-nowrap text-xs sm:text-sm font-medium {{ request()->is('contact') ? 'text-chrome font-semibold' : 'text-muted hover:text-chrome' }}">
                     Kontakt
                 </a>
@@ -48,7 +51,7 @@
     </div>
     
     <main class="flex-grow w-full mx-auto max-w-6xl px-6 py-10" style="margin-top: 50px;">
-
+            
         <!-- GRID -->
         <div class="grid gap-8 md:grid-cols-2">
             
@@ -309,5 +312,7 @@
     </div>
 	</footer>
 
+
+    @include('partials.cookie-consent')
 </body>
 </html>

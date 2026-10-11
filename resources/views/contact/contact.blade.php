@@ -27,6 +27,9 @@
                 <a href="/tests" class="shrink-0 transition-colors whitespace-nowrap text-xs sm:text-sm font-medium text-muted hover:text-chrome">
                     Specyfikacja
                 </a>
+                <a href="/course" class="shrink-0 transition-colors whitespace-nowrap text-xs sm:text-sm font-medium {{ request()->is('course*') ? 'text-chrome font-semibold' : 'text-muted hover:text-chrome' }}">
+					Kurs
+				</a>
                 <a href="/contact" class="shrink-0 transition-colors whitespace-nowrap text-xs sm:text-sm font-medium text-chrome font-semibold">
                     Kontakt
                 </a>
@@ -118,5 +121,7 @@
     </div>
 	</footer>
 
+
+    @include('partials.cookie-consent')
 </body>
 </html>

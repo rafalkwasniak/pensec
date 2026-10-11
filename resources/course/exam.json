@@ -1,0 +1,135 @@
+{
+    "_comment": "Egzamin jako laboratorium decyzyjne: ciągły scenariusz jednej oceny. Każdy krok ma opcjonalny 'context' (wynik lub log do odczytania), 'type' (komenda|interpretacja|decyzja|finding), 'prompt', 'options' i 'correct' (indeks od 0). 'correct' zostaje po stronie serwera i NIE trafia do przeglądarki. Dodając krok, dopisz obiekt do 'steps'; liczba kroków i próg wyliczają się same.",
+    "title": "Egzamin końcowy",
+    "intro": "Scenariusz prowadzi przez jedną ocenę ekspozycji infrastruktury wewnętrznej, od uzyskania dostępu do segmentu po wnioski do raportu. Na każdym kroku wskaż właściwą komendę, zinterpretuj wynik lub podejmij decyzję.",
+    "pass_threshold": 75,
+    "steps": [
+        {
+            "type": "decyzja",
+            "prompt": "Uzyskano dostęp do segmentu sieci wewnętrznej. Od czego rozpocząć ocenę, aby nie ujawnić się przedwcześnie?",
+            "options": [
+                "Pełny, głośny skan nmap wszystkich portów w całym zakresie.",
+                "Pasywny odczyt tablicy sąsiadów i niskoprofilowe mapowanie ARP.",
+                "Natychmiastowe aktywne zatruwanie, aby przyspieszyć zbiór danych."
+            ],
+            "correct": 1
+        },
+        {
+            "type": "komenda",
+            "prompt": "Chcesz wylistować aktywne hosty w swoim segmencie, działając w warstwie łącza danych. Którą komendę wybierasz?",
+            "options": [
+                "sudo arp-scan -I eth0 192.168.10.0/24",
+                "sudo hydra -L users.txt -P pass.txt 192.168.10.0/24 ssh",
+                "sudo nuclei -u 192.168.10.0/24"
+            ],
+            "correct": 0
+        },
+        {
+            "type": "interpretacja",
+            "context": "Interface: eth0\n192.168.10.1    a0:36:9f:xx:xx:xx   Cisco Systems\n192.168.10.10   b8:27:eb:xx:xx:xx   Raspberry Pi Foundation\n\n128 hosts scanned, 2 responded",
+            "prompt": "Zakres był siecią /24. Jaki wniosek jest uprawniony na podstawie tego wyniku?",
+            "options": [
+                "Pokrycie jest pełne, w segmencie działają tylko dwa hosty.",
+                "Pokrycie jest częściowe, brak hosta w wyniku nie dowodzi jego nieobecności.",
+                "Sieć jest pusta, rozpoznanie można zakończyć."
+            ],
+            "correct": 1
+        },
+        {
+            "type": "komenda",
+            "prompt": "Host wystawia port 445. Chcesz sprawdzić udziały dostępne bez poświadczeń. Która komenda?",
+            "options": [
+                "sudo nmap -Pn -p 445 --script smb-enum-shares 192.168.10.40",
+                "sudo arping -U -I eth0 192.168.10.40",
+                "sudo mitm6 -i eth0"
+            ],
+            "correct": 0
+        },
+        {
+            "type": "finding",
+            "context": "smb-enum-shares:\n  \\\\192.168.10.40\\dane\n    Anonymous access: READ/WRITE",
+            "prompt": "Czy to jest ustalenie do raportu?",
+            "options": [
+                "Tak, odczyt i zapis bez uwierzytelnienia to realna ekspozycja danych.",
+                "Nie, samo istnienie udziału nigdy nie ma znaczenia.",
+                "Nie, dopóki nie pobierze się całej zawartości udziału."
+            ],
+            "correct": 0
+        },
+        {
+            "type": "interpretacja",
+            "context": "[SMB] NTLMv2-SSP Hash : jkowalski::WORKSTATION:a1b2c3xxxxxxxxxxxx...",
+            "prompt": "Przechwycono powyższy materiał. Czym on jest?",
+            "options": [
+                "Hasłem użytkownika w postaci jawnej, gotowym do zalogowania.",
+                "Skrótem NetNTLMv2 z wyzwania i odpowiedzi, bez gotowego dostępu.",
+                "Kluczem szyfrującym dysk stacji roboczej."
+            ],
+            "correct": 1
+        },
+        {
+            "type": "komenda",
+            "prompt": "Chcesz sprawdzić podatność segmentu na pośrednika, bez zatruwania tablic ARP. Co uruchamiasz?",
+            "options": [
+                "sudo arpspoof -i eth0 -t 192.168.10.50 192.168.10.1",
+                "sudo arping -U -c 2 -I eth0 192.168.10.5",
+                "sudo ettercap -T -M arp"
+            ],
+            "correct": 1
+        },
+        {
+            "type": "interpretacja",
+            "context": "Ramka: Ether()/Dot1Q(vlan=1)/Dot1Q(vlan=30)/IP(dst=10.0.30.5)/ICMP()\nWynik: odebrano odpowiedź echo",
+            "prompt": "Ramka z podwójnym znacznikiem dostała odpowiedź echo z obcej sieci. Co to oznacza?",
+            "options": [
+                "Pełny dowód przełamania segmentacji, temat można zamknąć.",
+                "Potencjalne przełamanie wymagające potwierdzenia łączności po stronie docelowej.",
+                "Błąd testu, odpowiedź echo nie ma znaczenia."
+            ],
+            "correct": 1
+        },
+        {
+            "type": "finding",
+            "context": "nmap --script vuln:\n  http-...: VULNERABLE: ... State: UNKNOWN (unable to test)",
+            "prompt": "Jak potraktować ten wpis?",
+            "options": [
+                "Jako potwierdzoną podatność krytyczną.",
+                "Jako trop wymagający weryfikacji, nie potwierdzone ustalenie.",
+                "Jako błąd skanera bez żadnego znaczenia."
+            ],
+            "correct": 1
+        },
+        {
+            "type": "finding",
+            "context": "nuclei: [CVE-20xx-xxxx] matched at https://192.168.10.60",
+            "prompt": "Trafienie szablonu nuclei to...",
+            "options": [
+                "Dowód obecności podatności, oznaczamy jako potwierdzone.",
+                "Obserwacja wymagająca ręcznej weryfikacji, nigdy automatycznie potwierdzona.",
+                "Fałszywy alarm, który zawsze się pomija."
+            ],
+            "correct": 1
+        },
+        {
+            "type": "interpretacja",
+            "context": "redis-info:\n  Version: 6.0.16\n  Connected clients: 1",
+            "prompt": "Baza Redis zwróciła powyższe bez pytania o poświadczenia. Co z tego wynika?",
+            "options": [
+                "Usługa wymaga uwierzytelnienia, wynik jest nieistotny.",
+                "Dostęp bez uwierzytelniania, czyli ekspozycja bazy do dalszej weryfikacji zawartości.",
+                "Natychmiastowe zdalne wykonanie kodu na serwerze."
+            ],
+            "correct": 1
+        },
+        {
+            "type": "decyzja",
+            "prompt": "Baza jest otwarta bez poświadczeń. Jak minimalnie potwierdzić ryzyko danych wrażliwych?",
+            "options": [
+                "Pobrać całą zawartość bazy na dysk operatora.",
+                "Odczytać próbkę rekordów wystarczającą do wykazania charakteru danych.",
+                "Nie sprawdzać zawartości, otwarty port wystarcza za dowód."
+            ],
+            "correct": 1
+        }
+    ]
+}

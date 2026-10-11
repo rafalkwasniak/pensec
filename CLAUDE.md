@@ -425,3 +425,43 @@ minute per probe, token length. They are config, not `.env`, and not class const
   and the contract's enum must grow with it.
 - **Password reset for another administrator** - an administrator sets the initial
   password when creating an account; the account owner changes it themselves.
+
+---
+
+## 6. The course (`/course`)
+
+A Polish course on **manual exposure assessment of internal infrastructure**. Its DNA: it
+mirrors the **test surface of the probe** (`rpi-pentest`) and teaches each technique by hand,
+in an auditor's voice (detection and evidence, not exploitation). It never names the probe.
+`resources/course/AUTHORING.md` is the **redactional contract** and wins on any course style
+question: language rules (no dashes, parentheses only for English terms, avoid "które",
+blocks only for commands), the *observation → interpretation → validation → impact* schema,
+the command convention, lesson skeletons, and the decision that **the probe's source code is
+the ground truth for commands** (there is no lab, so commands are grounded in the code plus
+tool docs, not live-tested).
+
+- **Content vs structure.** Lesson prose lives in `resources/course/<chapter>/NN.md`.
+  `resources/course/structure.json` is the **only** place chapters are ordered and chapters
+  and lessons are named - names are **not** derived from file or directory names. A lesson is
+  reachable only when the manifest lists it and its `.md` exists; `CourseController` never
+  builds a path from the raw slug, so there is no traversal. Directory prefixes are **not**
+  load-bearing (the manifest array is the order), which is why some prefixes repeat after
+  incremental additions; a one-time renumber is still open.
+- **Fundamentals vs technique lessons.** Short concept lessons (metodyka, fundamenty) flow
+  without headings; technique lessons use natural, content-specific section titles, never a
+  stamped "Mechanizm / Procedura" skeleton. Fundamentals show a read-only inspection command;
+  offensive execution stays in its own module.
+- **Exam is a decision lab.** `resources/course/exam.json` is an ordered scenario of steps
+  (`context`, `type`, `prompt`, `options`, `correct`). `ExamController` grades on the server;
+  the `correct` index never reaches the browser. A pass plus a name issues a `Certificate`
+  (unguessable `public_id`; the URL is also its verification), downloadable as PDF via dompdf
+  (`pdf/certificate.blade.php`, A4 landscape, DejaVu Sans, the flattened PNG logo).
+- **Checkpoints.** `resources/course/checkpoints.json`, keyed by chapter directory, holds a
+  few questions per chapter. They render at the end of the chapter's last lesson and are
+  graded by `CourseController@checkpoint` on the server (no certificate). `correct` stays off
+  the page.
+- **Cookie consent.** `partials/cookie-consent.blade.php`, included on every public page,
+  states only necessary cookies are used and stores consent in `localStorage`. There is no
+  tracking to gate.
+- The course is still **in writing**: text is drafted and awaits Rafał's editorial pass, and
+  commands await a lab spot-check before launch.

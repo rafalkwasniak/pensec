@@ -1,0 +1,133 @@
+{
+    "_comment": "Kolejność, tytuły rozdziałów i nazwy lekcji. To jest jedyne miejsce, w którym nazywa się kurs - treść lekcji leży w plikach .md, a nazwy NIE są z nich wyciągane. 'dir' to katalog rozdziału, klucze w 'lessons' to nazwy plików .md (bez rozszerzenia). Lekcja pojawia się na stronie tylko gdy jest tu wymieniona i jej plik istnieje.",
+    "chapters": [
+        {
+            "dir": "00-wprowadzenie",
+            "kicker": "Wprowadzenie",
+            "title": "Początek kursu",
+            "lessons": {
+                "01": "Wprowadzenie do testów penetracyjnych",
+                "02": "Zasady zaangażowania",
+                "03": "Zakres i model zaufania",
+                "04": "Assume Breach",
+                "05": "Fazy testu penetracyjnego",
+                "06": "Myślenie w kategoriach ścieżki ataku",
+                "07": "Klasyfikacja działań (MITRE ATT&CK)",
+                "08": "Evidence i dokumentowanie wyników",
+                "09": "Walidacja podatności",
+                "0A": "Bezpieczne prowadzenie działań ofensywnych",
+                "0D": "Profile działania",
+                "0B": "Środowisko laboratoryjne",
+                "0C": "Cel dalszej części kursu"
+            }
+        },
+        {
+            "dir": "01-warstwa-dostepowa",
+            "kicker": "Rozdział I",
+            "title": "Fundamenty sieciowe",
+            "lessons": {
+                "01": "Model warstwowy i ruch sieciowy",
+                "02": "Ethernet",
+                "03": "Przełączanie i domeny",
+                "04": "Sieci wirtualne (VLAN)",
+                "05": "ARP",
+                "06": "IPv4",
+                "07": "IPv6",
+                "08": "DHCP",
+                "09": "DNS i rozwiązywanie nazw",
+                "10": "Porty i usługi"
+            }
+        },
+        {
+            "dir": "02-dostep-l2",
+            "kicker": "Rozdział II",
+            "title": "Warstwa dostępowa i L2",
+            "lessons": {
+                "01": "Mapowanie hostów w warstwie łącza danych",
+                "02": "Mapowanie ruchu w segmencie",
+                "03": "Protokoły zarządzania przełącznikiem (DTP, STP)",
+                "04": "Reakcja na STP i BPDU-guard",
+                "05": "Adres MAC jako tożsamość (MAB)",
+                "06": "Przełamanie segmentacji (VLAN hopping)"
+            }
+        },
+        {
+            "dir": "02-plaszczyzna-sterowania",
+            "kicker": "Rozdział III",
+            "title": "Protokoły lokalne i poświadczenia",
+            "lessons": {
+                "01": "Test podatności na pośrednika (gratuitous ARP)",
+                "02": "Rozgłoszeniowe rozwiązywanie nazw i NetNTLMv2",
+                "03": "Aktywne zatruwanie: DHCP i WPAD",
+                "04": "Wykrywanie obcego serwera DHCP",
+                "05": "Przejęcie rozwiązywania nazw przez IPv6"
+            }
+        },
+        {
+            "dir": "04-rozpoznanie",
+            "kicker": "Rozdział IV",
+            "title": "Rozpoznanie i enumeracja usług",
+            "lessons": {
+                "01": "Wykrywanie aktywnych hostów",
+                "02": "Skanowanie portów, wersji i systemu",
+                "03": "Interpretacja stanów i kompletności skanu",
+                "04": "Skrypty NSE i enumeracja SNMP",
+                "05": "Identyfikacja urządzeń (UPnP, mDNS, NetBIOS)",
+                "06": "Postura TLS/SSL"
+            }
+        },
+        {
+            "dir": "03-tozsamosc-uslugi",
+            "kicker": "Rozdział V",
+            "title": "Tożsamość i usługi katalogowe",
+            "lessons": {
+                "01": "Enumeracja udziałów SMB",
+                "02": "Przeszukiwanie udziału read-only",
+                "03": "Wyszukiwanie plików z poświadczeniami",
+                "04": "Sesja anonimowa RPC",
+                "05": "Anonimowy odczyt LDAP"
+            }
+        },
+        {
+            "dir": "04-aplikacje-skarbce",
+            "kicker": "Rozdział VI",
+            "title": "Usługi, bazy i podatności",
+            "lessons": {
+                "01": "Otwarte usługi: dostępność a dostęp",
+                "02": "Bazy klucz-wartość i dokumentowe",
+                "03": "Bazy i narzędzia przez HTTP",
+                "04": "Domyślne poświadczenia i kontrola negatywna",
+                "05": "Bazy relacyjne: MySQL i PostgreSQL",
+                "06": "MSSQL i sprawdzenie poza pasmem",
+                "07": "Oracle, DB2 i Cassandra",
+                "08": "Neo4j: domyślne poświadczenia i walidacja",
+                "09": "Weryfikacja danych wrażliwych",
+                "10": "Skanowanie znanych podatności",
+                "11": "Nuclei: szablony jako obserwacja",
+                "12": "Korelacja CVE i weryfikacja ustaleń"
+            }
+        },
+        {
+            "dir": "05-specjalistyczne",
+            "kicker": "Rozdział VII",
+            "title": "Moduły specjalistyczne",
+            "lessons": {
+                "01": "Sieć bezprzewodowa i tryb monitora",
+                "02": "Pasywny zrzut EAPOL",
+                "03": "IT a OT i bezpieczne skanowanie",
+                "04": "Wykrywanie i identyfikacja urządzeń OT"
+            }
+        },
+        {
+            "dir": "06-raport",
+            "kicker": "Rozdział VIII",
+            "title": "Diagnostyka, dowód i raport",
+            "lessons": {
+                "01": "Diagnostyka stanu sieci",
+                "02": "Od obserwacji do ustalenia",
+                "03": "Waga bez przeszacowania",
+                "04": "Struktura raportu"
+            }
+        }
+    ]
+}

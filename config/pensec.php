@@ -28,6 +28,14 @@ return [
         'preview_max_bytes' => 5 * 1024 * 1024,
     ],
 
+    'course' => [
+        // Exam submissions per minute per IP. The quiz posts once when it ends
+        // and once more to issue the certificate, so this only bites someone
+        // hammering the grader. The questions and pass threshold are content,
+        // and live in resources/course/exam.json instead.
+        'exam_rate_limit_per_minute' => 20,
+    ],
+
     'devices' => [
         // Raw bytes behind a device token. Rendered as hex, so the token the
         // device receives is twice this long.

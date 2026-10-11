@@ -32,4 +32,8 @@ Thumbs.db
 /awstats
 /logs
 /rpi-pentest
+/rpi-pentest.zip
 /vscode-czystka-pakiet
+
+# Author's book fragments uploaded only as course style references, never shipped.
+/resources/course/*.pdf

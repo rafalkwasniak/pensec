@@ -23,7 +23,7 @@
             ['Badanie', $report->scanned_at !== null ? $report->scanned_at->format('Y-m-d H:i:s').' UTC' : 'sonda nie podała'],
             ['Odebrano', $report->received_at->format('Y-m-d H:i:s').' UTC'],
             ['Czekało na sondzie', $lagLabel],
-            ['Stan', $report->status->value],
+            ['Stan', $report->status->label()],
             ['Rozmiar', number_format($report->payload_bytes, 0, ',', ' ').' B'],
             ['Adres źródłowy', $report->source_ip ?? 'nieznany'],
         ] as [$label, $value])
@@ -38,6 +38,8 @@
             <dd class="mt-2 break-all font-mono text-xs text-chrome">{{ $report->payload_sha256 }}</dd>
         </div>
     </dl>
+
+    @include('panel.reports.partials.analysis', ['report' => $report])
 
     @include('panel.reports.partials.narratives', ['report' => $report])
 

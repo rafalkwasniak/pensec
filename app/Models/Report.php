@@ -30,6 +30,9 @@ class Report extends Model
         'payload_path',
         'payload_format',
         'source_ip',
+        'parsed_at',
+        'parse_failure_reason',
+        'summary',
     ];
 
     protected static function booted(): void
@@ -48,6 +51,8 @@ class Report extends Model
             'status' => ReportStatus::class,
             'received_at' => 'datetime',
             'scanned_at' => 'datetime',
+            'parsed_at' => 'datetime',
+            'summary' => 'array',
             'payload_bytes' => 'integer',
             'payload_format' => PayloadFormat::class,
         ];
@@ -111,6 +116,11 @@ class Report extends Model
     public function narratives(): HasMany
     {
         return $this->hasMany(ReportNarrative::class);
+    }
+
+    public function findings(): HasMany
+    {
+        return $this->hasMany(ReportFinding::class);
     }
 
     /**

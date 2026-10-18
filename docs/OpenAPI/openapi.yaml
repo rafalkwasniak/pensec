@@ -187,11 +187,20 @@ components:
     ReportStatus:
       type: string
       description: >
-        Processing state of a stored report. `received` means the raw document
-        is stored and nothing has been derived from it yet - parsing is a later,
-        separate step. Further values will be added as parsing lands.
+        Processing state of a stored report. `received` means the raw document is
+        stored and queued for analysis, nothing derived yet. `parsing` means the
+        asynchronous parse of the stored document is under way. `parsed` means it
+        finished and the derived findings are available in the administration
+        panel. `failed` means the parse could not complete; the raw document is
+        unchanged and still the source of truth. Parsing never alters the stored
+        document, and a `failed` parse is still a successfully stored report, so
+        this field is never an error signal - transport errors use the error
+        envelope and HTTP status instead.
       enum:
         - received
+        - parsing
+        - parsed
+        - failed
       example: received
 
     DeviceReportPayload:

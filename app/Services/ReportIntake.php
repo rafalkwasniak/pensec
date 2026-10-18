@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\PayloadFormat;
 use App\Enums\ReportStatus;
+use App\Jobs\ParseReport;
 use App\Models\Device;
 use App\Models\Report;
 use App\Support\ScanTime;
@@ -87,6 +88,12 @@ class ReportIntake
             // Gone already when the report was stored; left behind otherwise.
             $disk->delete($scratch);
         }
+
+        // Only the genuinely new row gets a parse. Duplicates and the loser of a
+        // race returned earlier, so a report is never parsed twice from intake.
+        // Dispatched after the transaction has committed, so the row and its
+        // moved file are durable before the job can run.
+        ParseReport::dispatch($report->id);
 
         return ['report' => $report, 'stored' => true];
     }

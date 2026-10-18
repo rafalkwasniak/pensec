@@ -30,10 +30,34 @@ class ReportController extends Controller
         ]);
     }
 
-    public function show(Report $report): View
+    public function show(Request $request, Report $report): View
     {
+        $report->load('device', 'narratives');
+
+        $level = $request->string('level')->toString() ?: null;
+        $source = $request->string('source')->toString() ?: null;
+        $search = $request->string('q')->toString() ?: null;
+
+        $findings = $report->findings()
+            ->when($level, fn ($query) => $query->where('level', $level))
+            ->when($source, fn ($query) => $query->where('source', $source))
+            ->when($search, fn ($query) => $query->where(
+                fn ($inner) => $inner->where('title', 'like', '%'.$search.'%')->orWhere('ip', 'like', '%'.$search.'%'),
+            ))
+            // Severity order (App\Support\Severity::ORDER), most severe first.
+            ->orderByRaw("CASE level WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END")
+            ->orderBy('id')
+            ->paginate(50)
+            ->withQueryString();
+
         return view('panel.reports.show', [
-            'report' => $report->load('device', 'narratives'),
+            'report' => $report,
+            'findings' => $findings,
+            'findingLevels' => $report->findings()->distinct()->orderBy('level')->pluck('level'),
+            'findingSources' => $report->findings()->distinct()->orderBy('source')->pluck('source'),
+            'filterLevel' => $level,
+            'filterSource' => $source,
+            'filterQuery' => $search,
             'lagWarningSeconds' => $this->lagWarningSeconds(),
             'previewable' => $report->payload_bytes <= config('pensec.reports.preview_max_bytes'),
         ]);

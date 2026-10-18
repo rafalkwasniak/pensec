@@ -419,10 +419,15 @@ minute per probe, token length. They are config, not `.env`, and not class const
 - **Code map** (`code-map.html`, FOUNDATION §4) - skipped by decision: the API is a single
   endpoint and the map would cost more to maintain than it returns.
 - **Discord alerting** (FOUNDATION §5) - deferred, to be picked up later.
-- **Report parsing in the API** - still a later stage. `ReportFacts` reads the document to
-  build a PDF, but nothing is parsed on the way in and nothing derived is stored:
-  `ReportStatus` still has one value, `received`. New values are added as parsing lands,
-  and the contract's enum must grow with it.
+- **Report parsing in the API** - LANDED 2026-10-18 (no longer "not built"). A queued
+  `App\Jobs\ParseReport`, dispatched from `ReportIntake` for every newly stored report, reads
+  the document **bounded** through `ReportFacts::forReport` and persists a `report_findings`
+  row per finding (idempotent by a `fingerprint`) plus a `summary` JSON on `reports`. Nothing
+  is parsed on the way in and the stored document is never rewritten, so a firmware format
+  change still costs a `ReportFacts` edit, not a migration. `ReportStatus` grew
+  `received → parsing → parsed → failed` (PHP enum and the OpenAPI enum in lockstep; additive,
+  the card gained no fields). Derived findings are shown in the panel only. Future parsing
+  refinements add more derived storage; keep the PHP and contract enums in step.
 - **Password reset for another administrator** - an administrator sets the initial
   password when creating an account; the account owner changes it themselves.
 

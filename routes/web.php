@@ -10,6 +10,7 @@ use App\Http\Controllers\Panel\DeviceTokenController;
 use App\Http\Controllers\Panel\PasswordController;
 use App\Http\Controllers\Panel\ReportController;
 use App\Http\Controllers\Panel\ReportNarrativeController;
+use App\Http\Controllers\Panel\ReportParseController;
 use App\Http\Controllers\Panel\SessionController;
 use Illuminate\Support\Facades\Route;
 
@@ -84,6 +85,10 @@ Route::prefix('panel')->name('panel.')->middleware('panel.locale')->group(functi
         Route::get('reports/{report}', [ReportController::class, 'show'])->name('reports.show');
         Route::get('reports/{report}/payload', [ReportController::class, 'payload'])->name('reports.payload');
         Route::get('reports/{report}/download', [ReportController::class, 'download'])->name('reports.download');
+
+        Route::post('reports/{report}/parse', [ReportParseController::class, 'store'])->name('reports.parse.store');
+        Route::post('reports/{report}/parse/reparse', [ReportParseController::class, 'reparse'])->name('reports.parse.reparse');
+        Route::get('reports/{report}/parse/status', [ReportParseController::class, 'status'])->name('reports.parse.status');
 
         // {variant} binds to the NarrativeVariant enum, so an unknown value is
         // a 404 before the controller runs.

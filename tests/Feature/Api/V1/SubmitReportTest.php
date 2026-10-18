@@ -4,10 +4,12 @@ namespace Tests\Feature\Api\V1;
 
 use App\Enums\PayloadFormat;
 use App\Enums\ReportStatus;
+use App\Jobs\ParseReport;
 use App\Models\Device;
 use App\Models\Report;
 use App\Services\ReportFacts;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Testing\TestResponse;
 use Spectator\Spectator;
@@ -26,6 +28,13 @@ class SubmitReportTest extends TestCase
         parent::setUp();
 
         Spectator::using('openapi.yaml');
+
+        // Intake dispatches ParseReport. Under the sync queue a test uses, it
+        // would otherwise run inline and flip a just-stored report to `parsed`
+        // before these tests read it. Faked here so storage stays observable;
+        // the parse itself is exercised in ParseReportTest and the one test
+        // below that runs the job by hand.
+        Queue::fake();
     }
 
     /**
@@ -99,6 +108,27 @@ class SubmitReportTest extends TestCase
         $this->assertSame($device->id, $report->device_id);
         $this->assertSame(self::REPORT_ID, $report->report_uid);
         $this->assertSame(ReportStatus::Received, $report->status);
+
+        // A newly stored report is queued for analysis exactly once.
+        Queue::assertPushed(ParseReport::class, 1);
+    }
+
+    public function test_a_parsed_report_still_satisfies_the_contract(): void
+    {
+        $this->activeDevice();
+
+        $this->submit()->assertValidResponse(201);
+
+        // Run the parse by hand (the queue is faked) so the report reaches the
+        // `parsed` status, then prove the idempotent re-submit still returns a
+        // card the contract accepts - the grown ReportStatus enum in use.
+        (new ParseReport(Report::sole()->id))->handle();
+
+        $this->assertSame(ReportStatus::Parsed, Report::sole()->status);
+
+        $this->submit()
+            ->assertValidResponse(200)
+            ->assertJsonPath('data.status', ReportStatus::Parsed->value);
     }
 
     public function test_it_stores_the_body_exactly_as_sent_alongside_its_checksum(): void

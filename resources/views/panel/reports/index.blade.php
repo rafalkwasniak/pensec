@@ -67,7 +67,7 @@
                                 <a href="{{ route('panel.reports.show', $report) }}"
                                    class="font-mono text-xs text-brand hover:underline">{{ $report->report_uid }}</a>
                             </td>
-                            <td class="px-5 py-4 text-muted">{{ $report->status->value }}</td>
+                            <td class="px-5 py-4 text-muted">{{ $report->status->label() }}</td>
                             <td class="px-5 py-4 text-muted">{{ number_format($report->payload_bytes / 1024, 1, ',', ' ') }} kB</td>
                         </tr>
                     @endforeach

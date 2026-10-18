@@ -8,6 +8,14 @@
     $totals = $summary['totals'] ?? [];
     $gaps = $summary['gaps'] ?? [];
 
+    $outcomeLabel = match ($summary['scan']['outcome'] ?? null) {
+        'operator_stop' => 'zatrzymane przez operatora',
+        'completed_with_module_errors' => 'ukończone z błędami części testów',
+        'completed' => 'ukończone',
+        null => null,
+        default => $summary['scan']['outcome'],
+    };
+
     $levelClass = fn (string $level): string => match ($level) {
         Severity::CRITICAL => 'border-warn-line bg-warn-soft text-warn',
         Severity::HIGH => 'border-warn-line text-warn',
@@ -42,20 +50,18 @@
 
     <div class="mt-5 flex flex-wrap items-center gap-3">
         @if ($status === ReportStatus::Parsed)
+            @if ($report->parsed_at)
+                <span class="text-xs text-muted">Przeanalizowano {{ $report->parsed_at->format('Y-m-d H:i') }} UTC</span>
+            @endif
             <form method="POST" action="{{ route('panel.reports.parse.reparse', $report) }}"
                   onsubmit="return confirm('Przeanalizować ten raport od nowa? Obecne ustalenia zostaną zastąpione.')">
                 @csrf
                 <button type="submit" class="text-sm text-muted transition hover:text-chrome">Przeanalizuj od nowa</button>
             </form>
-            @if ($report->parsed_at)
-                <span class="text-xs text-muted">Sparsowano {{ $report->parsed_at->format('Y-m-d H:i') }} UTC</span>
-            @endif
         @elseif ($status->inProgress())
-            <span class="text-sm text-muted">Analiza w toku, strona odświeży się sama&hellip;</span>
-            <form method="POST" action="{{ route('panel.reports.parse.store', $report) }}">
-                @csrf
-                <button type="submit" class="text-sm text-muted transition hover:text-chrome">Uruchom teraz</button>
-            </form>
+            <span class="text-sm text-muted">
+                {{ $status === ReportStatus::Parsing ? 'Analiza w toku, strona odświeży się sama…' : 'Raport czeka w kolejce analizy, strona odświeży się sama…' }}
+            </span>
         @else
             <form method="POST" action="{{ route('panel.reports.parse.store', $report) }}">
                 @csrf
@@ -99,9 +105,9 @@
             @if ($summary['personal_data'] ?? false)
                 <span class="rounded-full border border-warn-line px-3 py-1 text-warn">Dane osobowe w sieci</span>
             @endif
-            @if (($summary['scan']['outcome'] ?? null) !== null)
+            @if ($outcomeLabel !== null)
                 <span class="rounded-full border border-ink-line px-3 py-1 text-muted">
-                    Przebieg: {{ $summary['scan']['outcome'] }}
+                    Przebieg: {{ $outcomeLabel }}
                 </span>
             @endif
         </div>

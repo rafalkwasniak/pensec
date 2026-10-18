@@ -125,7 +125,7 @@
                                 'Wykrywanie infrastruktury przemysłowej (ICS/OT) w otwartych segmentach sieci LAN.',
                                 'Diagnostyka sieci i bezpieczeństwo Wi-Fi, podatności na podsłuch, VLAN Hopping czy fałszywe DHCP.',
                                 'Wskazanie obowiązków ochrony danych osobowych (RODO), gdy badanie dotrze do danych wrażliwych, takich jak numery PESEL czy dane kart.',
-                                'Plan naprawy lub utrzymania — uszeregowane według priorytetu zalecenia usunięcia wykrytych podatności.',
+                                'Plan naprawy lub utrzymania, czyli uszeregowane według priorytetu zalecenia usunięcia wykrytych podatności.',
                             ] as $item)
                                 <li class="flex gap-3 items-start">
                                     <span aria-hidden="true" class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-ink-line"></span>
@@ -171,7 +171,7 @@
                                 'Wykrywanie infrastruktury przemysłowej (ICS/OT) w otwartych segmentach sieci LAN.',
                                 'Diagnostyka sieci i bezpieczeństwo Wi-Fi, podatności na podsłuch, VLAN Hopping czy fałszywe DHCP.',
                                 'Wskazanie obowiązków ochrony danych osobowych (RODO), gdy badanie dotrze do danych wrażliwych, takich jak numery PESEL czy dane kart.',
-                                'Plan naprawy lub utrzymania — uszeregowane według priorytetu zalecenia usunięcia wykrytych podatności.',
+                                'Plan naprawy lub utrzymania, czyli uszeregowane według priorytetu zalecenia usunięcia wykrytych podatności.',
                             ] as $item)
                                 <li class="flex gap-3 items-start">
                                     <span aria-hidden="true" class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-ink-line"></span>

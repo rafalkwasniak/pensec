@@ -23,7 +23,7 @@ class ReportParseController extends Controller
     public function store(Report $report): RedirectResponse
     {
         if ($report->status === ReportStatus::Parsed) {
-            return back()->with('status', 'Ten raport jest już sparsowany.');
+            return back()->with('status', 'Ten raport jest już przeanalizowany.');
         }
 
         if ($report->status === ReportStatus::Parsing) {

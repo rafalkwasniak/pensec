@@ -24,7 +24,7 @@ enum ReportStatus: string
         return match ($this) {
             self::Received => 'W kolejce do analizy',
             self::Parsing => 'Analiza trwa',
-            self::Parsed => 'Sparsowany',
+            self::Parsed => 'Przeanalizowany',
             self::Failed => 'Analiza nie udała się',
         };
     }

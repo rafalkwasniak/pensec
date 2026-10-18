@@ -145,6 +145,43 @@ class Diagnostics
         'upload' => 'Wysyłanie',
     ];
 
+    /** Whole diagnostics that are internal run bookkeeping, not a result. */
+    private const HIDDEN_KEYS = ['operator_stop_checkpoint_capture', 'fatal_error'];
+
+    /** Fields that are internal probe bookkeeping, shown to nobody. */
+    private const HIDDEN_FIELDS = ['error_bytes', 'error_sha256', 'error_redacted', 'scheduler'];
+
+    /**
+     * Plain-Polish labels for probe fields that have no dedicated spec above.
+     * A field named here is "known" and stays in the manager report; a field
+     * that falls through to humanise() is shown only in the expert report.
+     *
+     * @var array<string, string>
+     */
+    private const FIELD_LABELS = [
+        'status' => 'Stan',
+        'reason' => 'Powód',
+        'assessment' => 'Ocena',
+        'server' => 'Odpytany serwer',
+        'interface' => 'Interfejs',
+        'target' => 'Cel',
+        'gratuitous_arp_probe_sent' => 'Wysłano próbny Gratuitous ARP',
+        'probe_source_ip' => 'Adres źródłowy próby',
+        'observation_target' => 'Obserwowany host',
+        'responses_observed' => 'Zaobserwowane odpowiedzi',
+        'dhcp_servers' => 'Serwery DHCP',
+        'multiple_dhcp_responders' => 'Wiele odpowiadających serwerów',
+        'authorized_dhcp_servers' => 'Autoryzowane serwery DHCP',
+        'test_host' => 'Host testowy',
+        'resolved_addresses' => 'Rozpoznane adresy',
+        'ports_tested' => 'Liczba badanych portów',
+        'bpdu_probe_sent' => 'Wysłano próbny BPDU',
+        'mab_bypass_candidates' => 'Kandydaci do obejścia MAB',
+        'carrier_after_bpdu_probe' => 'Łącze po próbie BPDU',
+        'wpad_authoritative_dns' => 'Autorytatywny DNS WPAD',
+        'wpad_dns_record_present' => 'Rekord DNS WPAD',
+    ];
+
     public static function label(string $key): string
     {
         return self::KNOWN[$key]['label'] ?? self::humanise($key);
@@ -171,6 +208,11 @@ class Diagnostics
             'text' => '',
             'error' => null,
         ];
+
+        if (in_array($key, self::HIDDEN_KEYS, true)) {
+            // Internal run bookkeeping; the empty entry is dropped by the caller.
+            return $entry;
+        }
 
         if (in_array($key, ['top_talkers', 'top_talkers_evidence'], true)) {
             // Up to schema 2 the probe sent tshark's console dump as text;
@@ -230,7 +272,11 @@ class Diagnostics
         }
 
         if (array_is_list($value)) {
-            $entry['fields'] = self::listFields($value);
+            // The per-interface VLAN check carries a readable assessment per
+            // entry; show that, not a dump of every internal field.
+            $entry['fields'] = $key === 'vlan_hopping'
+                ? self::vlanFields($value)
+                : self::listFields($value);
             $entry['kind'] = $entry['fields'] === [] ? 'text' : 'fields';
 
             return $entry;
@@ -242,6 +288,10 @@ class Diagnostics
             if ($field === 'error') {
                 $entry['error'] = is_string($raw) && $raw !== '' ? $raw : 'Test zgłosił błąd.';
 
+                continue;
+            }
+
+            if (in_array((string) $field, self::HIDDEN_FIELDS, true)) {
                 continue;
             }
 
@@ -277,30 +327,39 @@ class Diagnostics
                 // a finding and must not turn up in the ranked list.
                 'level' => $concern ? ($spec['level'] ?? Severity::MEDIUM) : Severity::INFO,
                 'gap' => $concern && ($spec['gap'] ?? false),
+                'known' => true,
             ];
         }
+
+        $label = $spec['label'] ?? self::FIELD_LABELS[$field] ?? self::humanise($field);
+
+        // A field we translate (dedicated spec or a Polish label above) stays in
+        // the manager report; one that only humanises the raw name is expert-only.
+        $known = $spec !== [] || array_key_exists($field, self::FIELD_LABELS);
 
         if (is_array($raw)) {
             $items = array_filter($raw, is_scalar(...));
 
             if ($items === []) {
                 return [
-                    'label' => $spec['label'] ?? self::humanise($field),
+                    'label' => $label,
                     'value' => $spec['empty'] ?? 'brak',
                     'concern' => false,
                     'level' => Severity::INFO,
                     'gap' => false,
+                    'known' => $known,
                 ];
             }
 
             $concern = (bool) ($spec['concern_when_filled'] ?? false);
 
             return [
-                'label' => $spec['label'] ?? self::humanise($field),
+                'label' => $label,
                 'value' => implode(', ', array_map(strval(...), $items)),
                 'concern' => $concern,
                 'level' => $concern ? ($spec['level'] ?? Severity::MEDIUM) : Severity::INFO,
                 'gap' => false,
+                'known' => $known,
             ];
         }
 
@@ -310,11 +369,12 @@ class Diagnostics
 
         if (is_bool($raw)) {
             return [
-                'label' => $spec['label'] ?? self::humanise($field),
+                'label' => $label,
                 'value' => $raw ? 'tak' : 'nie',
                 'concern' => false,
                 'level' => Severity::INFO,
                 'gap' => false,
+                'known' => $known,
             ];
         }
 
@@ -322,15 +382,68 @@ class Diagnostics
             return null;
         }
 
+        // An empty string carries nothing - an unfilled "reason" is not a row.
+        if (is_string($raw) && trim($raw) === '') {
+            return null;
+        }
+
         $unit = isset($spec['unit']) ? ' '.$spec['unit'] : '';
 
         return [
-            'label' => $spec['label'] ?? self::humanise($field),
+            'label' => $label,
             'value' => $raw.$unit,
             'concern' => false,
             'level' => Severity::INFO,
             'gap' => false,
+            'known' => $known,
         ];
+    }
+
+    /**
+     * The per-interface VLAN check, reduced to the one sentence that matters -
+     * the probe's assessment, with its concern lifted from the severity. The
+     * internal fields (baseline count, confidence, probe count) are dropped.
+     *
+     * @param  list<mixed>  $value
+     * @return list<array{label: ?string, value: string, concern: bool, level: string, gap: bool, known: bool}>
+     */
+    private static function vlanFields(array $value): array
+    {
+        $fields = [];
+
+        foreach ($value as $entry) {
+            if (! is_array($entry)) {
+                continue;
+            }
+
+            $sentence = null;
+
+            foreach (['assessment', 'reason'] as $k) {
+                if (is_string($entry[$k] ?? null) && trim($entry[$k]) !== '') {
+                    $sentence = trim($entry[$k]);
+
+                    break;
+                }
+            }
+
+            if ($sentence === null) {
+                continue;
+            }
+
+            $severity = mb_strtoupper((string) ($entry['severity'] ?? ''));
+            $concern = ! in_array($severity, ['', 'INFO', 'SECURE'], true);
+
+            $fields[] = [
+                'label' => null,
+                'value' => $sentence,
+                'concern' => $concern,
+                'level' => $concern ? Severity::ofProbeWord($severity) : Severity::INFO,
+                'gap' => false,
+                'known' => true,
+            ];
+        }
+
+        return $fields;
     }
 
     /**

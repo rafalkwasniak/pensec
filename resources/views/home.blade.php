@@ -124,6 +124,7 @@
                                 'Ekspozycja poufnych poświadczeń, wycieki z LDAP, anonimowe udziały SMB i słabe hasła.',
                                 'Wykrywanie infrastruktury przemysłowej (ICS/OT) w otwartych segmentach sieci LAN.',
                                 'Diagnostyka sieci i bezpieczeństwo Wi-Fi, podatności na podsłuch, VLAN Hopping czy fałszywe DHCP.',
+                                'Wskazanie obowiązków ochrony danych osobowych (RODO), gdy badanie dotrze do danych wrażliwych, takich jak numery PESEL czy dane kart.',
                                 'Plan naprawy lub utrzymania — uszeregowane według priorytetu zalecenia usunięcia wykrytych podatności.',
                             ] as $item)
                                 <li class="flex gap-3 items-start">
@@ -169,6 +170,7 @@
                                 'Ekspozycja poufnych poświadczeń, wycieki z LDAP, anonimowe udziały SMB i słabe hasła.',
                                 'Wykrywanie infrastruktury przemysłowej (ICS/OT) w otwartych segmentach sieci LAN.',
                                 'Diagnostyka sieci i bezpieczeństwo Wi-Fi, podatności na podsłuch, VLAN Hopping czy fałszywe DHCP.',
+                                'Wskazanie obowiązków ochrony danych osobowych (RODO), gdy badanie dotrze do danych wrażliwych, takich jak numery PESEL czy dane kart.',
                                 'Plan naprawy lub utrzymania — uszeregowane według priorytetu zalecenia usunięcia wykrytych podatności.',
                             ] as $item)
                                 <li class="flex gap-3 items-start">

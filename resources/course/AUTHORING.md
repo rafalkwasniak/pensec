@@ -55,6 +55,10 @@ wykonujący ocenę ręcznie.
 ## 4. Reguły języka
 
 - **Bez myślników** (— –) w prozie. Zdania proste lub przecinek.
+- **Bez dwukropków i średników w prozie.** Zdanie łączymy kropką albo przecinkiem, nie
+  dwukropkiem ani średnikiem. Jedyny dozwolony dwukropek **wprowadza polecenie lub składnię**
+  tuż przed blokiem komendy, wzorem książki: „…służy następujące polecenie:” a pod spodem blok.
+  Średnik występuje wyłącznie **wewnątrz komendy** (terminator instrukcji SQL), nigdy w prozie.
 - **Nawiasy wyłącznie dla terminu angielskiego** przy pierwszym użyciu: `Rules of
   Engagement`, `handshake`, `null session`. Nie dla dopowiedzeń.
 - **Unikamy „które/która/którego…"** — przebudowa na zdanie proste albo imiesłów.
@@ -107,12 +111,9 @@ potwierdzenia.
 ## 6. Konwencja komend
 
 - Komendy w blokach ` ```bash `, przykładowy output w ` ```text `.
-- **Każdy parametr zmienny jako `[PLACEHOLDER]`** wielkimi literami, a pod blokiem słownik:
-
-  ```
-  [INTERFACE]   Lokalny interfejs sieciowy podłączony do badanej sieci.
-  [TARGET_IP]   Adres badanego hosta.
-  ```
+- **Każdy parametr zmienny jako `[PLACEHOLDER]`** wielkimi literami w bloku komendy. Pod blokiem
+  **nie dajemy słownika w tabelce ani tersnej listy flag z separatorem `·`** — całą składnię
+  objaśniamy ciągłą prozą (sekcja „Wzorzec prezentacji komendy”).
 - Output realistyczny i zanonimizowany (`xx:xx:xx`, `192.168.x.x`).
 - **Używamy realnych narzędzi narzędzia audytowego**, nie „hollywoodzkich":
 
@@ -132,27 +133,36 @@ potwierdzenia.
   `hashcat`/`aircrack`, `impacket`/NTLM relay, BloodHound, `redis-cli`/`mongosh` jako
   podstawy — narzędzie ich nie używa.
 
-### Wzorzec prezentacji komendy (z książki)
+### Wzorzec prezentacji komendy (styl książki, pełny)
 
-Najmocniejszy nośnik stylu książki, przejmujemy go w całości:
+Najmocniejszy nośnik stylu książki, przejmujemy go **w całości**. Komendę wprowadzamy, pokazujemy
+jej składnię w bloku, a następnie w **ciągłej prozie** przechodzimy przez każdy element od lewej do
+prawej, mówiąc **co dany przełącznik robi i co operator w jego miejsce podstawia**. Nie zostawiamy
+wiszącego placeholdera bez objaśnienia ani tersnej listy flag po przecinku. Składnię tłumaczymy tak,
+jak książka tłumaczy `SELECT` czy `UPDATE`: „Po słowie kluczowym X podaje się…”, „Kolejnym
+elementem składni jest…”, „Opcjonalnie można zastosować…”.
 
-1. **Składnia ogólna** — w prozie i w bloku, ze zmiennymi jako `[PLACEHOLDER]`.
-2. **Objaśnienie części składni** — co znaczy każdy element (to jednocześnie słownik
-   placeholderów pod blokiem).
-3. **Przykład z jawną intencją** — jedno zdanie po polsku, co operator chce ustalić, a pod nim
-   konkretna komenda.
-4. **Komentowany output** — zamiast zrzutu ekranu: blok ` ```text ` z wynikiem i krótką
-   interpretacją linii obok (co jest informacją, co obserwacją, co wymaga potwierdzenia).
+1. **Zdanie wprowadzające** — co polecenie ustala i po co.
+2. **Składnia w bloku** ` ```bash ` ze zmiennymi jako `[PLACEHOLDER]`.
+3. **Objaśnienie prozą, element po elemencie** — każdy przełącznik i każdy placeholder opisuje
+   zdanie, a nie tabelka ani lista z separatorem.
+4. **Komentowany output** — blok ` ```text ` z wynikiem i krótką interpretacją linii obok (co jest
+   informacją, co obserwacją, co wymaga potwierdzenia).
 
-Schemat:
+Wzór (lekcja nmap):
 
-> Składnia: `nmap -sV -p [PORTS] [TARGET]`
-> `[PORTS]` lista portów · `[TARGET]` adres badanego hosta.
-> Przykład: wykrycie wersji usług na odnalezionym hoście.
-> `nmap -sV -p 445,139 [TARGET]`
+> Do rozpoznania wersji usług i systemu służy następujące polecenie:
+> ```bash
+> sudo nmap -sV -O -Pn -p [PORTS] [TARGET]
+> ```
+> Przełącznik `-sV` uruchamia rozpoznanie wersji usług, dzięki czemu nmap nawiązuje połączenie z
+> otwartym portem i odczytuje baner zamiast poprzestawać na samym numerze. Przełącznik `-O` włącza
+> szacowanie systemu operacyjnego na podstawie charakterystyki stosu sieciowego. Przełącznik `-Pn`
+> pomija ponowne wykrywanie hosta, przydatny wtedy, gdy aktywność adresu ustalono we wcześniejszym
+> etapie. Po przełączniku `-p` podaje się listę portów rozdzielonych przecinkami, na przykład
+> `445,139,3389`, albo znak `-` oznaczający pełny zakres od 1 do 65535. Ostatnim elementem składni
+> jest adres badanego hosta.
 > (następnie komentowany output z interpretacją)
-
-Łączy styl książki, konwencję `[PLACEHOLDER]` i komentowany output w jeden powtarzalny schemat.
 
 ## 6a. Formatowanie treści i gęstość (z recenzji M0)
 
@@ -190,7 +200,7 @@ koncepcyjne (fundamenty) płyną bez nagłówków.
 **Lekcja ataku/testu (6 sekcji):**
 1. **Mechanizm** — jak działa protokół/technologia.
 2. **Warunek podatności** — kiedy test może coś wykazać (bardzo ważne).
-3. **Procedura** — komendy (`[PLACEHOLDER]` + słownik).
+3. **Procedura** — komendy (`[PLACEHOLDER]` + objaśnienie prozą, element po elemencie).
 4. **Obserwacja i interpretacja** — co output znaczy, a czego nie.
 5. **Walidacja i wpływ** — jak potwierdzić i co to realnie dowodzi.
 6. **Remediacja** — jedno zdanie obronne.

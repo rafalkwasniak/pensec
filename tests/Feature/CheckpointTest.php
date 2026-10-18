@@ -15,21 +15,24 @@ class CheckpointTest extends TestCase
         return array_map(fn (array $q): int => $q['correct'], $all[$chapter]['questions']);
     }
 
-    public function test_checkpoint_appears_on_the_last_lesson_without_answers(): void
+    public function test_checkpoint_renders_as_its_own_topic_without_answers(): void
     {
-        // 0C is the last lesson of the intro chapter per the manifest order.
-        $this->get('/course/00-wprowadzenie/0C')
+        // The checkpoint is a navigable "Sprawdź się" topic, not a block hidden
+        // under the last lesson.
+        $this->get('/course/00-wprowadzenie/sprawdz-sie')
             ->assertOk()
-            ->assertSee('Sprawdź się')
+            ->assertSee('id="checkpoint"', false)
             ->assertSee('Assume Breach')
             ->assertDontSee('"correct"', false);
     }
 
-    public function test_checkpoint_is_absent_on_a_non_last_lesson(): void
+    public function test_checkpoint_is_absent_on_a_content_lesson(): void
     {
+        // A content lesson never carries the checkpoint block; the sidebar still
+        // links the "Sprawdź się" topic, so assert on the block, not the label.
         $this->get('/course/00-wprowadzenie/01')
             ->assertOk()
-            ->assertDontSee('Sprawdź się');
+            ->assertDontSee('id="checkpoint"', false);
     }
 
     public function test_checkpoint_grades_on_the_server(): void

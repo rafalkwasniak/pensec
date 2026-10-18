@@ -292,8 +292,8 @@
             try {
                 const result = await postExam({ answers, name });
                 if (result.certificate_url) {
-                    window.open(result.certificate_url, '_blank');
-                    button.innerText = 'Pobierz ponownie';
+                    window.location.href = result.certificate_url;
+                    return;
                 } else {
                     button.innerText = 'Odbierz certyfikat';
                     alert('Nie udało się wydać certyfikatu.');

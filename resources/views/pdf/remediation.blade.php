@@ -20,6 +20,27 @@
         $hosts[$host['ip']] = $host;
     }
 
+    // A technician fixes one device at a time, so the guide groups repairs by
+    // host. Each finding keeps its original 1-based number - that is how the
+    // model's steps are keyed - so grouping never breaks the step mapping.
+    // Hosts are ordered worst-severity first (the most exposed device, usually
+    // the one carrying the critical findings), then by how many it carries.
+    $numbered = [];
+    foreach ($findings as $i => $f) {
+        $numbered[] = $f + ['_n' => $i + 1];
+    }
+
+    $groups = [];
+    foreach ($numbered as $f) {
+        $groups[$f['ip'] ?? '__net__'][] = $f;
+    }
+
+    uasort($groups, function (array $a, array $b): int {
+        $worst = fn (array $g): int => min(array_map(fn ($f) => Severity::rank($f['level']), $g));
+
+        return [$worst($a), -count($a)] <=> [$worst($b), -count($b)];
+    });
+
     /** Model output is untrusted input; markdown is rendered with HTML escaped. */
     $markdown = fn (?string $text): string => $text
         ? Str::markdown($text, ['html_input' => 'escape', 'allow_unsafe_links' => false])
@@ -166,59 +187,68 @@
     </div>
 @endif
 
-@foreach ($findings as $index => $finding)
+@foreach ($groups as $groupKey => $groupFindings)
     @php
-        $number = $index + 1;
-        [$ink, $bg] = $levelInk[$finding['level']] ?? ['#55647f', '#eef2f9'];
-        $host = $finding['ip'] !== null ? ($hosts[$finding['ip']] ?? null) : null;
-        $device = $host !== null
-            ? implode(', ', array_filter([$host['vendor'], $host['model'], $host['os']]))
+        $isNet = $groupKey === '__net__';
+        $groupHost = ! $isNet ? ($hosts[$groupKey] ?? null) : null;
+        $groupDevice = $groupHost !== null
+            ? implode(', ', array_filter([$groupHost['vendor'], $groupHost['model'], $groupHost['os']]))
             : '';
     @endphp
 
-    <div class="card">
-        <div class="card-head">
-            <table style="width:100%; border-collapse:collapse;">
-                <tr>
-                    <td style="vertical-align:top;">
-                        <span style="font-size:12px; font-weight:bold; color:#0b1426;">{{ $number }}. {{ $finding['title'] }}</span>
-                    </td>
-                    <td style="vertical-align:top; text-align:right; width:90px;">
-                        <span class="tag" style="color:{{ $ink }}; background:{{ $bg }};">{{ Severity::label($finding['level']) }}</span>
-                    </td>
-                </tr>
-            </table>
-            <div style="font-size:9px; color:#55647f; margin-top:3px;">
-                <span class="mono" style="color:#0b1426;">{{ $finding['ip'] ?? 'cała sieć' }}</span>
-                @if ($finding['where'])
-                    · {{ $finding['where'] }}
+    <h2 style="font-size:13px; color:#0b1426; margin:18px 0 8px; padding-bottom:4px; border-bottom:1px solid #e2e8f2;">
+        <span class="mono">{{ $isNet ? 'Cała sieć' : $groupKey }}</span>
+        @if ($groupDevice !== '')
+            <span style="font-size:10px; font-weight:normal; color:#55647f;">· {{ $groupDevice }}</span>
+        @endif
+        <span style="font-size:9px; font-weight:normal; color:#8a97ab;">· {{ App\Support\Polish::count(count($groupFindings), 'usterka', 'usterki', 'usterek') }}</span>
+    </h2>
+
+    @foreach ($groupFindings as $finding)
+        @php
+            $number = $finding['_n'];
+            [$ink, $bg] = $levelInk[$finding['level']] ?? ['#55647f', '#eef2f9'];
+        @endphp
+
+        <div class="card">
+            <div class="card-head">
+                <table style="width:100%; border-collapse:collapse;">
+                    <tr>
+                        <td style="vertical-align:top;">
+                            <span style="font-size:12px; font-weight:bold; color:#0b1426;">{{ $number }}. {{ $finding['title'] }}</span>
+                        </td>
+                        <td style="vertical-align:top; text-align:right; width:90px;">
+                            <span class="tag" style="color:{{ $ink }}; background:{{ $bg }};">{{ Severity::label($finding['level']) }}</span>
+                        </td>
+                    </tr>
+                </table>
+                @if ($finding['where'] || ! $finding['confirmed'])
+                    <div style="font-size:9px; color:#55647f; margin-top:3px;">
+                        @if ($finding['where']){{ $finding['where'] }}@endif
+                        @if ($finding['where'] && ! $finding['confirmed']) · @endif
+                        @if (! $finding['confirmed'])<span style="color:#8a4b06;">ustalenie niepotwierdzone - najpierw zweryfikuj</span>@endif
+                    </div>
                 @endif
-                @if ($device !== '')
-                    · {{ $device }}
+                @if ($finding['note'])
+                    <div style="font-size:9px; color:#55647f; margin-top:3px;">{{ Str::limit($finding['note'], 300) }}</div>
                 @endif
-                @if (! $finding['confirmed'])
-                    · <span style="color:#8a4b06;">ustalenie niepotwierdzone - najpierw zweryfikuj</span>
+                @if ($finding['cves'] !== [])
+                    <div class="mono" style="color:#55647f; margin-top:3px;">{{ implode(', ', array_slice($finding['cves'], 0, 8)) }}</div>
                 @endif
             </div>
-            @if ($finding['note'])
-                <div style="font-size:9px; color:#55647f; margin-top:3px;">{{ Str::limit($finding['note'], 300) }}</div>
-            @endif
-            @if ($finding['cves'] !== [])
-                <div class="mono" style="color:#55647f; margin-top:3px;">{{ implode(', ', array_slice($finding['cves'], 0, 8)) }}</div>
-            @endif
-        </div>
 
-        <div class="card-body">
-            @if (isset($steps[$number]))
-                {!! $markdown($steps[$number]) !!}
-            @else
-                <div class="empty" style="margin-bottom:8px;">
-                    Kroki dla tej usterki nie zostały wygenerowane. Ustalenie pozostaje do naprawy -
-                    wygeneruj przewodnik ponownie albo zaplanuj działanie na podstawie opisu powyżej.
-                </div>
-            @endif
+            <div class="card-body">
+                @if (isset($steps[$number]))
+                    {!! $markdown($steps[$number]) !!}
+                @else
+                    <div class="empty" style="margin-bottom:8px;">
+                        Kroki dla tej usterki nie zostały wygenerowane. Ustalenie pozostaje do naprawy -
+                        wygeneruj przewodnik ponownie albo zaplanuj działanie na podstawie opisu powyżej.
+                    </div>
+                @endif
+            </div>
         </div>
-    </div>
+    @endforeach
 @endforeach
 
 @if ($skipped > 0)

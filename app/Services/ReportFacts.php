@@ -546,7 +546,7 @@ class ReportFacts
 
             $findings[] = self::finding(
                 $exposed['level'],
-                $exposed['name'].' dostępny w sieci',
+                'Usługa dostępna w sieci: '.$exposed['name'],
                 $service['ip'],
                 $service['port'].'/'.$service['transport'],
                 'Usługi',
@@ -565,7 +565,9 @@ class ReportFacts
 
             $findings[] = self::finding(
                 $level,
-                (is_string($endpoint['protocol'] ?? null) ? $endpoint['protocol'] : 'Protokół przemysłowy').' dostępny w sieci',
+                is_string($endpoint['protocol'] ?? null)
+                    ? 'Protokół '.$endpoint['protocol'].' dostępny w sieci'
+                    : 'Protokół przemysłowy dostępny w sieci',
                 $endpoint['ip'],
                 ($endpoint['port'] ?? '?').'/'.($endpoint['transport'] ?? '?'),
                 'ICS/OT',
@@ -671,6 +673,10 @@ class ReportFacts
             'gaps' => $gaps,
             'severity_counts' => $counts,
             'actionable' => $actionable,
+            // Personal data reachable in a database (PESEL, card numbers) raises a
+            // RODO/UODO obligation on the owner; the template renders a standing
+            // note where this is true, in both reports.
+            'personal_data' => in_array('Dane wrażliwe dostępne w bazie danych', array_column($findings, 'title'), true),
             // Which closing section the document ends with. A network with gaps
             // in its coverage never gets the congratulatory ending, because
             // nobody can vouch for what was not examined.

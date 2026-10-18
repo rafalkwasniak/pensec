@@ -70,7 +70,8 @@ class NarrativePrompt
         $voice = match ($variant) {
             NarrativeVariant::Expert => <<<'TEXT'
             Odbiorcą jest administrator sieci lub specjalista bezpieczeństwa, a dokument ma być
-            formalnym raportem z audytu.
+            formalnym, technicznym raportem z audytu. To wersja pogłębiona - bogatsza i bardziej
+            szczegółowa niż wariant dla klienta.
 
             Rejestr: polszczyzna bezosobowa, strona bierna, chłodny ton rzeczoznawcy. Pisz
             "stwierdzono", "wykryto", "nie odnotowano" - nie "widzimy", "znaleźliśmy", "powinieneś".
@@ -79,11 +80,21 @@ class NarrativePrompt
             Terminologii branżowej (skrypty NSE, NetNTLMv2, VLAN hopping, WPAD, egress filtering,
             ICS/OT) używaj swobodnie i nie tłumacz jej.
 
-            W sekcji "rekomendacje" stwórz listę numerowaną (1., 2., 3...), każdy punkt zaczynaj rzeczownikiem odczasownikowym:
-            "Wyłączenie obsługi SSLv3 na 192.168.0.1", "Wdrożenie izolacji segmentu OT",
-            "Aktualizacja oprogramowania". Nie "należy wyłączyć" ani "wyłącz".
+            Głębia techniczna. Każde ustalenie zakotwicz w konkretnym dowodzie z zestawienia:
+            dokładna wersja oprogramowania i port, numer CVE oraz podany wynik CVSS, gdy występuje
+            w danych, a także słowo stanu testu (VULNERABLE, LIKELY VULNERABLE, UNKNOWN), jeśli
+            zostało przekazane. Nie wymyślaj wektorów CVSS ani liczb spoza zestawienia. Wyjaśniaj
+            mechanizm podatności technicznie i wskazuj, dlaczego waga jest taka, a nie inna
+            (ustalenie potwierdzone w działaniu kontra dopasowanie po numerze wersji). Gdzie to
+            zasadne, odwołuj się do treści dowodu z pogłębionych testów.
 
-            Każda sekcja to 2-5 zdań albo zwięzła lista.
+            W sekcji "rekomendacje" stwórz listę numerowaną (1., 2., 3...), każdy punkt zaczynaj
+            rzeczownikiem odczasownikowym i wiąż z konkretnym hostem, portem oraz usługą:
+            "Wyłączenie obsługi SSLv3 na 192.168.0.1:8443", "Wdrożenie izolacji segmentu OT".
+            Nie "należy wyłączyć" ani "wyłącz".
+
+            Sekcje mogą być dłuższe niż w wariancie klienckim, od kilku zdań po rozbudowaną, zwięzłą
+            listę, o ile każde zdanie niesie konkret z zestawienia. Nie lej wody dla objętości.
             TEXT,
             NarrativeVariant::Client => <<<'TEXT'
             Odbiorcą jest właściciel firmy lub osoba zarządzająca, która nie jest technikiem.
@@ -92,6 +103,10 @@ class NarrativePrompt
             Tłumacz co dane ustalenie oznacza w praktyce dla firmy: co ktoś niepowołany mógłby
             zrobić i czym to grozi. Nie strasz, ale nie ukrywaj problemów. Każda sekcja to
             2-4 zdania w naturalnej polszczyźnie.
+
+            W sekcji zaleceń przedstaw plan naprawy jako listę numerowaną (1., 2., 3...),
+            uszeregowaną od najpilniejszego, korzystając z już nadanych wag. Nie zmieniaj wag ani
+            nie dodawaj problemów spoza ustaleń. Każdy punkt to proste, konkretne działanie.
             TEXT,
         };
 
@@ -152,7 +167,14 @@ class NarrativePrompt
      */
     public static function split(string $answer): array
     {
-        $pattern = '/^'.preg_quote(self::MARKER, '/').'\s*([a-z]+)\s*$/mi';
+        // The model is asked for "### SEKCJA: klucz" before each block, but in
+        // practice it sometimes drops the ###, misspells SEKCJA as SECCJA, or
+        // writes the key with Polish diacritics ("urządzenia"). A strict match
+        // would leave that marker sitting in the prose and leave the real
+        // section empty, so the parser is deliberately tolerant: optional hashes,
+        // the SE[KC][KC]JA spelling, then the key normalised before matching.
+        // SE[KC]JA covers the real spellings seen: SEKCJA, SECCJA and SECJA.
+        $pattern = '/^[ \t]*#{0,3}[ \t]*se[kc]{1,2}ja[ \t]*:[ \t]*(.+?)[ \t]*$/miu';
 
         $pieces = preg_split($pattern, $answer, -1, PREG_SPLIT_DELIM_CAPTURE);
 
@@ -164,14 +186,58 @@ class NarrativePrompt
 
         // Element 0 is whatever preceded the first marker; pairs follow.
         for ($i = 1; $i < count($pieces) - 1; $i += 2) {
-            $key = mb_strtolower(trim($pieces[$i]));
-            $body = trim($pieces[$i + 1]);
+            $key = self::normaliseKey($pieces[$i]);
+            $body = self::stripForeign(trim($pieces[$i + 1]));
 
-            if (array_key_exists($key, self::SECTIONS) && $body !== '') {
+            if ($key !== null && $body !== '' && ! isset($sections[$key])) {
                 $sections[$key] = $body;
             }
         }
 
         return $sections;
+    }
+
+    /**
+     * DeepSeek occasionally drops a stray CJK token into otherwise Polish prose
+     * (a Chinese "端口" for "port" was seen mid-sentence). Polish never uses these
+     * scripts, so they are removed and the spacing they leave behind is tidied.
+     */
+    public static function stripForeign(string $text): string
+    {
+        $text = preg_replace('/[\x{3000}-\x{303F}\x{3400}-\x{9FFF}\x{FF00}-\x{FFEF}]/u', '', $text) ?? $text;
+
+        return trim(preg_replace('/[ \t]{2,}/', ' ', $text) ?? $text);
+    }
+
+    /**
+     * Maps whatever the model wrote after the marker to one of our section keys,
+     * stripping diacritics and trailing words, or null when it is none of them.
+     */
+    private static function normaliseKey(string $raw): ?string
+    {
+        $key = mb_strtolower(trim($raw));
+        $key = strtr($key, [
+            'ą' => 'a', 'ć' => 'c', 'ę' => 'e', 'ł' => 'l', 'ń' => 'n',
+            'ó' => 'o', 'ś' => 's', 'ż' => 'z', 'ź' => 'z',
+        ]);
+        $key = preg_replace('/[^a-z]/', '', $key) ?? '';
+
+        if ($key === '') {
+            return null;
+        }
+
+        if (array_key_exists($key, self::SECTIONS)) {
+            return $key;
+        }
+
+        // The model may append words after the key ("uslugi sieciowe"); take the
+        // known key the leftover starts with.
+        foreach (array_keys(self::SECTIONS) as $known) {
+            if (str_starts_with($key, $known)) {
+                return $known;
+            }
+        }
+
+        return null;
     }
 }

@@ -18,7 +18,7 @@ enum NarrativeVariant: string
     {
         return match ($this) {
             self::Expert => 'Pobierz raport ekspercki',
-            self::Client => 'Pobierz raport kliencki',
+            self::Client => 'Pobierz raport menedżerski',
             self::Technician => 'Pobierz przewodnik naprawy',
         };
     }
@@ -37,7 +37,7 @@ enum NarrativeVariant: string
     {
         return match ($this) {
             self::Expert => 'Raport ekspercki',
-            self::Client => 'Raport dla klienta',
+            self::Client => 'Raport menedżerski',
             self::Technician => 'Przewodnik naprawy',
         };
     }

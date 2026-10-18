@@ -53,7 +53,16 @@ class ResultText
             $text = is_bool($value) ? ($value ? 'tak' : 'nie') : (string) $value;
 
             if ($text !== '') {
-                $parts[] = $key.': '.$text;
+                // The generic single-value wrapper ReportFacts adds ("value") is
+                // not a field name worth printing. A lone interface name reads
+                // better with a word of context than as a bare "eth0".
+                if ($key === 'value') {
+                    $parts[] = preg_match('/^(eth|wlan|wl|en|wg|br|tun|tap|lo)[0-9a-z.:]*$/i', $text) === 1
+                        ? 'interfejs '.$text
+                        : $text;
+                } else {
+                    $parts[] = $key.': '.$text;
+                }
             }
         }
 

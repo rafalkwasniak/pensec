@@ -37,20 +37,29 @@ class RemediationPrompt
         Zasady, których nie wolno złamać:
         1. Naprawiasz TYLKO usterki z przekazanej listy. Nie wymyślasz nowych problemów, adresów,
            urządzeń ani podatności. Każdy blok odpowiada jednej usterce z listy.
-        2. Kroki dostosuj do wskazanego urządzenia (producent, model, wersja oprogramowania) oraz
-           usługi i portu. Pisz konkretnie: co otworzyć, gdzie wejść, co ustawić albo jaką komendę
-           wykonać na tym sprzęcie.
-        3. Jeśli dokładna ścieżka w panelu zależy od wersji oprogramowania i nie masz pewności,
-           podaj najbardziej prawdopodobną i wyraźnie dopisz, że należy ją potwierdzić w panelu lub
-           dokumentacji producenta. Nie zmyślaj nazw opcji z pełną pewnością.
-        4. Każdy blok kończ krokiem weryfikacji: jak sprawdzić, że usterka została usunięta.
+        2. Zacznij od sposobu dostępu do urządzenia, dopasowanego do producenta, modelu i wersji
+           oprogramowania. Rozróżnij urządzenie z panelem webowym (np. router SOHO, NAS, kamera) od
+           urządzenia sterowanego z wiersza poleceń (np. przełącznik lub router Cisco z systemem IOS,
+           serwer z systemem Linux). Dla panelu webowego napisz, gdzie wejść i co kliknąć; dla
+           urządzenia terminalowego podaj konkretne polecenia do wykonania na tym sprzęcie. Zawsze
+           wskaż, na co uważać, żeby nie przerwać pracy sieci.
+        3. Jeśli dokładna ścieżka w panelu albo nazwa polecenia zależy od wersji oprogramowania i nie
+           masz pewności, podaj najbardziej prawdopodobną i wyraźnie dopisz, że należy ją potwierdzić
+           w panelu lub dokumentacji producenta. Nie zmyślaj nazw opcji z pełną pewnością. Gdy pewność
+           co do ścieżki jest niska, połóż główny nacisk na stan docelowy i weryfikację - są one
+           prawdziwe niezależnie od interfejsu urządzenia.
+        4. Każdy blok kończ dwoma osobnymi wierszami. Najpierw "Stan docelowy:" - w prostych słowach,
+           co ma być prawdą po naprawie (np. "usługa Telnet nie nasłuchuje, dostęp wyłącznie przez
+           SSH"). Potem "Weryfikacja:" - jak to sprawdzić. Oba muszą być prawdziwe niezależnie od
+           modelu sprzętu.
         5. Nie podnoś ani nie obniżaj wagi usterki - jest już ustalona.
         6. Nie dopisuj wstępu, podsumowania ani punktu o ponownym audycie. System dokłada ramkę
            i stopkę sam.
 
         Format odpowiedzi: dla każdej usterki jeden blok. Blok zaczynasz linią "### KROK: N", gdzie
-        N to numer usterki z listy. Pod nią numerowana lista kroków (1., 2., 3...), a na końcu
-        osobny wiersz zaczynający się od "Weryfikacja:". Nie używaj nagłówków markdown wewnątrz bloku.
+        N to numer usterki z listy. Pod nią numerowana lista kroków (1., 2., 3...), a na końcu osobne
+        wiersze "Stan docelowy:" oraz "Weryfikacja:". Nie używaj nagłówków markdown wewnątrz bloku.
+        Polecenia terminalowe zapisuj w znacznikach kodu (backtickach).
         TEXT;
     }
 
@@ -155,7 +164,7 @@ class RemediationPrompt
 
         for ($i = 1; $i < count($pieces) - 1; $i += 2) {
             $number = (int) $pieces[$i];
-            $body = trim($pieces[$i + 1]);
+            $body = NarrativePrompt::stripForeign(trim($pieces[$i + 1]));
 
             if ($body !== '') {
                 $blocks[$number] = $body;

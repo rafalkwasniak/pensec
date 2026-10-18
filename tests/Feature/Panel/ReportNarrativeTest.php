@@ -87,7 +87,7 @@ class ReportNarrativeTest extends TestCase
         $this->get("/panel/reports/{$report->id}")
             ->assertOk()
             ->assertSee('Raport ekspercki')
-            ->assertSee('Raport dla klienta');
+            ->assertSee('Raport menedżerski');
     }
 
     public function test_clicking_generate_queues_the_work_and_returns_at_once(): void

@@ -26,6 +26,7 @@ class CourseController extends Controller
         }
 
         $manifest = json_decode(File::get($manifestPath), true);
+        $checkpoints = $this->checkpoints();
 
         $outline = [];
         $flatList = [];
@@ -49,13 +50,32 @@ class CourseController extends Controller
                 $flatList[] = $slug;
             }
 
-            if ($files !== []) {
-                $outline[$dir] = [
-                    'kicker' => $chapter['kicker'] ?? '',
-                    'title' => $chapter['title'] ?? $dir,
-                    'files' => $files,
-                ];
+            if ($files === []) {
+                continue;
             }
+
+            // A chapter that ships a checkpoint gets a final "Sprawdź się" topic -
+            // its own navigable step, not a block hidden under the last lesson.
+            if (($checkpoints[$dir]['questions'] ?? []) !== []) {
+                $files["{$dir}/sprawdz-sie"] = 'Sprawdź się';
+                $flatList[] = "{$dir}/sprawdz-sie";
+            }
+
+            $outline[$dir] = [
+                'kicker' => $chapter['kicker'] ?? '',
+                'title' => $chapter['title'] ?? $dir,
+                'files' => $files,
+            ];
+        }
+
+        // Closing chapter, after all course content: the book.
+        if ($flatList !== []) {
+            $outline['po-kursie'] = [
+                'kicker' => 'Po kursie',
+                'title' => 'Materiały dodatkowe',
+                'files' => ['po-kursie/ksiazka' => 'Książka o bazach danych'],
+            ];
+            $flatList[] = 'po-kursie/ksiazka';
         }
 
         return [$outline, $flatList];
@@ -65,60 +85,61 @@ class CourseController extends Controller
     {
         [$outline, $flatList] = $this->outline();
 
-        // The slug is never used to build the path: a lesson is served only
-        // when it appears in the manifest-derived list, so there is no way to
-        // reach a file outside the enumerated set.
+        // The slug is never used to build the path: a lesson or synthetic topic
+        // is served only when it appears in the manifest-derived list, so there
+        // is no way to reach content outside the enumerated set.
         if (! in_array($slug, $flatList, true)) {
             abort(404);
         }
 
-        // Lesson content is authored in the repo, but escaping raw HTML and
-        // refusing unsafe link schemes is cheap defence-in-depth. Fenced code
-        // still keeps its language-* class, so the terminal styling is intact.
-        $html = Str::markdown(File::get(resource_path("course/{$slug}.md")), [
-            'html_input' => 'escape',
-            'allow_unsafe_links' => false,
-        ]);
-        $readingTime = max(2, (int) ceil(str_word_count(strip_tags($html)) / 200));
+        $currentDir = explode('/', $slug)[0];
+
+        // Chapter context and topic title come from the outline for every slug,
+        // whether a real lesson or a synthetic topic.
+        $chapterKicker = $outline[$currentDir]['kicker'] ?? '';
+        $chapterTitle = $outline[$currentDir]['title'] ?? '';
+        $topicTitle = $outline[$currentDir]['files'][$slug] ?? '';
 
         $currentIndex = array_search($slug, $flatList, true);
         $prev = $currentIndex > 0 ? $flatList[$currentIndex - 1] : null;
         $next = $currentIndex < count($flatList) - 1 ? $flatList[$currentIndex + 1] : null;
 
-        $chapterKicker = '';
-        $chapterTitle = '';
-        $topicTitle = '';
-        foreach ($outline as $chapter) {
-            if (isset($chapter['files'][$slug])) {
-                $chapterKicker = $chapter['kicker'];
-                $chapterTitle = $chapter['title'];
-                $topicTitle = $chapter['files'][$slug];
-                break;
+        $nextText = 'Następny temat';
+        if ($next !== null) {
+            if (str_ends_with($next, '/sprawdz-sie')) {
+                $nextText = 'Sprawdź się';
+            } elseif (str_starts_with($next, 'po-kursie/')) {
+                $nextText = 'Po kursie';
+            } elseif (explode('/', $next)[0] !== $currentDir) {
+                $nextText = 'Następny rozdział';
             }
         }
 
-        // "Next chapter" vs "next topic": whether the next lesson sits in the
-        // same chapter as the current one.
-        $currentDir = explode('/', $slug)[0];
-        $nextText = $next !== null && ! isset($outline[$currentDir]['files'][$next])
-            ? 'Następny rozdział'
-            : 'Następny temat';
-
-        // On the last lesson of a chapter, offer the chapter checkpoint if the
-        // chapter ships one. Correct answers stay out of the page; grading is
-        // done by checkpoint() on the server.
+        // Three kinds of page: a checkpoint topic, the book topic, or a real
+        // lesson. Checkpoint answers stay off the page; grading is server-side.
+        $html = '';
+        $readingTime = null;
         $checkpoint = null;
         $checkpointChapter = null;
-        $chapterFiles = $outline[$currentDir]['files'] ?? [];
-        if ($slug === array_key_last($chapterFiles)) {
-            $questions = array_map(
+        $bookTopic = false;
+
+        if (str_ends_with($slug, '/sprawdz-sie')) {
+            $checkpoint = array_map(
                 fn (array $q): array => ['prompt' => $q['prompt'], 'options' => $q['options']],
                 $this->checkpoints()[$currentDir]['questions'] ?? [],
             );
-            if ($questions !== []) {
-                $checkpoint = $questions;
-                $checkpointChapter = $currentDir;
-            }
+            $checkpointChapter = $currentDir;
+        } elseif ($slug === 'po-kursie/ksiazka') {
+            $bookTopic = true;
+        } else {
+            // Lesson content is authored in the repo, but escaping raw HTML and
+            // refusing unsafe link schemes is cheap defence-in-depth. Fenced
+            // code keeps its language-* class, so terminal styling is intact.
+            $html = Str::markdown(File::get(resource_path("course/{$slug}.md")), [
+                'html_input' => 'escape',
+                'allow_unsafe_links' => false,
+            ]);
+            $readingTime = max(2, (int) ceil(str_word_count(strip_tags($html)) / 200));
         }
 
         return view('course.reader', compact(
@@ -134,6 +155,7 @@ class CourseController extends Controller
             'nextText',
             'checkpoint',
             'checkpointChapter',
+            'bookTopic',
         ));
     }
 

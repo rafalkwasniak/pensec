@@ -11,6 +11,35 @@
     // sentence that matters.
     $evidence = $variant === App\Enums\NarrativeVariant::Expert ? 700 : 200;
 
+    // Manager report: humanise the probe's raw status words inside the evidence
+    // (State: UNKNOWN, LIKELY VULNERABLE). Expert keeps it verbatim as proof.
+    $client = $variant === App\Enums\NarrativeVariant::Client;
+    // Tabs and other in-line whitespace in nmap/vulners output render as a
+    // missing glyph in dompdf; collapse them to a space but keep the newlines
+    // that lay the multi-line evidence out.
+    $clean = fn (string $t): string => preg_replace('/[^\S\n]+/u', ' ', $t) ?? $t;
+    $evidenceText = fn (string $t): string => $clean($client ? App\Support\ProbeLabels::evidence($t) : $t);
+
+    // Manager report: a friendly test name and a one-line finding instead of the
+    // raw nmap/vulners dump (CPE strings, URLs, *EXPLOIT*, source fragments).
+    // The expert report keeps the raw evidence, which is what makes it proof.
+    $friendly = fn (string $n): string => $client ? App\Support\ProbeLabels::testName($n) : $n;
+    $clientFinding = function (array $f): string {
+        $parts = [];
+        $states = ['vulnerable' => 'podatny', 'likely_vulnerable' => 'prawdopodobnie podatny', 'not_vulnerable' => 'niepodatny', 'unknown' => 'niepotwierdzony'];
+        if (($f['name'] ?? '') === 'vulners') {
+            $parts[] = 'Dopasowanie znanych podatności do wersji oprogramowania';
+        } elseif (isset($states[$f['state'] ?? ''])) {
+            $parts[] = 'Stan: '.$states[$f['state']];
+        }
+        $cves = ($f['cves'] ?? []) ?: App\Support\Severity::cvesIn($f['output'] ?? '');
+        if ($cves !== []) {
+            $parts[] = implode(', ', array_slice($cves, 0, 6)).(count($cves) > 6 ? ' i '.(count($cves) - 6).' innych' : '');
+        }
+
+        return $parts === [] ? 'Wymaga uwagi — szczegóły w opisie poniżej.' : implode(' · ', $parts);
+    };
+
     // A table past this length stops being read. The remainder is counted, not
     // dropped silently, and stays in the stored report.
     $listed = array_slice($notable, 0, 40);
@@ -43,8 +72,12 @@
                 @foreach ($listed as $finding)
                     <tr>
                         <td class="mono">{{ $finding['ip'] }}</td>
-                        <td class="mono">{{ $finding['name'] }}</td>
-                        <td style="white-space: pre-wrap;">{{ Illuminate\Support\Str::limit($finding['output'], $evidence) }}</td>
+                        <td class="{{ $client ? '' : 'mono' }}">{{ $friendly($finding['name']) }}</td>
+                        @if ($client)
+                            <td>{{ $clientFinding($finding) }}</td>
+                        @else
+                            <td style="white-space: pre-wrap;">{{ Illuminate\Support\Str::limit($evidenceText($finding['output']), $evidence, '…', preserveWords: true) }}</td>
+                        @endif
                     </tr>
                 @endforeach
             </tbody>
@@ -92,7 +125,7 @@
                     <td>
                         {{ $finding['title'] }}
                         @if ($finding['note'])
-                            <div style="color:#55647f;">{{ Illuminate\Support\Str::limit($finding['note'], $evidence) }}</div>
+                            <div style="color:#55647f;">{{ Illuminate\Support\Str::limit($finding['note'], $evidence, '…', preserveWords: true) }}</div>
                         @endif
                     </td>
                 </tr>

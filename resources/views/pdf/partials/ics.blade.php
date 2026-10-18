@@ -1,4 +1,5 @@
 @php($group = $facts['coverage']['ics_ot'] ?? null)
+@php($client = ($variant ?? null) === App\Enums\NarrativeVariant::Client)
 @include('pdf.partials._pokrycie', ['group' => $group])
 
 @if ($facts['ics_endpoints'] === [] && (($group['problem'] ?? false) && ! $group['ran']))
@@ -22,10 +23,10 @@
                     <td class="mono">{{ $endpoint['ip'] }}</td>
                     <td class="mono">{{ $endpoint['port'] ?? '—' }}/{{ $endpoint['transport'] ?? '—' }}</td>
                     <td>{{ $endpoint['protocol'] ?? 'nieznany' }}</td>
-                    <td class="mono">{{ $endpoint['state'] ?? '—' }}</td>
+                    <td class="mono">{{ $client ? App\Support\ProbeLabels::term($endpoint['state'] ?? '—') : ($endpoint['state'] ?? '—') }}</td>
                     <td>
                         <span class="tag {{ ($endpoint['severity'] ?? '') === 'INCONCLUSIVE' ? 'tag-calm' : 'tag-warn' }}">
-                            {{ $endpoint['severity'] ?? 'brak oceny' }}
+                            {{ $client ? App\Support\ProbeLabels::term($endpoint['severity'] ?? 'brak oceny') : ($endpoint['severity'] ?? 'brak oceny') }}
                         </span>
                     </td>
                 </tr>
@@ -33,10 +34,13 @@
         </tbody>
     </table>
 
+    @php($hasOpenFiltered = collect($facts['ics_endpoints'])->contains(fn ($e) => ($e['state'] ?? '') === 'open|filtered'))
     <p style="font-size:9px; color:#667a96;">
         Punktów końcowych ICS/OT: <strong>{{ $totals['ics_endpoints'] }}</strong>.
-        Stan <span class="mono">open|filtered</span> oznacza, że sonda nie mogła rozstrzygnąć,
-        czy port jest otwarty, czy odfiltrowany.
+        @if ($hasOpenFiltered)
+            Stan <span class="mono">open|filtered</span> oznacza, że sonda nie mogła rozstrzygnąć,
+            czy port jest otwarty, czy odfiltrowany.
+        @endif
     </p>
 @endif
 

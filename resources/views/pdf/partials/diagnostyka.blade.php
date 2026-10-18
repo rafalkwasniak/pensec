@@ -1,5 +1,11 @@
 @php
+    use App\Support\ProbeLabels;
     use App\Support\TsharkEndpoints;
+
+    // The manager report gets plain-Polish status words; the expert report keeps
+    // the probe's raw tokens verbatim.
+    $client = ($variant ?? null) === App\Enums\NarrativeVariant::Client;
+    $term = fn (?string $v): ?string => $client ? ProbeLabels::term($v) : $v;
 @endphp
 
 @if ($facts['diagnostics'] === [])
@@ -47,15 +53,18 @@
                 <table class="data">
                     <tbody>
                         @foreach ($diagnostic['fields'] as $field)
+                            {{-- Manager report drops raw probe fields with no plain-Polish
+                                 label, unless the field is itself a concern. --}}
+                            @continue($client && ! ($field['known'] ?? true) && ! $field['concern'])
                             <tr>
                                 @if ($field['label'])
-                                    <td style="width:30%; color:#667a96;">{{ $field['label'] }}</td>
+                                    <td style="width:30%; color:#667a96;">{{ $term($field['label']) }}</td>
                                     <td style="{{ $field['concern'] ? 'color:#8a4b06;' : '' }}">
-                                        {{ $field['concern'] ? '▲ ' : '' }}{{ $field['value'] }}
+                                        {{ $field['concern'] ? '▲ ' : '' }}{{ $term($field['value']) }}
                                     </td>
                                 @else
                                     <td colspan="2" style="{{ $field['concern'] ? 'color:#8a4b06;' : '' }}">
-                                        {{ $field['concern'] ? '▲ ' : '' }}{{ $field['value'] }}
+                                        {{ $field['concern'] ? '▲ ' : '' }}{{ $term($field['value']) }}
                                     </td>
                                 @endif
                             </tr>

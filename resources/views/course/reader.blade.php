@@ -125,18 +125,59 @@
             <!-- KAFELEK Z TREŚCIĄ -->
             <div class="mt-12 card p-6 sm:p-10 lg:p-16 relative">
                 
+                @if($readingTime)
                 <!-- Czas czytania (Został na górze wewnątrz kafelka) -->
                 <div class="flex items-center gap-2 text-xs font-mono text-muted mb-8 uppercase tracking-widest border-b border-ink-line pb-4">
                     <svg class="h-4 w-4 text-brand" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <span>Czas czytania tematu: ok. {{ $readingTime }} min</span>
+                    <span>Czas czytania tematu: ok. {{ $readingTime * 2 }} min</span>
                 </div>
+                @endif
 
+                @if($checkpoint)
+                <!-- CHECKPOINT: pytania podsumowujące rozdział (ocena po stronie serwera) -->
+                <div id="checkpoint" data-url="{{ route('course.checkpoint', $checkpointChapter) }}">
+                    <p class="mb-8 text-base leading-relaxed text-muted">Kilka pytań podsumowujących rozdział. Odpowiedzi ocenia serwer.</p>
+                    <div class="space-y-8">
+                        @foreach($checkpoint as $qi => $q)
+                            <div class="checkpoint-q" data-index="{{ $qi }}">
+                                <p class="text-base font-medium text-chrome">{{ $loop->iteration }}. {{ $q['prompt'] }}</p>
+                                <div class="mt-4 space-y-2">
+                                    @foreach($q['options'] as $oi => $opt)
+                                        <label class="flex cursor-pointer items-start gap-3 rounded-md border border-ink-line bg-ink px-4 py-3 text-sm text-muted transition-colors hover:bg-ink-raised">
+                                            <input type="radio" name="cq{{ $qi }}" value="{{ $oi }}" class="mt-1 accent-brand">
+                                            <span>{{ $opt }}</span>
+                                        </label>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                    <div class="mt-8 flex items-center gap-4">
+                        <button id="checkpoint-submit" class="rounded-md border border-ink-line bg-ink-raised px-6 py-3 text-sm font-medium text-chrome hover:border-brand transition-colors">
+                            Sprawdź odpowiedzi
+                        </button>
+                        <span id="checkpoint-score" class="font-mono text-sm text-muted"></span>
+                    </div>
+                </div>
+                @elseif($bookTopic ?? false)
+                <!-- KSIĄŻKA: zajawka na końcu kursu -->
+                <article class="pensec-markdown">
+                    <p>Ten kurs wyrósł z wieloletniej praktyki z bazami danych. Jeżeli chcesz pogłębić ten obszar, autor kursu przygotował poświęconą mu książkę.</p>
+                    <p>Pełny opis, zawartość i okładka znajdują się na osobnej stronie.</p>
+                </article>
+                <div class="mt-8">
+                    <a href="/course/ksiazka" class="inline-block rounded-md border border-ink-line bg-ink-raised px-6 py-3 text-sm font-medium text-chrome transition-colors hover:border-brand">
+                        Zobacz książkę
+                    </a>
+                </div>
+                @else
                 <!-- TREŚĆ MD -->
                 <article class="pensec-markdown">
                     {!! $html !!}
                 </article>
+                @endif
 
                 <!-- PRZYCISKI -->
                 <div class="mt-16 pt-8 border-t border-ink-line flex justify-between items-center w-full">
@@ -167,38 +208,6 @@
             </div>
             
         </div>
-
-        @isset($checkpoint)
-        <div class="w-full mx-auto max-w-5xl px-6 pb-16">
-            <section id="checkpoint" data-url="{{ route('course.checkpoint', $checkpointChapter) }}" class="card p-6 sm:p-10">
-                <h2 class="text-sm uppercase tracking-[0.25em] text-brand">Sprawdź się</h2>
-                <p class="mt-2 text-sm text-muted">Kilka pytań na koniec rozdziału. Odpowiedzi ocenia serwer.</p>
-
-                <div class="mt-8 space-y-8">
-                    @foreach($checkpoint as $qi => $q)
-                        <div class="checkpoint-q" data-index="{{ $qi }}">
-                            <p class="text-base font-medium text-chrome">{{ $loop->iteration }}. {{ $q['prompt'] }}</p>
-                            <div class="mt-4 space-y-2">
-                                @foreach($q['options'] as $oi => $opt)
-                                    <label class="flex cursor-pointer items-start gap-3 rounded-md border border-ink-line bg-ink px-4 py-3 text-sm text-muted transition-colors hover:bg-ink-raised">
-                                        <input type="radio" name="cq{{ $qi }}" value="{{ $oi }}" class="mt-1 accent-brand">
-                                        <span>{{ $opt }}</span>
-                                    </label>
-                                @endforeach
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-
-                <div class="mt-8 flex items-center gap-4 border-t border-ink-line pt-6">
-                    <button id="checkpoint-submit" class="rounded-md border border-ink-line bg-ink-raised px-6 py-3 text-sm font-medium text-chrome hover:border-brand transition-colors">
-                        Sprawdź odpowiedzi
-                    </button>
-                    <span id="checkpoint-score" class="font-mono text-sm text-muted"></span>
-                </div>
-            </section>
-        </div>
-        @endisset
 
         <!-- TWOJA ORYGINALNA STOPKA -->
         <footer class="border-t border-ink-line mt-auto">

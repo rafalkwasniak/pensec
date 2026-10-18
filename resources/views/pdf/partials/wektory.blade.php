@@ -11,6 +11,22 @@
     // Ranked most severe first, so what falls past the limit is the least
     // pressing. The tiles above always count everything.
     $listed = array_slice($facts['findings'], 0, 60);
+
+    $client = ($variant ?? null) === App\Enums\NarrativeVariant::Client;
+
+    // Manager report: the "Gdzie" column is a location, not a test id. Keep the
+    // port, drop the raw script name a reader there does not need. The expert
+    // report keeps the full "skrypt · port" locator.
+    $whereFor = function (?string $w) use ($client): ?string {
+        if (! $client || $w === null) {
+            return $w;
+        }
+        if (preg_match('/·\s*(port\s+\S+)$/u', $w, $m) === 1) {
+            return $m[1];
+        }
+
+        return preg_match('/^[a-z][a-z0-9-]*$/i', $w) === 1 ? null : $w;
+    };
 @endphp
 
 @if ($facts['findings'] === [])
@@ -53,8 +69,8 @@
                     </td>
                     <td class="mono">
                         {{ $finding['ip'] ?? 'cała sieć' }}
-                        @if ($finding['where'])
-                            <div style="color:#8a97ab;">{{ $finding['where'] }}</div>
+                        @if ($whereFor($finding['where']))
+                            <div style="color:#8a97ab;">{{ $whereFor($finding['where']) }}</div>
                         @endif
                     </td>
                     <td>

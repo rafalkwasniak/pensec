@@ -41,4 +41,13 @@ class ResultTextTest extends TestCase
     {
         $this->assertSame('192.168.0.1: port: 443, expired: nie', ResultText::describe(['ip' => '192.168.0.1', 'port' => 443, 'expired' => false]));
     }
+
+    public function test_a_lone_interface_value_reads_with_context(): void
+    {
+        // The responder finding is a bare interface wrapped as {value: eth0}.
+        $this->assertSame('interfejs eth0', ResultText::describe(['value' => 'eth0']));
+        $this->assertSame('interfejs wlan0', ResultText::describe(['value' => 'wlan0']));
+        // A non-interface value is still shown plainly, without the "value:" key.
+        $this->assertSame('coś-innego', ResultText::describe(['value' => 'coś-innego']));
+    }
 }

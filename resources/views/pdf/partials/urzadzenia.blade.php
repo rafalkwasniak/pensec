@@ -3,6 +3,25 @@
 @if ($facts['hosts'] === [])
     <div class="empty">Skanowanie nie wykryło w tym segmencie żadnego urządzenia.</div>
 @else
+    @php
+        $anyScanned = collect($facts['hosts'])->contains(fn ($h) => $h['scanned']);
+    @endphp
+    @if (! $anyScanned)
+        {{-- Port scanning never ran: a full table of identical "nie skanowany"
+             rows is a page of noise. The addresses still belong here, compactly. --}}
+        <div class="empty">
+            Skanowanie portów nie zostało wykonane, dlatego żadne z {{ $totals['hosts_discovered'] }}
+            wykrytych urządzeń nie ma opisu usług. Poniżej same adresy, które odpowiedziały przy
+            wykrywaniu sieci.
+        </div>
+        <p class="mono" style="font-size:9px; color:#55647f; word-wrap:break-word; line-height:1.9;">
+            {{ implode(', ', array_map(fn ($h) => $h['ip'], $facts['hosts'])) }}
+        </p>
+        <p style="font-size:9px; color:#667a96;">
+            Wykrytych urządzeń: <strong>{{ $totals['hosts_discovered'] }}</strong>,
+            objętych skanowaniem portów: <strong>0</strong>.
+        </p>
+    @else
     <table class="data">
         <thead>
             <tr>
@@ -47,4 +66,5 @@
         Wykrytych urządzeń: <strong>{{ $totals['hosts_discovered'] }}</strong>,
         odpowiedziało na skanowanie portów: <strong>{{ $totals['hosts_reachable'] }}</strong>.
     </p>
+    @endif
 @endif

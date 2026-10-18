@@ -21,8 +21,11 @@
             <div class="h-4 w-px shrink-0 bg-ink-line"></div>
             <nav class="flex shrink min-w-0 items-center gap-4 sm:gap-5 overflow-x-auto hide-scrollbar">
                 <a href="/tests" class="shrink-0 transition-colors whitespace-nowrap text-xs sm:text-sm font-medium text-muted hover:text-chrome">Specyfikacja</a>
-                <a href="/course" class="shrink-0 transition-colors whitespace-nowrap text-xs sm:text-sm font-medium text-muted hover:text-chrome">Kurs</a>
-                <a href="/contact" class="shrink-0 transition-colors whitespace-nowrap text-xs sm:text-sm font-medium text-chrome font-semibold">Kontakt</a>
+                <a href="/course" class="shrink-0 transition-colors whitespace-nowrap text-xs sm:text-sm font-medium {{ request()->is('course*') ? 'text-chrome font-semibold' : 'text-muted hover:text-chrome' }}">Kurs</a>
+                {{-- Zakładka książki - odsłonić, gdy książka będzie gotowa.
+                <a href="/course/ksiazka" class="shrink-0 transition-colors whitespace-nowrap text-xs sm:text-sm font-medium {{ request()->is('course/ksiazka') ? 'text-chrome font-semibold' : 'text-muted hover:text-chrome' }}">Książka</a>
+                --}}
+                <a href="/contact" class="shrink-0 transition-colors whitespace-nowrap text-xs sm:text-sm font-medium {{ request()->is('contact') ? 'text-chrome font-semibold' : 'text-muted hover:text-chrome' }}">Kontakt</a>
             </nav>
             <div class="h-4 w-px shrink-0 bg-ink-line"></div>
             <div class="shrink-0 flex items-center">@include('partials.theme-toggle')</div>

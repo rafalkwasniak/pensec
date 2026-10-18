@@ -31,7 +31,12 @@
                 <a href="/course" class="shrink-0 transition-colors whitespace-nowrap text-xs sm:text-sm font-medium {{ request()->is('course*') ? 'text-chrome font-semibold' : 'text-muted hover:text-chrome' }}">
                     Kurs
                 </a>
-                <a href="/contact" class="shrink-0 transition-colors whitespace-nowrap text-xs sm:text-sm font-medium text-chrome font-semibold">
+                {{-- Zakładka książki - odsłonić, gdy książka będzie gotowa (strona /course/ksiazka już istnieje).
+                <a href="/course/ksiazka" class="shrink-0 transition-colors whitespace-nowrap text-xs sm:text-sm font-medium {{ request()->is('course/ksiazka') ? 'text-chrome font-semibold' : 'text-muted hover:text-chrome' }}">
+                    Książka
+                </a>
+                --}}
+                <a href="/contact" class="shrink-0 transition-colors whitespace-nowrap text-xs sm:text-sm font-medium {{ request()->is('contact') ? 'text-chrome font-semibold' : 'text-muted hover:text-chrome' }}">
                     Kontakt
                 </a>
             </nav>
@@ -164,20 +169,6 @@
                 </div>
             </div>
             <p class="mt-4 text-center text-xs text-muted">Przykładowy wygląd. Certyfikat jest imienny i weryfikowalny pod własnym adresem.</p>
-        </section>
-
-        <!-- PO KURSIE: KSIĄŻKA -->
-        <section class="mt-24 border-t border-ink-line pt-16">
-            <div class="card flex flex-col gap-6 p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8">
-                <div>
-                    <h2 class="text-sm uppercase tracking-[0.25em] text-brand">Po kursie</h2>
-                    <p class="mt-3 text-lg font-semibold chrome-text">Pogłęb wiedzę o bazach danych</p>
-                    <p class="mt-2 max-w-2xl text-sm leading-relaxed text-muted">Książka autora kursu poświęcona bazom danych.</p>
-                </div>
-                <a href="/course/ksiazka" class="shrink-0 whitespace-nowrap rounded-md border border-ink-line bg-ink-raised px-5 py-2.5 text-sm font-medium text-chrome hover:border-brand transition-colors">
-                    Zobacz książkę
-                </a>
-            </div>
         </section>
 
     </main>

@@ -197,9 +197,13 @@
 @php
     $critical = $facts['severity_counts'][App\Support\Severity::CRITICAL];
 
+    // "0 otwartych portów" reads as a clean result; when the port scan never ran
+    // it is not a result at all, so the tile shows a dash instead of a figure.
+    $portScanRan = collect($facts['hosts'])->contains(fn ($h) => $h['scanned']);
+
     $tiles = [
         ['Wykryte urządzenia', $totals['hosts_discovered'], '#0b62c4'],
-        ['Otwarte porty', $totals['open_ports'], '#0b62c4'],
+        ['Otwarte porty', $portScanRan ? $totals['open_ports'] : '—', '#0b62c4'],
         ['Ustalenia wymagające działania', $facts['actionable'], match (true) {
             $critical > 0 => '#7f1d1d',
             $facts['actionable'] > 0 => '#b45309',
@@ -252,6 +256,20 @@
         'none' => ['Brak', '#2f6b3d', '#e9f5ec'],
         'unknown' => ['Nieustalone', '#55647f', '#eef2f9'],
     ];
+
+    // The probe leaves its verdict unknown/none on an interrupted scan, but our
+    // own ranking may already carry a critical finding. Fall back to the computed
+    // top severity so the badge never reads "Nieustalone" next to a critical.
+    $computedRisk = null;
+    foreach (App\Support\Severity::ORDER as $level) {
+        if (($facts['severity_counts'][$level] ?? 0) > 0) {
+            $computedRisk = $level;
+            break;
+        }
+    }
+    if ($computedRisk !== null && in_array($risk, [null, 'unknown', 'none'], true)) {
+        $risk = $computedRisk;
+    }
 
     // The devices carrying the most weight, so a reader sees where to look
     // first. Network-wide findings (no IP) are not a device.

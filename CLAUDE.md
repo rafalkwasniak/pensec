@@ -445,8 +445,8 @@ tool docs, not live-tested).
   and lessons are named - names are **not** derived from file or directory names. A lesson is
   reachable only when the manifest lists it and its `.md` exists; `CourseController` never
   builds a path from the raw slug, so there is no traversal. Directory prefixes are **not**
-  load-bearing (the manifest array is the order), which is why some prefixes repeat after
-  incremental additions; a one-time renumber is still open.
+  load-bearing (the manifest array is the order); they were renumbered on 2026-10-18 to run
+  `00`→`08` in manifest order, so the prefix now matches the reading sequence.
 - **Fundamentals vs technique lessons.** Short concept lessons (metodyka, fundamenty) flow
   without headings; technique lessons use natural, content-specific section titles, never a
   stamped "Mechanizm / Procedura" skeleton. Fundamentals show a read-only inspection command;

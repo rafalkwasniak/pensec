@@ -37,7 +37,7 @@
             $parts[] = implode(', ', array_slice($cves, 0, 6)).(count($cves) > 6 ? ' i '.(count($cves) - 6).' innych' : '');
         }
 
-        return $parts === [] ? 'Wymaga uwagi — szczegóły w opisie poniżej.' : implode(' · ', $parts);
+        return $parts === [] ? 'Wymaga uwagi, szczegóły w opisie poniżej.' : implode(' · ', $parts);
     };
 
     // A table past this length stops being read. The remainder is counted, not
@@ -56,7 +56,7 @@
 @else
     @if ($notable === [])
         <div class="empty">
-            Żaden z uruchomionych testów nie wykazał problemu - wszystkie zakończyły się wynikiem
+            Żaden z uruchomionych testów nie wykazał problemu. Wszystkie zakończyły się wynikiem
             czystym (łącznie: {{ $totals['deep_findings'] }}).
         </div>
     @else

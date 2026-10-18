@@ -541,7 +541,7 @@ class ReportFactsTest extends TestCase
         ], array_slice(array_column($facts['gaps'], 'title'), 0, 2));
 
         // The SMB module's own "did not run" is already covered by the line above.
-        $this->assertNotContains('Anonimowe sesje i udziały SMB — test nie wykonał się', array_column($facts['gaps'], 'title'));
+        $this->assertNotContains('Anonimowe sesje i udziały SMB: test nie wykonał się', array_column($facts['gaps'], 'title'));
     }
 
     /**
@@ -574,7 +574,7 @@ class ReportFactsTest extends TestCase
 
         $this->assertTrue($smb['not_applicable']);
         $this->assertFalse($smb['failed']);
-        $this->assertNotContains('Anonimowe sesje i udziały SMB — test nie wykonał się', array_column($facts['gaps'], 'title'));
+        $this->assertNotContains('Anonimowe sesje i udziały SMB: test nie wykonał się', array_column($facts['gaps'], 'title'));
     }
 
     /** Report 35: Responder failed to start, and said so as a HIGH entry. */

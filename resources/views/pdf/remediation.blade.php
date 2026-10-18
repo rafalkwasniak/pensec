@@ -174,7 +174,7 @@
 
 <div class="notice">
     <strong>Przed wprowadzeniem zmian.</strong> Usterki, adresy i wersje oprogramowania pochodzą
-    wprost z badania. Kroki naprawy zostały przygotowane z pomocą AI na ich podstawie - nazwy menu
+    wprost z badania. Kroki naprawy zostały przygotowane z pomocą AI na ich podstawie. Nazwy menu
     i opcji mogą różnić się w zależności od wersji oprogramowania urządzenia. Każdą zmianę
     zweryfikuj w panelu lub dokumentacji producenta, wykonaj kopię konfiguracji przed jej zmianą
     i wprowadzaj zmiany w oknie serwisowym. Usterki są ułożone od najpilniejszej.
@@ -226,7 +226,7 @@
                     <div style="font-size:9px; color:#55647f; margin-top:3px;">
                         @if ($finding['where']){{ $finding['where'] }}@endif
                         @if ($finding['where'] && ! $finding['confirmed']) · @endif
-                        @if (! $finding['confirmed'])<span style="color:#8a4b06;">ustalenie niepotwierdzone - najpierw zweryfikuj</span>@endif
+                        @if (! $finding['confirmed'])<span style="color:#8a4b06;">ustalenie niepotwierdzone, najpierw zweryfikuj</span>@endif
                     </div>
                 @endif
                 @if ($finding['note'])
@@ -260,7 +260,7 @@
 
 @if ($findings !== [])
     <p style="font-size:10px; color:#55647f; margin-top:10px;">
-        Po wprowadzeniu zmian zalecamy ponowne badanie sondą - potwierdzi ono, że usterki zostały
+        Po wprowadzeniu zmian zalecamy ponowne badanie sondą. Potwierdzi ono, że usterki zostały
         usunięte, a zmiany nie otworzyły nowych.
     </p>
 @endif

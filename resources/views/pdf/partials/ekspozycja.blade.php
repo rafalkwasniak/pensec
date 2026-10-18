@@ -51,7 +51,7 @@
                         @if ($module['partial'] ?? false)
                             <span class="tag tag-calm">nie stwierdzono podatności w sprawdzonym zakresie</span>
                         @else
-                            <span class="tag tag-calm">stan prawidłowy — nie stwierdzono podatności</span>
+                            <span class="tag tag-calm">stan prawidłowy, nie stwierdzono podatności</span>
                         @endif
                     @else
                         <span class="tag tag-warn">{{ Polish::count(count($module['findings']), 'ustalenie', 'ustalenia', 'ustaleń') }}</span>
@@ -77,7 +77,7 @@
                              colours). Counted context, never vulnerabilities. --}}
                         <div style="margin-top:4px; color:#8a97ab;">
                             Dodatkowo {{ App\Support\Polish::count($module['observations'], 'techniczna obserwacja', 'techniczne obserwacje', 'technicznych obserwacji') }}
-                            narzędzia (np. znaczniki czasu) - nie są to podatności.
+                            narzędzia (np. znaczniki czasu). Nie są to podatności.
                         </div>
                     @endif
                 </td>
@@ -89,6 +89,6 @@
 @if ($totals['modules_failed'] > 0)
     <div class="empty" style="border-left-color:#b45309;">
         {{ Polish::plural($totals['modules_failed'], 'Jeden moduł badania nie wykonał się', $totals['modules_failed'].' moduły badania nie wykonały się', $totals['modules_failed'].' modułów badania nie wykonało się') }}
-        poprawnie. Wyniku tych testów nie należy czytać jako „nic nie znaleziono” - one się nie odbyły.
+        poprawnie. Wyniku tych testów nie należy czytać jako „nic nie znaleziono”. One się nie odbyły.
     </div>
 @endif

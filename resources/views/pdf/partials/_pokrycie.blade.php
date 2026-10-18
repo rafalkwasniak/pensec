@@ -13,7 +13,7 @@
     <div class="empty" style="background:#fdf6ea; border-left-color:#b45309; color:#8a4b06;">
         @if (! $group['ran'])
             Ten test się nie odbył{{ in_array($group['status'], ['timeout', 'blocked'], true) ? ' ('.$group['phrase'].')' : '' }}. Brak wyników w tej części nie oznacza,
-            że nie ma tu problemów - ten obszar pozostaje niesprawdzony.
+            że nie ma tu problemów. Ten obszar pozostaje niesprawdzony.
         @elseif ($hosts !== [])
             Test nie powiódł się na {{ count($hosts) }} {{ count($hosts) === 1 ? 'urządzeniu' : 'urządzeniach' }}:
             <span class="mono">{{ implode(', ', $shown) }}</span>{{ count($hosts) > count($shown) ? ' i '.(count($hosts) - count($shown)).' innych' : '' }}.

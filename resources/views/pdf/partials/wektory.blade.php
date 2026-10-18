@@ -112,7 +112,7 @@
         @foreach ($facts['gaps'] as $gap)
             @php ($hosts = $gap['hosts'] ?? []) @endphp
             <div style="margin-bottom:2px;">
-                &bull; {{ $gap['ip'] ? $gap['ip'].' — ' : '' }}{{ $gap['title'] }}
+                &bull; {{ $gap['ip'] ? $gap['ip'].': ' : '' }}{{ $gap['title'] }}
                 @if ($hosts !== [])
                     <span class="mono" style="color:#8a97ab;">({{ implode(', ', array_slice($hosts, 0, 6)) }}{{ count($hosts) > 6 ? ' i '.(count($hosts) - 6).' innych' : '' }})</span>
                 @endif

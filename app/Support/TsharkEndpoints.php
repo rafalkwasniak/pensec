@@ -49,6 +49,35 @@ class TsharkEndpoints
         return $rows;
     }
 
+    /**
+     * A group address is not a device. tshark lists mDNS, SSDP, LLMNR and the
+     * broadcast address among the endpoints, and sorted by traffic they sit high
+     * in the table reading as hosts. This names them so a reader is not misled;
+     * the row stays, because the traffic it carries is real. Returns null for an
+     * ordinary unicast address, which is the common case.
+     */
+    public static function groupLabel(string $address): ?string
+    {
+        // Limited broadcast - the one broadcast address certain without a mask.
+        if ($address === '255.255.255.255') {
+            return 'rozgłoszeniowy';
+        }
+
+        // IPv4 multicast is 224.0.0.0/4: the first octet from 224 to 239.
+        if (preg_match('/^(\d{1,3})\.\d{1,3}\.\d{1,3}\.\d{1,3}$/', $address, $m) === 1) {
+            $first = (int) $m[1];
+
+            return $first >= 224 && $first <= 239 ? 'multicast' : null;
+        }
+
+        // IPv6 multicast is ff00::/8 - any address whose first byte is 0xff.
+        if (str_contains($address, ':') && preg_match('/^ff[0-9a-f]{0,2}:/i', $address) === 1) {
+            return 'multicast';
+        }
+
+        return null;
+    }
+
     /** Bytes as a person reads them. */
     public static function bytes(int $bytes): string
     {

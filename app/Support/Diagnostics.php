@@ -46,7 +46,7 @@ class Diagnostics
             'fields' => [
                 'gratuitous_arp_blocked' => [
                     'true' => 'Ruch Gratuitous ARP jest blokowany.',
-                    'false' => 'Brak blokady Gratuitous ARP — ruch w sieci można przechwycić i podsłuchać.',
+                    'false' => 'Brak blokady Gratuitous ARP. Ruch w sieci można przechwycić i podsłuchać.',
                     'concern' => false,
                     'level' => Severity::HIGH,
                 ],
@@ -57,7 +57,7 @@ class Diagnostics
             'fields' => [
                 'wpad_authoritative_dns' => [
                     'true' => 'W DNS istnieje autorytatywny wpis WPAD.',
-                    'false' => 'Brak autorytatywnego wpisu WPAD w DNS — można podszyć się pod serwer konfiguracji proxy.',
+                    'false' => 'Brak autorytatywnego wpisu WPAD w DNS. Można podszyć się pod serwer konfiguracji proxy.',
                     'concern' => false,
                     'level' => Severity::HIGH,
                 ],
@@ -89,13 +89,13 @@ class Diagnostics
             'label' => 'Zabezpieczenie portu dostępowego',
             'fields' => [
                 'dtp_trunking_active' => [
-                    'true' => 'Port negocjuje trunk (DTP) — można z niego wejść do innych sieci VLAN.',
+                    'true' => 'Port negocjuje trunk (DTP). Można z niego wejść do innych sieci VLAN.',
                     'false' => 'Port nie negocjuje trunku.',
                     'concern' => true,
                     'level' => Severity::HIGH,
                 ],
                 'stp_bpdu_guard_missing' => [
-                    'true' => 'Brak BPDU Guard — podłączony przełącznik może przejąć rolę głównego w topologii.',
+                    'true' => 'Brak BPDU Guard. Podłączony przełącznik może przejąć rolę głównego w topologii.',
                     'false' => 'BPDU Guard jest włączony.',
                     'concern' => true,
                     'level' => Severity::MEDIUM,
@@ -131,7 +131,7 @@ class Diagnostics
         ],
         'top_talkers' => ['label' => 'Najbardziej obciążające urządzenia'],
         'top_talkers_evidence' => ['label' => 'Najbardziej obciążające urządzenia'],
-        'top_talkers_context' => ['label' => 'Pomiar ruchu — warunki'],
+        'top_talkers_context' => ['label' => 'Warunki pomiaru ruchu'],
         'bandwidth' => ['label' => 'Przepustowość łącza'],
         'bandwidth_evidence' => ['label' => 'Przepustowość łącza'],
         'wpad' => ['label' => 'WPAD (automatyczna konfiguracja proxy)'],

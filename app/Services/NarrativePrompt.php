@@ -62,6 +62,9 @@ class NarrativePrompt
            podaje. "Na jednym z urządzeń" jest zabronione, gdy znasz adres.
         7. Wagi ustaleń (krytyczne, wysokie, średnie) są już wyliczone i podane w zestawieniu.
            Nie podnoś ich ani nie obniżaj i nie wymyślaj własnych.
+        8. Nie używaj długich myślników (— ani –) wewnątrz zdań. Pisz płynnym tekstem: w miejscu,
+           w którym narzuca się myślnik, użyj przecinka, nawiasu albo podziel myśl na dwa zdania.
+           Zwykły łącznik w nazwach własnych (NetNTLMv2, VLAN-y) jest dozwolony.
 
         Format odpowiedzi: każdy blok poprzedzasz linią "### SEKCJA: klucz", gdzie klucz jest
         dokładnie taki, jak podano niżej. Nie dodajesz żadnych innych bloków ani tekstu poza nimi.

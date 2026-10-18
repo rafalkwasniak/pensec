@@ -260,9 +260,9 @@ Razem ~55–65 lekcji.
   (recon → enumeracja → analiza → ostrożna walidacja → evidence → raport); eksploatację,
   lateral movement i pivoting opisać jako etapy spoza zakresu tej oceny, wymagające osobnych
   uprawnień. Dodać lekcję o profilach działania.
-- **Przepisać lekcje:** 02-plaszczyzna/01 (`arpspoof` → `arping -U`), 03-tozsamosc/01
-  (`nxc` → `smbmap`/`mount`/NSE), 04-aplikacje/02 (`redis-cli`/`mongosh` → NSE + `curl`);
-  w 02-plaszczyzna/02–03 zmienić głos na obserwacyjny.
+- **Przepisać lekcje:** 03-plaszczyzna/01 (`arpspoof` → `arping -U`), 05-tozsamosc/01
+  (`nxc` → `smbmap`/`mount`/NSE), 06-aplikacje/02 (`redis-cli`/`mongosh` → NSE + `curl`);
+  w 03-plaszczyzna/02–03 zmienić głos na obserwacyjny.
 - **Egzamin — poprawić 4 pytania:** Q1 (Wi-Fi pasywny, nie „wymusza handshake"), Q3 (brak MAB
   bypass → MAC jako słaba tożsamość), Q4 (VLAN = Dot1Q tagging, DTP pasywnie), Q7 (`arping -U`,
   nie `arpspoof` MITM).

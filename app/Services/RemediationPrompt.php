@@ -46,15 +46,17 @@ class RemediationPrompt
         3. Jeśli dokładna ścieżka w panelu albo nazwa polecenia zależy od wersji oprogramowania i nie
            masz pewności, podaj najbardziej prawdopodobną i wyraźnie dopisz, że należy ją potwierdzić
            w panelu lub dokumentacji producenta. Nie zmyślaj nazw opcji z pełną pewnością. Gdy pewność
-           co do ścieżki jest niska, połóż główny nacisk na stan docelowy i weryfikację - są one
-           prawdziwe niezależnie od interfejsu urządzenia.
-        4. Każdy blok kończ dwoma osobnymi wierszami. Najpierw "Stan docelowy:" - w prostych słowach,
-           co ma być prawdą po naprawie (np. "usługa Telnet nie nasłuchuje, dostęp wyłącznie przez
-           SSH"). Potem "Weryfikacja:" - jak to sprawdzić. Oba muszą być prawdziwe niezależnie od
-           modelu sprzętu.
-        5. Nie podnoś ani nie obniżaj wagi usterki - jest już ustalona.
+           co do ścieżki jest niska, połóż główny nacisk na stan docelowy i weryfikację, ponieważ są
+           one prawdziwe niezależnie od interfejsu urządzenia.
+        4. Każdy blok kończ dwoma osobnymi wierszami. Najpierw "Stan docelowy:", czyli w prostych
+           słowach to, co ma być prawdą po naprawie (np. "usługa Telnet nie nasłuchuje, dostęp wyłącznie
+           przez SSH"). Potem "Weryfikacja:", czyli sposób sprawdzenia tego. Oba muszą być prawdziwe
+           niezależnie od modelu sprzętu.
+        5. Nie podnoś ani nie obniżaj wagi usterki, jest już ustalona.
         6. Nie dopisuj wstępu, podsumowania ani punktu o ponownym audycie. System dokłada ramkę
            i stopkę sam.
+        7. Nie używaj długich myślników (— ani –) w tekście. Pisz płynnie, w miejscu myślnika użyj
+           przecinka, nawiasu albo dwóch zdań. Zwykły łącznik w nazwach własnych jest dozwolony.
 
         Format odpowiedzi: dla każdej usterki jeden blok. Blok zaczynasz linią "### KROK: N", gdzie
         N to numer usterki z listy. Pod nią numerowana lista kroków (1., 2., 3...), a na końcu osobne
@@ -95,7 +97,7 @@ class RemediationPrompt
         foreach ($findings as $index => $finding) {
             $number = $index + 1;
             $where = $finding['where'] !== null ? ' ('.$finding['where'].')' : '';
-            $lines[] = 'USTERKA '.$number.' — ['.mb_strtoupper(Severity::label($finding['level'])).'] '
+            $lines[] = 'USTERKA '.$number.' ['.mb_strtoupper(Severity::label($finding['level'])).'] '
                 .($finding['ip'] ?? 'cała sieć').$where.': '.$finding['title'];
 
             $host = $finding['ip'] !== null ? ($hosts[$finding['ip']] ?? null) : null;

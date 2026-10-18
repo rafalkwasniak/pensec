@@ -579,7 +579,7 @@ class ReportFacts
 
         foreach ($exposure as $module) {
             if (! $module['present']) {
-                $gaps[] = self::gap($module['label'].' — sonda nie przekazała wyniku', 'Ekspozycja');
+                $gaps[] = self::gap($module['label'].': sonda nie przekazała wyniku', 'Ekspozycja');
 
                 continue;
             }
@@ -588,7 +588,7 @@ class ReportFacts
                 // Its audit group already put this hole on the list, with the
                 // devices it covers.
                 if (! ($coverage['groups'][$module['group']]['problem'] ?? false)) {
-                    $gaps[] = self::gap($module['label'].' — test nie wykonał się', 'Ekspozycja');
+                    $gaps[] = self::gap($module['label'].': test nie wykonał się', 'Ekspozycja');
                 }
 
                 continue;
@@ -622,7 +622,7 @@ class ReportFacts
 
         foreach ($diagnostics as $diagnostic) {
             if ($diagnostic['error'] !== null) {
-                $gaps[] = self::gap($diagnostic['label'].' — test nie wykonał się', 'Diagnostyka');
+                $gaps[] = self::gap($diagnostic['label'].': test nie wykonał się', 'Diagnostyka');
             }
 
             foreach ($diagnostic['fields'] as $field) {
@@ -635,7 +635,7 @@ class ReportFacts
                 // also reported an error, that line already said so.
                 if ($field['gap']) {
                     if ($diagnostic['error'] === null) {
-                        $gaps[] = self::gap($diagnostic['label'].' — '.$field['value'], 'Diagnostyka');
+                        $gaps[] = self::gap($diagnostic['label'].': '.$field['value'], 'Diagnostyka');
                     }
 
                     continue;

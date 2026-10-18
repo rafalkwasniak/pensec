@@ -36,8 +36,14 @@
                     <tbody>
                         {{-- Sorted by traffic, so the busiest come first; the tail is counted below. --}}
                         @foreach (array_slice($diagnostic['rows'], 0, 15) as $row)
+                            @php ($group = TsharkEndpoints::groupLabel($row['address']))
                             <tr>
-                                <td class="mono">{{ $row['address'] }}</td>
+                                <td class="mono">
+                                    {{ $row['address'] }}
+                                    @if ($group)
+                                        <span style="color:#8a97ab; font-family:inherit;">({{ $group }})</span>
+                                    @endif
+                                </td>
                                 <td>{{ $row['packets'] }}</td>
                                 <td>{{ TsharkEndpoints::bytes($row['bytes']) }}</td>
                                 <td>{{ $row['tx_packets'] }} pk &middot; {{ TsharkEndpoints::bytes($row['tx_bytes']) }}</td>

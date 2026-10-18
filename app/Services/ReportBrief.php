@@ -123,7 +123,7 @@ class ReportBrief
             $lines[] = sprintf(
                 '[%s] %s%s (źródło: %s)%s%s',
                 mb_strtoupper(Severity::label($finding['level'])),
-                $where !== '' ? $where.' — ' : '',
+                $where !== '' ? $where.': ' : '',
                 self::clip($finding['title'], self::MAX_FINDING),
                 $finding['source'],
                 $cves !== [] ? ' '.implode(', ', $cves).(count($finding['cves']) > count($cves) ? ' i '.(count($finding['cves']) - count($cves)).' innych CVE' : '') : '',
@@ -156,7 +156,7 @@ class ReportBrief
         foreach ($facts['gaps'] as $gap) {
             $hosts = $gap['hosts'] ?? [];
 
-            $lines[] = '- '.($gap['ip'] !== null ? $gap['ip'].' — ' : '').$gap['title']
+            $lines[] = '- '.($gap['ip'] !== null ? $gap['ip'].': ' : '').$gap['title']
                 .($hosts !== [] ? ' ('.self::listed($hosts, 12).')' : '');
         }
 

@@ -35,7 +35,7 @@
         [
             'key' => 'wektory',
             'title' => 'Ustalenia według wagi',
-            'description' => 'Wszystko, co badanie wykazało, zebrane w jednym miejscu i uszeregowane od najpoważniejszego. Wagi wynikają z tego, co stwierdziły testy - ustalenie, którego test nie zdołał potwierdzić, jest oceniane niżej niż potwierdzone.',
+            'description' => 'Wszystko, co badanie wykazało, zebrane w jednym miejscu i uszeregowane od najpoważniejszego. Wagi wynikają z tego, co stwierdziły testy. Ustalenie, którego test nie zdołał potwierdzić, jest oceniane niżej niż potwierdzone.',
         ],
         [
             'key' => 'urzadzenia',

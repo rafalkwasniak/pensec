@@ -52,7 +52,7 @@
             }
         },
         {
-            "dir": "02-plaszczyzna-sterowania",
+            "dir": "03-plaszczyzna-sterowania",
             "kicker": "Rozdział III",
             "title": "Protokoły lokalne i poświadczenia",
             "lessons": {
@@ -77,7 +77,7 @@
             }
         },
         {
-            "dir": "03-tozsamosc-uslugi",
+            "dir": "05-tozsamosc-uslugi",
             "kicker": "Rozdział V",
             "title": "Tożsamość i usługi katalogowe",
             "lessons": {
@@ -89,7 +89,7 @@
             }
         },
         {
-            "dir": "04-aplikacje-skarbce",
+            "dir": "06-aplikacje-skarbce",
             "kicker": "Rozdział VI",
             "title": "Usługi, bazy i podatności",
             "lessons": {
@@ -108,7 +108,7 @@
             }
         },
         {
-            "dir": "05-specjalistyczne",
+            "dir": "07-specjalistyczne",
             "kicker": "Rozdział VII",
             "title": "Moduły specjalistyczne",
             "lessons": {
@@ -119,7 +119,7 @@
             }
         },
         {
-            "dir": "06-raport",
+            "dir": "08-raport",
             "kicker": "Rozdział VIII",
             "title": "Diagnostyka, dowód i raport",
             "lessons": {

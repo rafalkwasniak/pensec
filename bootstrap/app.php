@@ -2,6 +2,7 @@
 
 use App\Enums\ApiErrorCode;
 use App\Http\Middleware\AuthenticateDevice;
+use App\Http\Middleware\RememberLeadSource;
 use App\Http\Middleware\SetPanelLocale;
 use App\Http\Middleware\StreamReportUpload;
 use App\Support\ApiResponse;
@@ -29,7 +30,14 @@ return Application::configure(basePath: dirname(__DIR__))
             'panel.locale' => SetPanelLocale::class,
         ]);
 
-        $middleware->redirectGuestsTo(fn () => route('panel.login'));
+        // Where a visitor came from, kept for the contact form (see the class).
+        $middleware->web(append: [RememberLeadSource::class]);
+
+        // Unauthenticated portal requests go to the client login; everything
+        // else (the admin panel) to the panel login.
+        $middleware->redirectGuestsTo(
+            fn (Request $request) => $request->is('portal*') ? route('client.login') : route('panel.login'),
+        );
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

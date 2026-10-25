@@ -3,7 +3,10 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Kontakt | Pensec</title>
+    <title>Kontakt i zamówienie audytu bezpieczeństwa sieci | Pensec</title>
+    <meta name="description" content="Formularz zamówienia audytu bezpieczeństwa sieci wewnętrznej firmy lub zakładu przemysłowego oraz zadawania pytań o zakres badania.">
+    @include('partials.og', ['title' => 'Kontakt i zamówienie audytu bezpieczeństwa sieci | Pensec', 'description' => 'Formularz zamówienia audytu bezpieczeństwa sieci wewnętrznej firmy lub zakładu przemysłowego oraz zadawania pytań o zakres badania.'])
+    <link rel="canonical" href="{{ url('/contact') }}">
     <link rel="icon" type="image/png" href="/favicon.png">
     @include('partials.theme-boot')
     @vite('resources/css/app.css')
@@ -51,75 +54,84 @@
     </div>
 
     <main class="flex-grow w-full mx-auto max-w-6xl px-6 py-10" style="margin-top: 50px;">
+        <h1 style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0">Kontakt i zamówienie audytu bezpieczeństwa sieci</h1>
 
-        <!-- GRID -->
-        <div class="grid gap-8 md:grid-cols-2">
-            
-            <!-- KONTAKT -->
-            <div class="card p-6 sm:p-8 flex flex-col justify-between border-brand/30 bg-ink-raised/50">
-                <div>
-                    <div class="flex items-center gap-3 border-b border-ink-line pb-4 mb-6">
-                        <span class="font-mono text-brand text-lg">>_</span>
-                        <h3 class="text-sm uppercase tracking-[0.25em] text-chrome font-semibold">Kontakt</h3>
-                    </div>
-                    
-                    <div class="space-y-6">
-                        <div>
-                            <span class="font-mono text-xs text-brand block mb-1">EMAIL</span>
-                            <a href="mailto:norbert@kwasniak.org" class="text-xl font-medium text-chrome hover:text-brand transition-colors">
-                                norbert@kwasniak.org
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- WSPÓŁPRACA -->
-            <div class="card p-6 sm:p-8 flex flex-col relative overflow-hidden">
-                <div class="absolute top-0 right-0 w-32 h-32 bg-brand/10 blur-3xl rounded-full"></div>
+        <!-- FORMULARZ ZAPYTANIA -->
+        <section class="mx-auto max-w-3xl">
+            <div class="card p-6 sm:p-8">
                 <div class="flex items-center gap-3 border-b border-ink-line pb-4 mb-6">
                     <span class="font-mono text-brand text-lg">>_</span>
-                    <h3 class="text-sm uppercase tracking-[0.25em] text-chrome font-semibold">Współpraca</h3>
+                    <h2 class="text-sm uppercase tracking-[0.25em] text-chrome font-semibold">Zamówienie audytu lub pytanie</h2>
                 </div>
-                
-                <ul class="space-y-4 text-sm text-muted flex-grow">
-                    <li class="flex gap-3 items-start">
-                        <span class="text-brand font-mono font-bold">01</span>
-                        <span>Inicjalizacja urządzenia w sieci i wykonanie zautomatyzowanych testów penetracyjnych.</span>
-                    </li>
-                    <li class="flex gap-3 items-start">
-                        <span class="text-brand font-mono font-bold">02</span>
-                        <span>Dostarczenie raportu biznesowego oraz technicznego.</span>
-                    </li>
-                    <li class="flex gap-3 items-start">
-                        <span class="text-brand font-mono font-bold">03</span>
-                        <span>Naprawa błędów konfiguracyjnych i wprowadzenie zabezpieczeń w infrastrukturze klienta.</span>
-                    </li>
-                    <li class="flex gap-3 items-start">
-                        <span class="text-brand font-mono font-bold">04</span>
-                        <span>Przeprowadzenie <strong>bezpłatnego</strong> audytu potwierdzającego neutralizację podatności.</span>
-                    </li>
-                </ul>
 
-                <div class="pt-6 mt-8 border-t border-ink-line">
-                    <p class="text-xs leading-relaxed text-muted">
-                        Procedura realizowana jest w oparciu o standard Rules of Engagement (RoE) oraz klauzulę poufności NDA.
+                <p class="mb-6 text-sm leading-relaxed text-muted">
+                    Zapytanie trafia bezpośrednio do zespołu prowadzącego badania. Opis zakresu, kosztu
+                    i przebiegu badania zawiera <a href="/wiedza" class="text-brand hover:underline">baza wiedzy</a>,
+                    a kolejne etapy współpracy strona <a href="/jak-przebiega-audyt" class="text-brand hover:underline">przebiegu audytu</a>.
+                </p>
+
+                @if (session('lead_status') === 'ok')
+                    <div class="mb-6 rounded-lg border border-brand/40 bg-brand/10 px-4 py-3 text-sm text-chrome">
+                        Zapytanie zostało przyjęte. Odpowiedź zostanie wysłana na podany adres e-mail.
+                    </div>
+                    {{-- Read by the analytics loader in partials/cookie-consent, only after consent. --}}
+                    <script>window.pensecLeadSent = true;</script>
+                @endif
+
+                <form method="POST" action="{{ route('contact.lead') }}" class="grid gap-4 sm:grid-cols-2">
+                    @csrf
+
+                    {{-- Honeypot: ukryte pole, którego człowiek nie wypełni. --}}
+                    <div style="position:absolute;left:-9999px" aria-hidden="true">
+                        <label>Zostaw to pole puste
+                            <input type="text" name="website" tabindex="-1" autocomplete="off">
+                        </label>
+                    </div>
+
+                    <div>
+                        <label for="name" class="block text-xs text-muted mb-1">Imię i nazwisko</label>
+                        <input id="name" name="name" value="{{ old('name') }}" required
+                               class="w-full rounded-lg border border-ink-line bg-ink px-4 py-2.5 text-sm text-chrome outline-none focus:border-brand">
+                        @error('name') <p class="mt-1 text-xs text-warn">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div>
+                        <label for="email" class="block text-xs text-muted mb-1">E-mail</label>
+                        <input id="email" name="email" type="email" value="{{ old('email') }}" required
+                               class="w-full rounded-lg border border-ink-line bg-ink px-4 py-2.5 text-sm text-chrome outline-none focus:border-brand">
+                        @error('email') <p class="mt-1 text-xs text-warn">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div class="sm:col-span-2">
+                        <label for="company" class="block text-xs text-muted mb-1">Firma (opcjonalnie)</label>
+                        <input id="company" name="company" value="{{ old('company') }}"
+                               class="w-full rounded-lg border border-ink-line bg-ink px-4 py-2.5 text-sm text-chrome outline-none focus:border-brand">
+                        @error('company') <p class="mt-1 text-xs text-warn">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div class="sm:col-span-2">
+                        <label for="message" class="block text-xs text-muted mb-1">Wiadomość</label>
+                        <textarea id="message" name="message" rows="5" required
+                                  class="w-full rounded-lg border border-ink-line bg-ink px-4 py-2.5 text-sm text-chrome outline-none focus:border-brand">{{ old('message') }}</textarea>
+                        @error('message') <p class="mt-1 text-xs text-warn">{{ $message }}</p> @enderror
+                    </div>
+
+                    <p class="sm:col-span-2 text-xs leading-relaxed text-muted">
+                        Dane z formularza są przetwarzane wyłącznie w celu obsługi zapytania.
+                        Szczegóły zawiera <a href="/polityka-prywatnosci" class="text-brand hover:underline">polityka prywatności</a>.
                     </p>
-                </div>
+
+                    <div class="sm:col-span-2 mt-2 flex justify-center border-t border-ink-line pt-6">
+                        <button type="submit" class="rounded-md border border-ink-line bg-ink-raised px-6 py-2.5 text-sm font-medium text-chrome hover:border-brand transition-colors">
+                            Wyślij zapytanie
+                        </button>
+                    </div>
+                </form>
             </div>
-        </div>
+        </section>
     </main>
 
-    <footer class="border-t border-ink-line mt-auto">
-    <div class="mx-auto flex max-w-6xl items-center justify-center px-6 py-10 text-sm text-muted">
-        <div class="flex items-center gap-1.5">
-            <img src="/images/pensec-logo.webp" alt="Pensec" width="768" height="256" class="theme-when-dark h-4 sm:h-5 w-auto">
-            <img src="/images/pensec-logo-light.webp" alt="Pensec" width="768" height="256" class="theme-when-light h-4 sm:h-5 w-auto">
-            <span class="font-semibold tracking-wide text-chrome">&copy;</span>
-            <span class="font-semibold tracking-wide text-chrome">{{ date('Y') }}</span>
-        </div>
-    </div>
-	</footer>
+    @include('partials.site-footer')
 
 
     @include('partials.cookie-consent')

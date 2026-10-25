@@ -28,7 +28,9 @@
                 <nav class="flex shrink min-w-0 items-center gap-4 sm:gap-5 overflow-x-auto hide-scrollbar">
                     @foreach ([
                         ['panel.devices.index', 'Sondy', 'panel/devices*'],
+                        ['panel.clients.index', 'Klienci', 'panel/clients*'],
                         ['panel.reports.index', 'Badania', 'panel/reports*'],
+                        ['panel.leads.index', 'Zapytania', 'panel/leads*'],
                         ['panel.administrators.index', 'Administratorzy', 'panel/administrators*'],
                         ['panel.account.edit', 'Konto', 'panel/account*'],
                     ] as [$route, $label, $pattern])
@@ -81,6 +83,17 @@
                     w bazie zapisany jest wyłącznie jego skrót. Jeśli je zgubisz, wystawisz nowe.
                 </p>
                 <p class="mt-4 overflow-x-auto rounded-lg border border-ink-line bg-ink px-4 py-3 font-mono text-sm text-brand">{{ session('token') }}</p>
+            </div>
+        @endif
+
+        @if (session('setup_url'))
+            <div class="mb-6 card p-6">
+                <h2 class="text-base font-semibold text-chrome">Link do ustawienia hasła</h2>
+                <p class="mt-2 text-sm leading-relaxed text-muted">
+                    Przekaż go klientowi. Działa raz, do ustawienia hasła; po skorzystaniu przestaje działać.
+                    Wystawienie nowego linku unieważnia poprzedni.
+                </p>
+                <p class="mt-4 overflow-x-auto rounded-lg border border-ink-line bg-ink px-4 py-3 font-mono text-sm text-brand">{{ session('setup_url') }}</p>
             </div>
         @endif
 

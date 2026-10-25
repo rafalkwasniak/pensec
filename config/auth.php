@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Client;
 use App\Models\User;
 
 return [
@@ -42,6 +43,13 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+
+        // Portal clients, fully separate from the admin `web` guard. Invoked
+        // only explicitly (Auth::guard('client')); the default stays `web`.
+        'client' => [
+            'driver' => 'session',
+            'provider' => 'clients',
+        ],
     ],
 
     /*
@@ -67,10 +75,11 @@ return [
             'model' => env('AUTH_MODEL', User::class),
         ],
 
-        // 'users' => [
-        //     'driver' => 'database',
-        //     'table' => 'users',
-        // ],
+        // Hardcoded model: AUTH_MODEL only ever stands in for the admin provider.
+        'clients' => [
+            'driver' => 'eloquent',
+            'model' => Client::class,
+        ],
     ],
 
     /*

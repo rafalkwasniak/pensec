@@ -36,6 +36,25 @@ return [
         'exam_rate_limit_per_minute' => 20,
     ],
 
+    'leads' => [
+        // Where a contact-form enquiry is emailed. Leads are also stored in the
+        // database, so a lead is never lost even while mail is unconfigured; this
+        // is only the notification address. Not an @pensec.top mailbox by choice.
+        'notify_to' => env('PENSEC_LEADS_TO', 'norbert@kwasniak.org'),
+
+        // Contact-form submissions per minute per IP. A person sends one; this
+        // only bites a bot hammering the form.
+        'rate_limit_per_minute' => 5,
+    ],
+
+    'analytics' => [
+        // Google Analytics 4 measurement ID (G-XXXXXXXXXX). Empty means no
+        // analytics at all and the cookie banner offers only necessary cookies.
+        // When set, the tag loads on public pages only after the visitor
+        // accepts it in the banner - never before, never in the panel or portal.
+        'ga_id' => env('PENSEC_GA_ID'),
+    ],
+
     'devices' => [
         // Raw bytes behind a device token. Rendered as hex, so the token the
         // device receives is twice this long.

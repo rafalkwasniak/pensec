@@ -2,167 +2,120 @@
 <html lang="pl">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Certyfikat | Pensec</title>
-    @vite('resources/css/app.css')
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
-        
-        body, html {
-            background-color: #0b0f19;
+
+        * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        html, body { margin: 0; padding: 0; }
+
+        body {
+            min-height: 100vh;
+            min-height: 100dvh;
+            background: #0b0f19;
             font-family: 'Inter', sans-serif;
-            margin: 0;
-            padding: 0;
-            width: 100vw;
-            height: 100vh;
-            overflow: hidden; /* Bezwzględne zablokowanie scrollowania na urządzeniach mobilnych */
-        }
-        
-        .font-mono { font-family: 'JetBrains Mono', monospace; }
-
-        * {
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-            color-adjust: exact !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
         }
 
-        /* Nowa metoda pozycjonowania - absolutny środek niezależnie od urządzenia */
-        #cert-scaling-wrapper {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 1123px;
-            height: 794px;
-            /* Transformacja scale jest aplikowana przez JS do tego translate */
-            transform: translate(-50%, -50%) scale(1); 
+        /* Action bar, never printed. */
+        .actions { position: fixed; top: 16px; right: 16px; z-index: 50; display: flex; gap: 8px; }
+        .actions a {
+            font-size: 14px; text-decoration: none; border-radius: 8px; padding: 8px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.12); background: #141a28; color: #e7ecf5;
+        }
+        .actions a.secondary { color: #8a97ab; }
+
+        /*
+            A4 landscape, always proportional. The box fits inside both axes of the
+            viewport and its height follows from aspect-ratio, so the A4 proportion
+            holds on every screen - phone included - with no JavaScript. Everything
+            inside is sized in cqw (1% of this box's width), so the whole layout
+            scales as one with the box.
+        */
+        .cert-fit {
+            container-type: inline-size;
+            width: min(94vw, calc(90vh * 1123 / 794));
+            width: min(94vw, calc(90dvh * 1123 / 794));
+            aspect-ratio: 1123 / 794;
+        }
+
+        .cert-frame {
+            width: 100%; height: 100%;
+            padding: 1.1cqw;
+            border-radius: 2px;
+            background: linear-gradient(to bottom, #12a5ff, #020617);
+            box-shadow: 0 0 80px rgba(0, 0, 0, 0.8);
         }
 
         .cert-grid {
-            background-color: #ffffff;
+            width: 100%; height: 100%;
+            display: flex; flex-direction: column; justify-content: space-between;
+            padding: 5.5cqw 6cqw;
+            text-align: center;
+            background-color: #fff;
             background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
-            background-size: 12px 12px;
+            background-size: 1.1cqw 1.1cqw;
             background-position: center center;
         }
 
-        /* Reset układu dla drukarki systemu operacyjnego */
+        .cert-logo { display: block; height: 6.5cqw; margin: 0 auto; }
+
+        .cert-body { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .cert-title { margin: 0; font-size: 1.5cqw; font-weight: 500; color: #6b7280; letter-spacing: 0.3em; text-transform: uppercase; }
+        .cert-rule { width: 5.5cqw; height: 0.4cqw; margin: 3cqw auto; background: #12a5ff; opacity: 0.9; }
+        .cert-name { margin: 0; font-size: 4.6cqw; line-height: 1.1; font-weight: 700; color: #111827; letter-spacing: -0.01em; text-transform: uppercase; word-break: break-word; }
+        .cert-desc { margin: 0; max-width: 80cqw; font-size: 1.75cqw; font-weight: 300; line-height: 1.8; color: #374151; }
+
+        .cert-foot {
+            display: flex; justify-content: space-between; align-items: center;
+            border-top: 1px solid #e5e7eb; padding-top: 2.5cqw;
+            font-family: 'JetBrains Mono', monospace; font-size: 1.3cqw; letter-spacing: 0.15em; color: #9ca3af;
+        }
+        .cert-foot .mid { color: #111827; letter-spacing: 0.2em; text-transform: lowercase; }
+
         @media print {
-            body, html { background: white; margin: 0; padding: 0; width: 100%; height: auto; overflow: visible; display: block; }
-            .no-print { display: none !important; }
-            #cert-scaling-wrapper { 
-                position: relative !important; 
-                top: auto !important; 
-                left: auto !important; 
-                transform: none !important; 
-                margin: 0 !important; 
-            }
-            #cert-container { box-shadow: none !important; }
             @page { size: A4 landscape; margin: 0; }
+            body { display: block; background: #fff; padding: 0; }
+            .actions { display: none; }
+            .cert-fit { width: 100%; height: 100vh; }
+            .cert-frame { box-shadow: none; }
         }
     </style>
 </head>
 <body>
-
-    <!-- PASEK AKCJI (nie drukuje się) -->
-    <div class="no-print fixed top-4 right-4 z-50 flex gap-2">
-        <a href="{{ route('course.certificate.pdf', $certificate) }}" class="rounded-md border border-ink-line bg-ink-raised px-4 py-2 text-sm font-medium text-chrome transition-colors hover:border-brand">
-            Pobierz PDF
-        </a>
-        <a href="/course" class="rounded-md border border-ink-line bg-ink-raised px-4 py-2 text-sm font-medium text-muted transition-colors hover:text-chrome">
-            Wróć do kursu
-        </a>
+    <div class="actions">
+        <a href="{{ route('course.certificate.pdf', $certificate) }}">Pobierz PDF</a>
+        <a class="secondary" href="/course">Wróć do kursu</a>
     </div>
 
-    <!-- WEWNĘTRZNY KONTENER SKALOWANY (Absolutny środek) -->
-    <div id="cert-scaling-wrapper">
-        
-        <!-- RAMKA GRADIENTOWA -->
-        <div id="cert-container" class="w-full h-full shadow-[0_0_80px_rgba(0,0,0,0.8)] p-[12px] bg-gradient-to-b from-brand to-slate-950">
-            
-            <!-- CERTYFIKAT A4 Z SIATKĄ -->
-            <div class="cert-grid w-full h-full flex flex-col justify-between p-16 relative bg-white">
+    <div class="cert-fit">
+        <div class="cert-frame">
+            <div class="cert-grid">
+                <img class="cert-logo" src="/images/pensec-logo-light.webp" alt="Pensec">
 
-                <!-- GÓRA: Wyśrodkowane logo -->
-                <div class="w-full flex justify-center pt-8">
-                    <img src="/images/pensec-logo-light.webp" alt="Pensec" class="h-20">
-                </div>
-
-                <!-- ŚRODEK: Kaskada tekstu -->
-                <div class="flex-grow flex flex-col justify-center items-center text-center px-8 mt-6">
-                    
-                    <h1 class="text-base font-medium text-gray-500 tracking-[0.3em] uppercase mb-8">
-                        Certyfikat ukończenia kursu pentesterskiego
-                    </h1>
-
-                    <!-- MINIMALISTYCZNY SEPARATOR (BRAND) -->
-                    <div class="w-16 h-1 bg-brand mb-8 opacity-90"></div>
-
-                    <!-- IMIĘ I NAZWISKO (bohater certyfikatu) -->
-                    <h2 class="text-5xl leading-[1.1] font-bold text-gray-900 tracking-tight mb-12 uppercase break-words max-w-4xl">
-                        {{ $certificate->holder_name }}
-                    </h2>
-                    
-                    <!-- MINIMALISTYCZNY SEPARATOR (BRAND) -->
-                    <div class="w-16 h-1 bg-brand mb-10 opacity-90"></div>
-
-                    <!-- OPIS -->
-                    <p class="text-xl font-light text-gray-700 leading-[1.8] max-w-5xl">
-                        Ukończył z wynikiem pozytywnym autorski program szkoleniowy.<br>
-                        Zakres weryfikacji objął zaawansowane techniki ofensywne,<br>
-                        przełamywanie segmentacji sieciowej, analizę przestrzeni radiowej<br>
-                        oraz eksplorację środowisk usług katalogowych.
+                <div class="cert-body">
+                    <p class="cert-title">Certyfikat ukończenia kursu</p>
+                    <div class="cert-rule"></div>
+                    <h1 class="cert-name">{{ $certificate->holder_name }}</h1>
+                    <div class="cert-rule"></div>
+                    <p class="cert-desc">
+                        Ukończył z wynikiem pozytywnym szkolenie z oceny ekspozycji infrastruktury
+                        wewnętrznej, obejmujące rozpoznanie, enumerację usług oraz analizę baz danych
+                        i raportowanie.
                     </p>
-
                 </div>
 
-                <!-- DÓŁ: Symetryczna stopka z głębokimi marginesami (px-36) -->
-                <div class="w-full flex justify-between items-center border-t border-gray-200 pt-8 pb-4 px-36 font-mono text-base text-gray-400 tracking-widest">
-                    
-                    <!-- Lewa strona: ID -->
-                    <div class="text-left w-1/3">
-                        {{ $certificate->formattedId() }}
-                    </div>
-
-                    <!-- Środek: Domena -->
-                    <div class="text-center w-1/3 text-gray-900 font-medium tracking-[0.2em] lowercase">
-                        pensec.top
-                    </div>
-
-                    <!-- Prawa strona: Data -->
-                    <div class="text-right w-1/3">
-                        {{ $certificate->created_at->format('d.m.Y') }}
-                    </div>
-
+                <div class="cert-foot">
+                    <span>{{ $certificate->formattedId() }}</span>
+                    <span class="mid">pensec.top</span>
+                    <span>{{ $certificate->created_at->format('d.m.Y') }}</span>
                 </div>
-
             </div>
         </div>
-        
     </div>
-
-    <!-- SKRYPT SKALUJĄCY DO ŚRODKA EKRANU -->
-    <script>
-        function resizeCertificate() {
-            const scalingWrapper = document.getElementById('cert-scaling-wrapper');
-            
-            // Pobieramy absolutną przestrzeń całego okna (viewport)
-            // Zostawiamy 16px marginesu ochronnego
-            const availableWidth = window.innerWidth - 32; 
-            const availableHeight = window.innerHeight - 32;
-            
-            // Obliczamy skale dla obu osi. Bierzemy mniejszą, by dokument na pewno się zmieścił.
-            const scaleX = availableWidth / 1123;
-            const scaleY = availableHeight / 794;
-            const scale = Math.min(scaleX, scaleY, 1);
-            
-            // Klucz: dodajemy translate(-50%, -50%), aby utrzymać centrowanie absolutne przy skalowaniu
-            scalingWrapper.style.transform = `translate(-50%, -50%) scale(${scale})`;
-        }
-
-        window.addEventListener('resize', resizeCertificate);
-        
-        document.addEventListener('DOMContentLoaded', () => {
-            resizeCertificate();
-        });
-    </script>
 </body>
 </html>

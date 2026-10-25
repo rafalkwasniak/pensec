@@ -1,0 +1,29 @@
+{
+    "_comment": "Baza wiedzy. Kolejność, tytuły i opisy artykułów. Treść leży w plikach {slug}.md w tym katalogu. Artykuł jest dostępny tylko, gdy jest tu wymieniony i jego plik istnieje.",
+    "articles": [
+        {
+            "slug": "ile-kosztuje-audyt-bezpieczenstwa-sieci",
+            "title": "Ile kosztuje audyt bezpieczeństwa sieci",
+            "description": "Od czego zależy cena audytu bezpieczeństwa sieci wewnętrznej i co obejmuje wycena.",
+            "date": "2026-10-25"
+        },
+        {
+            "slug": "obowiazki-nis2-w-praktyce",
+            "title": "Obowiązki NIS2 w praktyce",
+            "description": "Co dyrektywa NIS2 wymaga w zakresie zarządzania ryzykiem i jak badanie bezpieczeństwa sieci wspiera te obowiązki.",
+            "date": "2026-10-25"
+        },
+        {
+            "slug": "czym-jest-wewnetrzny-test-penetracyjny",
+            "title": "Czym jest wewnętrzny test penetracyjny",
+            "description": "Na czym polega test penetracyjny sieci wewnętrznej, co bada i czym różni się od skanera podatności.",
+            "date": "2026-10-25"
+        },
+        {
+            "slug": "bezpieczenstwo-i-poufnosc-badania",
+            "title": "Bezpieczeństwo i poufność badania",
+            "description": "Wpływ badania na działającą sieć, czas trwania, umowa o zachowaniu poufności i miejsce przetwarzania danych.",
+            "date": "2026-10-25"
+        }
+    ]
+}

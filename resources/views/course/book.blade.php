@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Książka | Pensec</title>
     <meta name="description" content="Książka o bazach danych autora kursu.">
+    @include('partials.og', ['title' => 'Książka | Pensec', 'description' => 'Książka o bazach danych autora kursu.'])
     <link rel="icon" type="image/png" href="/favicon.png">
     @include('partials.theme-boot')
     @vite('resources/css/app.css')

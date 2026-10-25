@@ -3,15 +3,27 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Pensec</title>
+    <title>Audyt bezpieczeństwa sieci wewnętrznej | Pensec</title>
     <meta name="description" content="Pensec bada bezpieczeństwo sieci od środka. Sondy Raspberry Pi umieszczone w sieci przeprowadzają pełne badanie lokalnie i przekazują jeden kompletny raport.">
     <link rel="icon" type="image/png" href="/favicon.png">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-    <meta property="og:title" content="Pensec - badanie bezpieczeństwa sieci od środka">
+    <meta property="og:title" content="Badanie bezpieczeństwa sieci od środka | Pensec">
     <meta property="og:description" content="Sondy Raspberry Pi umieszczone wewnątrz sieci badają jej bezpieczeństwo i przekazują kompletny raport.">
-    <meta property="og:image" content="{{ url('/images/pensec-logo.webp') }}">
+    <meta property="og:image" content="{{ url('/images/pensec-logo-print.png') }}">
     <meta property="og:type" content="website">
     <meta property="og:locale" content="pl_PL">
+    <link rel="canonical" href="{{ url('/') }}">
+    @php
+        $ld = [
+            '@context' => 'https://schema.org',
+            '@type' => 'Organization',
+            'name' => 'Pensec',
+            'url' => url('/'),
+            'logo' => url('/images/pensec-logo.webp'),
+            'description' => 'Pensec przeprowadza audyt bezpieczeństwa sieci wewnętrznej za pomocą sond umieszczanych w sieci klienta. Pełne badanie biegnie lokalnie, a jego wynikiem jest kompletny raport.',
+        ];
+    @endphp
+    <script type="application/ld+json">{!! json_encode($ld, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
     @include('partials.theme-boot')
     @vite('resources/css/app.css')
 </head>
@@ -227,16 +239,7 @@
 
     </main>
 
-    <footer class="border-t border-ink-line mt-auto">
-    <div class="mx-auto flex max-w-6xl items-center justify-center px-6 py-10 text-sm text-muted">
-        <div class="flex items-center gap-1.5">
-            <img src="/images/pensec-logo.webp" alt="Pensec" width="768" height="256" class="theme-when-dark h-4 sm:h-5 w-auto">
-            <img src="/images/pensec-logo-light.webp" alt="Pensec" width="768" height="256" class="theme-when-light h-4 sm:h-5 w-auto">
-            <span class="font-semibold tracking-wide text-chrome">&copy;</span>
-            <span class="font-semibold tracking-wide text-chrome">{{ date('Y') }}</span>
-        </div>
-    </div>
-	</footer>
+    @include('partials.site-footer')
 
 
     @include('partials.cookie-consent')

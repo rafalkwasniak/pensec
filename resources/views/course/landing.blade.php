@@ -3,8 +3,25 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Kurs | Pensec</title>
-    <meta name="description" content="Twarda wiedza inżynieryjna. Zrozum mechanikę protokołów, zidentyfikuj luki konfiguracyjne, wdróż skuteczne mechanizmy obronne.">
+    <title>Kurs: audyt ekspozycji infrastruktury wewnętrznej | Pensec</title>
+    <meta name="description" content="Kurs oceny ekspozycji infrastruktury wewnętrznej: mechanika protokołów, identyfikacja luk konfiguracyjnych i mechanizmy obronne, w ujęciu audytora.">
+    @include('partials.og', ['title' => 'Kurs: audyt ekspozycji infrastruktury wewnętrznej | Pensec', 'description' => 'Kurs oceny ekspozycji infrastruktury wewnętrznej: mechanika protokołów, identyfikacja luk konfiguracyjnych i mechanizmy obronne, w ujęciu audytora.'])
+    <link rel="canonical" href="{{ url('/course') }}">
+    @php
+        $ld = [
+            '@context' => 'https://schema.org',
+            '@type' => 'Course',
+            'name' => 'Kurs manualnego audytu ekspozycji infrastruktury wewnętrznej',
+            'description' => 'Kurs prowadzi przez ręczną ocenę ekspozycji infrastruktury wewnętrznej, od fundamentów sieciowych, przez rozpoznanie i enumerację usług, aż po bazy danych i raport.',
+            'inLanguage' => 'pl',
+            'provider' => [
+                '@type' => 'Organization',
+                'name' => 'Pensec',
+                'url' => url('/'),
+            ],
+        ];
+    @endphp
+    <script type="application/ld+json">{!! json_encode($ld, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
     <link rel="icon" type="image/png" href="/favicon.png">
     @include('partials.theme-boot')
     @vite('resources/css/app.css')
@@ -62,8 +79,8 @@
         <section>
             <div class="card flex flex-col justify-between p-6">
                 <div class="text-center">
-                    <h2 class="text-sm uppercase tracking-[0.25em] text-brand">Wprowadzenie</h2>
-                    <h3 class="mt-4 text-2xl font-semibold chrome-text">Kurs Pentesterski</h3>
+                    <p class="text-sm uppercase tracking-[0.25em] text-brand">Wprowadzenie</p>
+                    <h1 class="mt-4 text-2xl font-semibold chrome-text">Kurs Pentesterski</h1>
                     <p class="mt-4 text-sm leading-relaxed text-muted mx-auto max-w-3xl">
                         Kurs prowadzi przez ręczną ocenę ekspozycji infrastruktury wewnętrznej, od fundamentów sieciowych, przez rozpoznanie i enumerację usług, aż po bazy danych i raport. Nacisk pada na składnię poleceń, pracę w terminalu środowiska Linux oraz ostrożną interpretację wyników, odróżniającą obserwację od potwierdzonego ustalenia. Program odwzorowuje metodykę realnego audytu, ze szczególnym uwzględnieniem usług i baz danych. Zaliczenie testu końcowego pozwala zdobyć imienny certyfikat ukończenia szkolenia.
                     </p>
@@ -173,16 +190,7 @@
 
     </main>
 
-    <footer class="border-t border-ink-line mt-auto">
-        <div class="mx-auto flex max-w-6xl items-center justify-center px-6 py-10 text-sm text-muted">
-            <div class="flex items-center gap-1.5">
-                <img src="/images/pensec-logo.webp" alt="Pensec" width="768" height="256" class="theme-when-dark h-4 sm:h-5 w-auto">
-                <img src="/images/pensec-logo-light.webp" alt="Pensec" width="768" height="256" class="theme-when-light h-4 sm:h-5 w-auto">
-                <span class="font-semibold tracking-wide text-chrome">&copy;</span>
-                <span class="font-semibold tracking-wide text-chrome">{{ date('Y') }}</span>
-            </div>
-        </div>
-    </footer>
+    @include('partials.site-footer')
 
 
     @include('partials.cookie-consent')

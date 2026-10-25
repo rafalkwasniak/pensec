@@ -3,7 +3,10 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Specyfikacja | Pensec</title>
+    <title>Zakres badania i silnik audytu | Pensec</title>
+    <meta name="description" content="Specyfikacja silnika audytu Pensec: rozpoznanie sieci, enumeracja usług, testy podatności, wykrywanie urządzeń przemysłowych ICS/OT oraz diagnostyka.">
+    @include('partials.og', ['title' => 'Zakres badania i silnik audytu | Pensec', 'description' => 'Specyfikacja silnika audytu Pensec: rozpoznanie sieci, enumeracja usług, testy podatności, wykrywanie urządzeń przemysłowych ICS/OT oraz diagnostyka.'])
+    <link rel="canonical" href="{{ url('/tests') }}">
     <link rel="icon" type="image/png" href="/favicon.png">
     @include('partials.theme-boot')
     @vite('resources/css/app.css')
@@ -51,6 +54,7 @@
     </div>
     
     <main class="flex-grow w-full mx-auto max-w-6xl px-6 py-10" style="margin-top: 50px;">
+        <h1 style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0">Specyfikacja silnika audytu bezpieczeństwa sieci Pensec</h1>
             
         <!-- GRID -->
         <div class="grid gap-8 md:grid-cols-2">
@@ -301,16 +305,7 @@
         </div>
     </main>
 
-    <footer class="border-t border-ink-line mt-auto">
-    <div class="mx-auto flex max-w-6xl items-center justify-center px-6 py-10 text-sm text-muted">
-        <div class="flex items-center gap-1.5">
-            <img src="/images/pensec-logo.webp" alt="Pensec" width="768" height="256" class="theme-when-dark h-4 sm:h-5 w-auto">
-            <img src="/images/pensec-logo-light.webp" alt="Pensec" width="768" height="256" class="theme-when-light h-4 sm:h-5 w-auto">
-            <span class="font-semibold tracking-wide text-chrome">&copy;</span>
-            <span class="font-semibold tracking-wide text-chrome">{{ date('Y') }}</span>
-        </div>
-    </div>
-	</footer>
+    @include('partials.site-footer')
 
 
     @include('partials.cookie-consent')

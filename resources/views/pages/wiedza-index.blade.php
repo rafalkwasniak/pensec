@@ -4,8 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Baza wiedzy o bezpieczeństwie sieci | Pensec</title>
-    <meta name="description" content="Artykuły o audycie i bezpieczeństwie sieci wewnętrznej: koszt audytu, obowiązki NIS2, wewnętrzny test penetracyjny, bezpieczeństwo i poufność badania.">
-    @include('partials.og', ['title' => 'Baza wiedzy o bezpieczeństwie sieci | Pensec', 'description' => 'Artykuły o audycie i bezpieczeństwie sieci wewnętrznej: koszt audytu, obowiązki NIS2, wewnętrzny test penetracyjny, bezpieczeństwo i poufność badania.'])
+    <meta name="description" content="Artykuły o audycie i bezpieczeństwie sieci wewnętrznej: koszt audytu, obowiązki NIS2, wewnętrzny test penetracyjny, bezpieczeństwo sieci przemysłowej OT, bezpieczeństwo i poufność badania.">
+    @include('partials.og', ['title' => 'Baza wiedzy o bezpieczeństwie sieci | Pensec', 'description' => 'Artykuły o audycie i bezpieczeństwie sieci wewnętrznej: koszt audytu, obowiązki NIS2, wewnętrzny test penetracyjny, bezpieczeństwo sieci przemysłowej OT, bezpieczeństwo i poufność badania.'])
     <link rel="canonical" href="{{ url('/wiedza') }}">
     <link rel="icon" type="image/png" href="/favicon.png">
     @include('partials.theme-boot')

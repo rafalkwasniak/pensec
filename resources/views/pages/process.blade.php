@@ -68,8 +68,8 @@
             </ul>
         </div>
 
-        <div class="mt-12 flex justify-center border-t border-ink-line pt-6">
-            <a href="/contact" class="inline-block rounded-md border border-ink-line bg-ink-raised px-6 py-2.5 text-sm font-medium text-chrome hover:border-brand transition-colors">
+        <div class="mt-12 text-center">
+            <a href="/contact" class="inline-block rounded-full border border-ink-line bg-ink-raised px-6 py-2.5 text-sm font-medium text-chrome hover:border-brand transition-colors">
                 Zamów audyt
             </a>
         </div>

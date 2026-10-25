@@ -1,12 +1,12 @@
 @extends('panel.layout')
 
-@section('title', 'Zapytania')
+@section('title', 'Wiadomości')
 
 @section('content')
     <div>
-        <h1 class="text-2xl font-semibold chrome-text">Zapytania</h1>
+        <h1 class="text-2xl font-semibold chrome-text">Wiadomości</h1>
         <p class="mt-2 max-w-2xl text-sm leading-relaxed text-muted">
-            Zapytania z formularza kontaktowego, od najnowszego. Każde trafia też jako powiadomienie
+            Wiadomości z formularza kontaktowego, od najnowszej. Każda trafia też jako powiadomienie
             na adres zbierający leady. Źródło to kampania z parametrów utm_* linku, a bez nich strona,
             z której nastąpiło przejście.
         </p>
@@ -14,7 +14,7 @@
 
     @if ($leads->isEmpty())
         <div class="card mt-8 p-10 text-center">
-            <p class="text-muted">Nie ma jeszcze żadnego zapytania.</p>
+            <p class="text-muted">Nie ma jeszcze żadnej wiadomości.</p>
         </div>
     @else
         <div class="card mt-8 overflow-x-auto">

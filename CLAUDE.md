@@ -386,6 +386,46 @@ are the two-report value, the engine spec, and the "Zasady badania" trust block 
 verifying re-audit). Sample reports under `public/reports/` are generated from a synthetic,
 anonymised scan - regenerate them if the report layout changes.
 
+### Public pages: copy, buttons, SEO
+
+- **Copy is impersonal and descriptive** ("jest przeprowadzany", never "przeprowadzamy" or
+  "napisz do nas"), everywhere: pages, articles, privacy policy, portal, meta tags. No dashes
+  in prose or titles; titles use `| Pensec`. Button labels may be imperative.
+- **Button rule, already true site-wide:** a button inside a card is `rounded-md` with a
+  `border-t border-ink-line pt-6` line above it; a button below a card, on the page background,
+  is `rounded-full` with no line.
+- The CSS build is old; prefer utility classes some view already uses, or inline styles,
+  over new ones (see "Building assets").
+- No shared public layout: each page carries its own nav, and includes `partials.og`,
+  `partials.site-footer` and `partials.cookie-consent`. `SitemapController` lists the static
+  routes plus the course and `/wiedza` manifests - add a new public page there.
+- Knowledge base: `resources/articles/articles.json` + `{slug}.md`, rendered like the course.
+  The FAQ was folded into it; `/faq` is a permanent redirect to `/wiedza`. Articles are drafts
+  awaiting Rafał's edit and, like the landing page, claim only what the probe does.
+
+### Leads and analytics
+
+The contact page is a single form. `LeadController` stores a `Lead` first, then mails
+`pensec.leads.notify_to` best-effort, so a lead survives a mail failure. `RememberLeadSource`
+(web middleware) keeps the visit's `utm_*`/`gclid`, external referrer and landing page in the
+session; a tagged visit replaces it, an untagged one never overwrites it. The panel calls
+leads "Wiadomości".
+
+Google Analytics 4 is off unless `PENSEC_GA_ID` is set. When set, the cookie banner offers a
+choice and the tag is injected by JavaScript **only after consent**, never on panel/portal;
+the footer's "Ustawienia cookie" withdraws it, and the privacy policy switches its text on the
+same config. A sent form fires `generate_lead`. Do not load the tag in markup.
+
+### Client portal
+
+`/portal`, guard `client` (provider `clients`), fully separate from the panel's `web`
+guard - which is why the panel group says `auth:web`/`guest:web` explicitly; a plain `auth`
+would admit a client session. Administrators create clients and assign devices
+(`devices.client_id`); the client sets a password through a one-time link
+(`ClientProvisioning`, hash only, shown once). Every portal read is scoped by
+`report.device.client_id` and answers 404 otherwise. The read-only analysis is the shared
+`partials/report-analysis`, also used by the panel.
+
 ### Panel
 
 Every account has full access. There are no roles: an administrator can manage probes,

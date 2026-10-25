@@ -20,6 +20,12 @@
             "date": "2026-10-25"
         },
         {
+            "slug": "bezpieczenstwo-sieci-przemyslowej-ot",
+            "title": "Bezpieczeństwo sieci przemysłowej (OT)",
+            "description": "Jak badana jest ekspozycja sterowników i protokołów automatyki, jakie problemy powtarzają się w zakładach i jak przekładają się na działania.",
+            "date": "2026-10-25"
+        },
+        {
             "slug": "bezpieczenstwo-i-poufnosc-badania",
             "title": "Bezpieczeństwo i poufność badania",
             "description": "Wpływ badania na działającą sieć, czas trwania, umowa o zachowaniu poufności i miejsce przetwarzania danych.",

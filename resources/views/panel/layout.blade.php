@@ -28,9 +28,9 @@
                 <nav class="flex shrink min-w-0 items-center gap-4 sm:gap-5 overflow-x-auto hide-scrollbar">
                     @foreach ([
                         ['panel.devices.index', 'Sondy', 'panel/devices*'],
-                        ['panel.clients.index', 'Klienci', 'panel/clients*'],
                         ['panel.reports.index', 'Badania', 'panel/reports*'],
-                        ['panel.leads.index', 'Zapytania', 'panel/leads*'],
+                        ['panel.leads.index', 'Wiadomości', 'panel/leads*'],
+                        ['panel.clients.index', 'Klienci', 'panel/clients*'],
                         ['panel.administrators.index', 'Administratorzy', 'panel/administrators*'],
                         ['panel.account.edit', 'Konto', 'panel/account*'],
                     ] as [$route, $label, $pattern])

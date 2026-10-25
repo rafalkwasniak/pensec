@@ -5,7 +5,6 @@
         <nav class="flex flex-wrap items-center justify-center gap-6 text-sm text-muted">
             <a href="/jak-przebiega-audyt" class="transition-colors hover:text-chrome">Jak przebiega audyt</a>
             <a href="/wiedza" class="transition-colors hover:text-chrome">Baza wiedzy</a>
-            <a href="/contact" class="transition-colors hover:text-chrome">Kontakt</a>
             <a href="/polityka-prywatnosci" class="transition-colors hover:text-chrome">Polityka prywatności</a>
             @if (config('pensec.analytics.ga_id'))
                 <button type="button" data-cookie-settings class="transition-colors hover:text-chrome">Ustawienia cookie</button>
